@@ -1,0 +1,14 @@
+alembic==1.14.0
+anyio==4.5.2a
+asyncpg==0.30.0
+fastapi==0.115.4
+# psycopg2==2.9.10
+pydantic==2.9.2
+pydantic-core==2.23.4
+python_dotenv==1.0.1
+sqlalchemy==2.0.36
+pydantic-partial==0.3.0
+aiosqlite==0.20.0
+pytest==8.3.3
+pytest-asyncio==0.24.0
+
