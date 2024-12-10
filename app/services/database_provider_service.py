@@ -1,13 +1,14 @@
 import logging
-import typing
+import math
 from uuid import UUID
-from sqlalchemy import asc, desc, and_
+from sqlalchemy import asc, desc, and_, func
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 
 from ..schemas import (
+    PaginatedSchema,
     DatabaseProviderCreateSchema,
     DatabaseProviderQuerySchema,
 )
@@ -84,7 +85,7 @@ class DatabaseProviderService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(self,
         query_options: DatabaseProviderQuerySchema
-    ) -> typing.List[DatabaseProvider]:
+    ) -> PaginatedSchema[DatabaseProvider]:
         """
         Retrieve a paginated, sorted list of DatabaseProvider instances.
 
@@ -101,13 +102,14 @@ class DatabaseProviderService(BaseService):
         filter_opts = {
             "provider_type_id": (DatabaseProvider.provider_type_id, "__eq__"),
             "domain_id": (DatabaseProvider.domain_id, "__eq__"),
+            "layer_id": (DatabaseProvider.layer_id, "__eq__"),
             "query": ((
                DatabaseProvider.name,
                DatabaseProvider.display_name,
                DatabaseProvider.description,
             ), "ilike"),
         }
-        filters = self.get_filters(filter_opts, query_options)
+        filters = self.get_filters(DatabaseProvider, filter_opts, query_options)
 
         if filters:
             query = query.where(and_(*filters))
@@ -119,10 +121,22 @@ class DatabaseProviderService(BaseService):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
                 order_func(getattr(DatabaseProvider, query_options.sort_by)))
+        rows = (
+            await self.session.execute(query.offset(offset).limit(limit))
+        ).scalars().unique().all()
 
-        result = await self.session.execute(
-            query.offset(offset).limit(limit))
-        return result.scalars().unique().all()
+        count_query = select(func.count()).select_from(
+            query.selectable.with_only_columns(DatabaseProvider.id)
+        )
+        total_rows = (await self.session.execute(count_query)).scalar_one()
+
+        return PaginatedSchema[DatabaseProvider](
+            page_size=limit,
+            page_count = math.ceil(total_rows / limit),
+            page=page,
+            count=total_rows,
+            items=rows,
+        )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(self, database_provider_id: UUID) -> DatabaseProvider:
@@ -137,5 +151,8 @@ class DatabaseProviderService(BaseService):
             select(DatabaseProvider)
             .options(selectinload(DatabaseProvider.provider_type))
             .options(selectinload(DatabaseProvider.domain))
+            .options(selectinload(DatabaseProvider.layer))
+            .options(selectinload(DatabaseProvider.connection))
+            .options(selectinload(DatabaseProvider.ingestions))
             .filter(DatabaseProvider.id == database_provider_id))
         return result.scalars().first()

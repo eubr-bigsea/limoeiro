@@ -8,125 +8,125 @@ from sqlalchemy.future import select
 
 from ..schemas import (
     PaginatedSchema,
-    DomainCreateSchema,
-    DomainQuerySchema,
+    LayerCreateSchema,
+    LayerQuerySchema,
 )
-from ..models import Domain
+from ..models import Layer
 from . import BaseService
 log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
-class DomainService(BaseService):
+class LayerService(BaseService):
     """ Service class implementing business logic for
-    Domain entities"""
+    Layer entities"""
     def __init__(self, session: AsyncSession ):
-        super().__init__(Domain)
+        super().__init__(Layer)
         self.session = session
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
-        self, domain_data: DomainCreateSchema
-    ) -> Domain:
+        self, layer_data: LayerCreateSchema
+    ) -> Layer:
         """
-        Create a new Domain instance.
+        Create a new Layer instance.
 
         Args:
-            domain: The new instance.
+            layer: The new instance.
         Returns:
-            Domain: Created instance
+            Layer: Created instance
         """
-        domain = Domain(**domain_data.model_dump(
+        layer = Layer(**layer_data.model_dump(
             exclude_unset=True))
-        self.session.add(domain)
+        self.session.add(layer)
         await self.session.commit()
-        await self.session.refresh(domain)
-        return domain
+        await self.session.refresh(layer)
+        return layer
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, domain_id: UUID) -> Domain:
+    async def delete(self, layer_id: UUID) -> Layer:
         """
-        Delete Domain instance.
+        Delete Layer instance.
         Args:
-            domain_id: The ID of the Domain instance to delete.
+            layer_id: The ID of the Layer instance to delete.
         Returns:
-            Domain: Deleted instance if found or None
+            Layer: Deleted instance if found or None
         """
-        domain = await self.get(domain_id)
-        if domain:
-            await self.session.delete(domain)
+        layer = await self.get(layer_id)
+        if layer:
+            await self.session.delete(layer)
             await self.session.commit()
-        return domain
+        return layer
 
     @handle_db_exceptions("Failed to update {}")
     async def update(self,
-        domain_id: UUID,
-        domain_data: Domain) -> Domain:
+        layer_id: UUID,
+        layer_data: Layer) -> Layer:
         """
-        Update a single instance of class Domain.
+        Update a single instance of class Layer.
         Args:
-            domain_id: The ID of the Domain instance to update.
-            domain_data: An object containing the updated fields for the instance.
+            layer_id: The ID of the Layer instance to update.
+            layer_data: An object containing the updated fields for the instance.
         Returns:
-            Domain: The updated instance if found, None otheriwse
+            Layer: The updated instance if found, None otheriwse
 
         """
-        domain = await self.get(domain_id)
-        if not domain:
+        layer = await self.get(layer_id)
+        if not layer:
             return None
-        for key, value in domain_data.model_dump(
+        for key, value in layer_data.model_dump(
             exclude_unset=True).items():
-            setattr(domain, key, value)
+            setattr(layer, key, value)
         await self.session.commit()
-        await self.session.refresh(domain)
+        await self.session.refresh(layer)
 
-        return domain
+        return layer
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(self,
-        query_options: DomainQuerySchema
-    ) -> PaginatedSchema[Domain]:
+        query_options: LayerQuerySchema
+    ) -> PaginatedSchema[Layer]:
         """
-        Retrieve a paginated, sorted list of Domain instances.
+        Retrieve a paginated, sorted list of Layer instances.
 
         Args:
 
         Returns:
-            List[Domain]: List of Domain instances
+            List[Layer]: List of Layer instances
         """
         page = max(query_options.page, 1)
         limit = min(max(1, query_options.page_size), 100)
         offset = (page - 1) * limit
 
-        query = select(Domain)
+        query = select(Layer)
         filter_opts = {
             "query": ((
-               Domain.name,
-               Domain.display_name,
-               Domain.description,
+               Layer.name,
+               Layer.display_name,
+               Layer.description,
             ), "ilike"),
         }
-        filters = self.get_filters(Domain, filter_opts, query_options)
+        filters = self.get_filters(Layer, filter_opts, query_options)
 
         if filters:
             query = query.where(and_(*filters))
 
         if (
             query_options.sort_by and
-                hasattr(Domain, query_options.sort_by)
+                hasattr(Layer, query_options.sort_by)
         ):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
-                order_func(getattr(Domain, query_options.sort_by)))
+                order_func(getattr(Layer, query_options.sort_by)))
         rows = (
             await self.session.execute(query.offset(offset).limit(limit))
         ).scalars().unique().all()
 
         count_query = select(func.count()).select_from(
-            query.selectable.with_only_columns(Domain.id)
+            query.selectable.with_only_columns(Layer.id)
         )
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[Domain](
+        return PaginatedSchema[Layer](
             page_size=limit,
             page_count = math.ceil(total_rows / limit),
             page=page,
@@ -135,15 +135,15 @@ class DomainService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, domain_id: UUID) -> Domain:
+    async def get(self, layer_id: UUID) -> Layer:
         """
-        Retrieve a Domain instance by id.
+        Retrieve a Layer instance by id.
         Args:
-            domain_id: The ID of the Domain instance to retrieve.
+            layer_id: The ID of the Layer instance to retrieve.
         Returns:
-            Domain: Found instance or None
+            Layer: Found instance or None
         """
         result = await self.session.execute(
-            select(Domain)
-            .filter(Domain.id == domain_id))
+            select(Layer)
+            .filter(Layer.id == layer_id))
         return result.scalars().first()

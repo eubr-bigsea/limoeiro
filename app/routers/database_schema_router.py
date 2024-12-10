@@ -1,5 +1,4 @@
 import logging
-import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -80,7 +79,7 @@ async def update_schemas(database_schema_id: UUID,
 @router.get(
     "/schemas/",
     tags=["DatabaseSchema"],
-    response_model=typing.List[DatabaseSchemaListSchema],
+    response_model=PaginatedSchema[DatabaseSchemaListSchema],
     response_model_exclude_none=True
 )
 async def find_schemas(
@@ -93,7 +92,10 @@ async def find_schemas(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DatabaseSchemaService(db).find(query_options)
+    schemas = await DatabaseSchemaService(db).find(query_options)
+    model = DatabaseSchemaListSchema()
+    schemas.items = [model.model_validate(d) for d in schemas.items]
+    return schemas
 
 @router.get("/schemas/{database_schema_id}",
     tags=["DatabaseSchema"],

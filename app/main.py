@@ -3,9 +3,14 @@ from fastapi import FastAPI
 from app.routers import (
     database_provider_router,
     database_provider_type_router,
+    database_provider_connection_router,
+    database_provider_ingestion_router,
     database_router,
     database_schema_router,
-    database_table_router
+    database_table_router,
+    layer_router,
+    tag_router,
+    i_a_model_router
 )
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import domain_router
@@ -36,9 +41,14 @@ routers = [
     domain_router.router,
     database_provider_type_router.router,
     database_provider_router.router,
+    database_provider_connection_router.router,
+    database_provider_ingestion_router.router,
     database_router.router,
     database_schema_router.router,
     database_table_router.router,
+    layer_router.router,
+    tag_router.router,
+    i_a_model_router.router
 ]
 for router in routers:
     app.include_router(router)

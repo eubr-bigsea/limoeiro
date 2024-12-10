@@ -1,5 +1,4 @@
 import logging
-import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -80,7 +79,7 @@ async def update_domains(domain_id: UUID,
 @router.get(
     "/domains/",
     tags=["Domain"],
-    response_model=typing.List[DomainListSchema],
+    response_model=PaginatedSchema[DomainListSchema],
     response_model_exclude_none=True
 )
 async def find_domains(
@@ -93,7 +92,10 @@ async def find_domains(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DomainService(db).find(query_options)
+    domains = await DomainService(db).find(query_options)
+    model = DomainListSchema()
+    domains.items = [model.model_validate(d) for d in domains.items]
+    return domains
 
 @router.get("/domains/{domain_id}",
     tags=["Domain"],

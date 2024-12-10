@@ -1,5 +1,4 @@
 import logging
-import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -80,7 +79,7 @@ async def update_database_providers(database_provider_id: UUID,
 @router.get(
     "/database-providers/",
     tags=["DatabaseProvider"],
-    response_model=typing.List[DatabaseProviderListSchema],
+    response_model=PaginatedSchema[DatabaseProviderListSchema],
     response_model_exclude_none=True
 )
 async def find_database_providers(
@@ -93,7 +92,10 @@ async def find_database_providers(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DatabaseProviderService(db).find(query_options)
+    database_providers = await DatabaseProviderService(db).find(query_options)
+    model = DatabaseProviderListSchema()
+    database_providers.items = [model.model_validate(d) for d in database_providers.items]
+    return database_providers
 
 @router.get("/database-providers/{database_provider_id}",
     tags=["DatabaseProvider"],

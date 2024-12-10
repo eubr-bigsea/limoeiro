@@ -1,5 +1,4 @@
 import logging
-import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -80,7 +79,7 @@ async def update_tables(database_table_id: UUID,
 @router.get(
     "/tables/",
     tags=["DatabaseTable"],
-    response_model=typing.List[DatabaseTableListSchema],
+    response_model=PaginatedSchema[DatabaseTableListSchema],
     response_model_exclude_none=True
 )
 async def find_tables(
@@ -93,7 +92,10 @@ async def find_tables(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DatabaseTableService(db).find(query_options)
+    tables = await DatabaseTableService(db).find(query_options)
+    model = DatabaseTableListSchema()
+    tables.items = [model.model_validate(d) for d in tables.items]
+    return tables
 
 @router.get("/tables/{database_table_id}",
     tags=["DatabaseTable"],

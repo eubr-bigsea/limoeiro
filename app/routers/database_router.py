@@ -1,5 +1,4 @@
 import logging
-import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status
@@ -80,7 +79,7 @@ async def update_databases(database_id: UUID,
 @router.get(
     "/databases/",
     tags=["Database"],
-    response_model=typing.List[DatabaseListSchema],
+    response_model=PaginatedSchema[DatabaseListSchema],
     response_model_exclude_none=True
 )
 async def find_databases(
@@ -93,7 +92,10 @@ async def find_databases(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DatabaseService(db).find(query_options)
+    databases = await DatabaseService(db).find(query_options)
+    model = DatabaseListSchema()
+    databases.items = [model.model_validate(d) for d in databases.items]
+    return databases
 
 @router.get("/databases/{database_id}",
     tags=["Database"],

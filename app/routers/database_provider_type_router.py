@@ -1,5 +1,4 @@
 import logging
-import typing
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -41,7 +40,7 @@ async def get_database_provider_type(database_provider_type_id: str,
 @router.get(
     "/database-provider-types/",
     tags=["DatabaseProviderType"],
-    response_model=typing.List[DatabaseProviderTypeListSchema],
+    response_model=PaginatedSchema[DatabaseProviderTypeListSchema],
     response_model_exclude_none=True
 )
 async def find_database_provider_types(
@@ -54,4 +53,7 @@ async def find_database_provider_types(
     :return: A JSON object containing the list of instances data.
     :rtype: dict
     """
-    return await DatabaseProviderTypeService(db).find(query_options)
+    database_provider_types = await DatabaseProviderTypeService(db).find(query_options)
+    model = DatabaseProviderTypeListSchema()
+    database_provider_types.items = [model.model_validate(d) for d in database_provider_types.items]
+    return database_provider_types
