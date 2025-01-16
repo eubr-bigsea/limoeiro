@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,14 +29,8 @@ async def add_layer(
     layer_data: LayerCreateSchema,
     db: AsyncSession = Depends(get_session)) -> LayerItemSchema:
     """
-    Add a single instance of class Layer.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe Layer.
     """
-        
-    layer_data.updated_by = "FIXME!!!"
-
     return await LayerService(db).add(
         layer_data)
 
@@ -45,12 +40,7 @@ async def add_layer(
 async def delete_layers(layer_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class Layer.
-
-    :param layer_id: The ID of the instance to delete.
-    :type layer_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe Layer.
     """
     await LayerService(db).delete(layer_id)
     return
@@ -59,20 +49,12 @@ async def delete_layers(layer_id: UUID,
     tags=["Layer"],
     response_model=LayerItemSchema,
     response_model_exclude_none=True)
-async def update_layers(layer_id: UUID,
-    layer_data: LayerUpdateSchema,
+async def update_layers(layer_id: UUID=Path(..., description="Identificador"),
+    layer_data: LayerUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> LayerItemSchema:
     """
-    Update a single instance of class Layer.
-
-    :param layer_id: The ID of the instance to update.
-    :type layer_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe Layer.
     """
-        
-    layer_data.updated_by = "FIXME!!!"
-
     return await LayerService(db).update(
         layer_id, layer_data)
 
@@ -87,10 +69,7 @@ async def find_layers(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[LayerListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     layers = await LayerService(db).find(query_options)
     model = LayerListSchema()
@@ -101,15 +80,10 @@ async def find_layers(
     tags=["Layer"],
     response_model=LayerItemSchema,
     response_model_exclude_none=False)
-async def get_layer(layer_id: UUID,
+async def get_layer(layer_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> LayerItemSchema:
     """
-    Retrieve a single instance of class Layer.
-
-    :param layer_id: The ID of the instance to retrieve.
-    :type layer_id: int
-    :return: A JSON object containing the Layer instance data.
-    :rtype: dict
+    Recupera uma instância da classe Layer.
     """
 
     layer = await LayerService(db).get(

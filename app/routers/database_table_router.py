@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,10 +29,7 @@ async def add_database_table(
     database_table_data: DatabaseTableCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
     """
-    Add a single instance of class DatabaseTable.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe DatabaseTable.
     """
         
     database_table_data.updated_by = "FIXME!!!"
@@ -45,12 +43,7 @@ async def add_database_table(
 async def delete_tables(database_table_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class DatabaseTable.
-
-    :param database_table_id: The ID of the instance to delete.
-    :type database_table_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe DatabaseTable.
     """
     await DatabaseTableService(db).delete(database_table_id)
     return
@@ -59,16 +52,11 @@ async def delete_tables(database_table_id: UUID,
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=True)
-async def update_tables(database_table_id: UUID,
-    database_table_data: DatabaseTableUpdateSchema,
+async def update_tables(database_table_id: UUID=Path(..., description="Identificador"),
+    database_table_data: DatabaseTableUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
     """
-    Update a single instance of class DatabaseTable.
-
-    :param database_table_id: The ID of the instance to update.
-    :type database_table_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe DatabaseTable.
     """
         
     database_table_data.updated_by = "FIXME!!!"
@@ -87,10 +75,7 @@ async def find_tables(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseTableListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     tables = await DatabaseTableService(db).find(query_options)
     model = DatabaseTableListSchema()
@@ -101,15 +86,10 @@ async def find_tables(
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=False)
-async def get_database_table(database_table_id: UUID,
+async def get_database_table(database_table_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
     """
-    Retrieve a single instance of class DatabaseTable.
-
-    :param database_table_id: The ID of the instance to retrieve.
-    :type database_table_id: int
-    :return: A JSON object containing the DatabaseTable instance data.
-    :rtype: dict
+    Recupera uma instância da classe DatabaseTable.
     """
 
     database_table = await DatabaseTableService(db).get(

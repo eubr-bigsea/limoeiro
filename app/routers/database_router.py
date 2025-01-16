@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,10 +29,7 @@ async def add_database(
     database_data: DatabaseCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DatabaseItemSchema:
     """
-    Add a single instance of class Database.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe Database.
     """
         
     database_data.updated_by = "FIXME!!!"
@@ -45,12 +43,7 @@ async def add_database(
 async def delete_databases(database_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class Database.
-
-    :param database_id: The ID of the instance to delete.
-    :type database_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe Database.
     """
     await DatabaseService(db).delete(database_id)
     return
@@ -59,16 +52,11 @@ async def delete_databases(database_id: UUID,
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=True)
-async def update_databases(database_id: UUID,
-    database_data: DatabaseUpdateSchema,
+async def update_databases(database_id: UUID=Path(..., description="Identificador"),
+    database_data: DatabaseUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DatabaseItemSchema:
     """
-    Update a single instance of class Database.
-
-    :param database_id: The ID of the instance to update.
-    :type database_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe Database.
     """
         
     database_data.updated_by = "FIXME!!!"
@@ -87,10 +75,7 @@ async def find_databases(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     databases = await DatabaseService(db).find(query_options)
     model = DatabaseListSchema()
@@ -101,15 +86,10 @@ async def find_databases(
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=False)
-async def get_database(database_id: UUID,
+async def get_database(database_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseItemSchema:
     """
-    Retrieve a single instance of class Database.
-
-    :param database_id: The ID of the instance to retrieve.
-    :type database_id: int
-    :return: A JSON object containing the Database instance data.
-    :rtype: dict
+    Recupera uma instância da classe Database.
     """
 
     database = await DatabaseService(db).get(

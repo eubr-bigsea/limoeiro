@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,10 +29,7 @@ async def add_i_a_model(
     i_a_model_data: IAModelCreateSchema,
     db: AsyncSession = Depends(get_session)) -> IAModelItemSchema:
     """
-    Add a single instance of class IAModel.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe IAModel.
     """
         
     i_a_model_data.updated_by = "FIXME!!!"
@@ -45,12 +43,7 @@ async def add_i_a_model(
 async def delete_ia_models(i_a_model_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class IAModel.
-
-    :param i_a_model_id: The ID of the instance to delete.
-    :type i_a_model_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe IAModel.
     """
     await IAModelService(db).delete(i_a_model_id)
     return
@@ -59,16 +52,11 @@ async def delete_ia_models(i_a_model_id: UUID,
     tags=["IAModel"],
     response_model=IAModelItemSchema,
     response_model_exclude_none=True)
-async def update_ia_models(i_a_model_id: UUID,
-    i_a_model_data: IAModelUpdateSchema,
+async def update_ia_models(i_a_model_id: UUID=Path(..., description="Identificador"),
+    i_a_model_data: IAModelUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> IAModelItemSchema:
     """
-    Update a single instance of class IAModel.
-
-    :param i_a_model_id: The ID of the instance to update.
-    :type i_a_model_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe IAModel.
     """
         
     i_a_model_data.updated_by = "FIXME!!!"
@@ -87,10 +75,7 @@ async def find_ia_models(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[IAModelListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     ia_models = await IAModelService(db).find(query_options)
     model = IAModelListSchema()
@@ -101,15 +86,10 @@ async def find_ia_models(
     tags=["IAModel"],
     response_model=IAModelItemSchema,
     response_model_exclude_none=False)
-async def get_i_a_model(i_a_model_id: UUID,
+async def get_i_a_model(i_a_model_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> IAModelItemSchema:
     """
-    Retrieve a single instance of class IAModel.
-
-    :param i_a_model_id: The ID of the instance to retrieve.
-    :type i_a_model_id: int
-    :return: A JSON object containing the IAModel instance data.
-    :rtype: dict
+    Recupera uma instância da classe IAModel.
     """
 
     i_a_model = await IAModelService(db).get(

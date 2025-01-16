@@ -101,7 +101,6 @@ class DomainService(BaseService):
         filter_opts = {
             "query": ((
                Domain.name,
-               Domain.display_name,
                Domain.description,
             ), "ilike"),
         }

@@ -20,7 +20,15 @@ from .utils.middlewares import add_middlewares
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="Limoeiro API",
+    description="Documentação da API de catálogo de dados do Lemonade.",
+    version="1.0.0",
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        }
+)
 
 print("Adding CORS")
 origins = ["*"]

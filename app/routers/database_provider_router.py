@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,10 +29,7 @@ async def add_database_provider(
     database_provider_data: DatabaseProviderCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderItemSchema:
     """
-    Add a single instance of class DatabaseProvider.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe DatabaseProvider.
     """
         
     database_provider_data.updated_by = "FIXME!!!"
@@ -45,12 +43,7 @@ async def add_database_provider(
 async def delete_database_providers(database_provider_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class DatabaseProvider.
-
-    :param database_provider_id: The ID of the instance to delete.
-    :type database_provider_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe DatabaseProvider.
     """
     await DatabaseProviderService(db).delete(database_provider_id)
     return
@@ -59,16 +52,11 @@ async def delete_database_providers(database_provider_id: UUID,
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=True)
-async def update_database_providers(database_provider_id: UUID,
-    database_provider_data: DatabaseProviderUpdateSchema,
+async def update_database_providers(database_provider_id: UUID=Path(..., description="Identificador"),
+    database_provider_data: DatabaseProviderUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderItemSchema:
     """
-    Update a single instance of class DatabaseProvider.
-
-    :param database_provider_id: The ID of the instance to update.
-    :type database_provider_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe DatabaseProvider.
     """
         
     database_provider_data.updated_by = "FIXME!!!"
@@ -87,10 +75,7 @@ async def find_database_providers(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseProviderListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     database_providers = await DatabaseProviderService(db).find(query_options)
     model = DatabaseProviderListSchema()
@@ -101,15 +86,10 @@ async def find_database_providers(
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=False)
-async def get_database_provider(database_provider_id: UUID,
+async def get_database_provider(database_provider_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderItemSchema:
     """
-    Retrieve a single instance of class DatabaseProvider.
-
-    :param database_provider_id: The ID of the instance to retrieve.
-    :type database_provider_id: int
-    :return: A JSON object containing the DatabaseProvider instance data.
-    :rtype: dict
+    Recupera uma instância da classe DatabaseProvider.
     """
 
     database_provider = await DatabaseProviderService(db).get(

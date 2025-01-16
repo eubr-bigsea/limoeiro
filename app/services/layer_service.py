@@ -101,7 +101,6 @@ class LayerService(BaseService):
         filter_opts = {
             "query": ((
                Layer.name,
-               Layer.display_name,
                Layer.description,
             ), "ilike"),
         }

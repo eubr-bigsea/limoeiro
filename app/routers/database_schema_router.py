@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,10 +29,7 @@ async def add_database_schema(
     database_schema_data: DatabaseSchemaCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DatabaseSchemaItemSchema:
     """
-    Add a single instance of class DatabaseSchema.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe DatabaseSchema.
     """
         
     database_schema_data.updated_by = "FIXME!!!"
@@ -45,12 +43,7 @@ async def add_database_schema(
 async def delete_schemas(database_schema_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class DatabaseSchema.
-
-    :param database_schema_id: The ID of the instance to delete.
-    :type database_schema_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe DatabaseSchema.
     """
     await DatabaseSchemaService(db).delete(database_schema_id)
     return
@@ -59,16 +52,11 @@ async def delete_schemas(database_schema_id: UUID,
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=True)
-async def update_schemas(database_schema_id: UUID,
-    database_schema_data: DatabaseSchemaUpdateSchema,
+async def update_schemas(database_schema_id: UUID=Path(..., description="Identificador"),
+    database_schema_data: DatabaseSchemaUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DatabaseSchemaItemSchema:
     """
-    Update a single instance of class DatabaseSchema.
-
-    :param database_schema_id: The ID of the instance to update.
-    :type database_schema_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe DatabaseSchema.
     """
         
     database_schema_data.updated_by = "FIXME!!!"
@@ -87,10 +75,7 @@ async def find_schemas(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseSchemaListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     schemas = await DatabaseSchemaService(db).find(query_options)
     model = DatabaseSchemaListSchema()
@@ -101,15 +86,10 @@ async def find_schemas(
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=False)
-async def get_database_schema(database_schema_id: UUID,
+async def get_database_schema(database_schema_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseSchemaItemSchema:
     """
-    Retrieve a single instance of class DatabaseSchema.
-
-    :param database_schema_id: The ID of the instance to retrieve.
-    :type database_schema_id: int
-    :return: A JSON object containing the DatabaseSchema instance data.
-    :rtype: dict
+    Recupera uma instância da classe DatabaseSchema.
     """
 
     database_schema = await DatabaseSchemaService(db).get(

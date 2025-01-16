@@ -123,17 +123,21 @@ class DataType(str, enum.Enum):
 class Layer(Base):
     """ Camada lógica para organização dos dados """
     __tablename__ = 'tb_layer'
+    __table_args__ = (
+        UniqueConstraint('name'),
+    )
 
     # Fields
     id = Column(UUID(as_uuid=True), primary_key=True,
                 autoincrement=False,
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
-    display_name = Column(String(200), nullable=False)
     description = Column(String(8000))
+    deleted = Column(Boolean,
+            default=False, nullable=False, server_default="False")
 
     def __str__(self):
-        return self.display_name
+        return ""
 
     def __repr__(self):
         return f'<Instance {self.__class__}: {self.id}>'
@@ -143,7 +147,7 @@ class Domain(Base):
     """ Um domínio é um contexto delimitado que está alinhado com uma Unidade de Negócios ou uma função dentro de uma organização. """
     __tablename__ = 'tb_domain'
     __table_args__ = (
-        UniqueConstraint('fully_qualified_name'),
+        UniqueConstraint('name'),
     )
 
     # Fields
@@ -151,20 +155,12 @@ class Domain(Base):
                 autoincrement=False,
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
-    display_name = Column(String(200), nullable=False)
-    fully_qualified_name = Column(String(500), nullable=False, index=True, unique=True)
     description = Column(String(8000))
-    version = Column(String(200),
-            default="0.0.0", nullable=False)
-    updated_at = Column(DateTime,
-            default=utc_now,
-            onupdate=utc_now)
-    updated_by = Column(String(200), nullable=False)
-    href = Column(String(2000))
-    owner = Column(String(200))
+    deleted = Column(Boolean,
+            default=False, nullable=False, server_default="False")
 
     def __str__(self):
-        return self.display_name
+        return ""
 
     def __repr__(self):
         return f'<Instance {self.__class__}: {self.id}>'
@@ -201,7 +197,7 @@ class Tag(Base):
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     description = Column(String(8000))
     applicable_to = Column(String(200))
 
@@ -270,7 +266,7 @@ class DatabaseProvider(Base):
     owner = Column(String(200))
     href = Column(String(2000))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     configuration = Column(JSON)
 
     # Associations
@@ -337,12 +333,7 @@ class DatabaseProviderConnection(Base):
     password = Column(String(100))
     host = Column(String(400), nullable=False)
     port = Column(Integer, nullable=False)
-    databases = Column(String(200))
-    all_database = Column(Boolean,
-            default=False, nullable=False)
-    schemas = Column(String(200))
-    tables = Column(String(200))
-    connection_scheme = Column(String(200))
+    database = Column(String(200))
     extra_parameters = Column(JSON)
 
     # Associations
@@ -375,7 +366,7 @@ class DatabaseProviderIngestion(Base):
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     type = Column(String(100), nullable=False)
     include_database = Column(String(1000))
     exclude_database = Column(String(1000))
@@ -469,7 +460,7 @@ class Database(Base):
     owner = Column(String(200))
     href = Column(String(2000))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     retention_period = Column(String(100))
 
     # Associations
@@ -536,7 +527,7 @@ class DatabaseSchema(Base):
     href = Column(String(2000))
     owner = Column(String(200))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
 
     # Associations
     database_id = Column(
@@ -594,7 +585,7 @@ class DatabaseTable(Base):
     href = Column(String(2000))
     owner = Column(String(200))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     proxy_enabled = Column(Boolean,
             default=False, nullable=False)
     query = Column(String(8000))
@@ -740,6 +731,8 @@ class TableColumn(Base):
             default=True, nullable=False)
     unique = Column(Boolean,
             default=False, nullable=False)
+    is_metadata = Column(Boolean,
+            default=False, nullable=False, server_default="False")
 
     # Associations
     table_id = Column(
@@ -833,7 +826,7 @@ class Role(Base):
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
 
     def __str__(self):
         return ""
@@ -852,7 +845,7 @@ class Action(Base):
                 default=uuid.uuid4)
     name = Column(String(200), nullable=False)
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     applies_to = Column(String(200), nullable=False)
 
     def __str__(self):
@@ -936,7 +929,7 @@ class IAModel(Base):
     href = Column(String(2000))
     owner = Column(String(200))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     algorithm = Column(String(200))
     tecnology = Column(String(200))
     server = Column(String(1000))
@@ -978,7 +971,7 @@ class IAModelAttribute(Base):
     name = Column(String(200), nullable=False)
     description = Column(String(8000))
     deleted = Column(Boolean,
-            default=False, nullable=False)
+            default=False, nullable=False, server_default="False")
     usage = Column(String(100),
             default='feature', nullable=False)
 

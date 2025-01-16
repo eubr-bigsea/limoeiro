@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,14 +29,8 @@ async def add_domain(
     domain_data: DomainCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DomainItemSchema:
     """
-    Add a single instance of class Domain.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe Domain.
     """
-        
-    domain_data.updated_by = "FIXME!!!"
-
     return await DomainService(db).add(
         domain_data)
 
@@ -45,12 +40,7 @@ async def add_domain(
 async def delete_domains(domain_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class Domain.
-
-    :param domain_id: The ID of the instance to delete.
-    :type domain_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe Domain.
     """
     await DomainService(db).delete(domain_id)
     return
@@ -59,20 +49,12 @@ async def delete_domains(domain_id: UUID,
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=True)
-async def update_domains(domain_id: UUID,
-    domain_data: DomainUpdateSchema,
+async def update_domains(domain_id: UUID=Path(..., description="Identificador"),
+    domain_data: DomainUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DomainItemSchema:
     """
-    Update a single instance of class Domain.
-
-    :param domain_id: The ID of the instance to update.
-    :type domain_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe Domain.
     """
-        
-    domain_data.updated_by = "FIXME!!!"
-
     return await DomainService(db).update(
         domain_id, domain_data)
 
@@ -87,10 +69,7 @@ async def find_domains(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DomainListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     domains = await DomainService(db).find(query_options)
     model = DomainListSchema()
@@ -101,15 +80,10 @@ async def find_domains(
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=False)
-async def get_domain(domain_id: UUID,
+async def get_domain(domain_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DomainItemSchema:
     """
-    Retrieve a single instance of class Domain.
-
-    :param domain_id: The ID of the instance to retrieve.
-    :type domain_id: int
-    :return: A JSON object containing the Domain instance data.
-    :rtype: dict
+    Recupera uma instância da classe Domain.
     """
 
     domain = await DomainService(db).get(

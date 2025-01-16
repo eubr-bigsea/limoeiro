@@ -1,7 +1,8 @@
+# 
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -28,14 +29,8 @@ async def add_database_provider_ingestion(
     database_provider_ingestion_data: DatabaseProviderIngestionCreateSchema,
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderIngestionItemSchema:
     """
-    Add a single instance of class DatabaseProviderIngestion.
-
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Adiciona uma instância da classe DatabaseProviderIngestion.
     """
-        
-    database_provider_ingestion_data.updated_by = "FIXME!!!"
-
     return await DatabaseProviderIngestionService(db).add(
         database_provider_ingestion_data)
 
@@ -45,12 +40,7 @@ async def add_database_provider_ingestion(
 async def delete_ingestions(database_provider_ingestion_id: UUID,
     db: AsyncSession = Depends(get_session)) :
     """
-    Delete a single instance of class DatabaseProviderIngestion.
-
-    :param database_provider_ingestion_id: The ID of the instance to delete.
-    :type database_provider_ingestion_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Exclui uma instância da classe DatabaseProviderIngestion.
     """
     await DatabaseProviderIngestionService(db).delete(database_provider_ingestion_id)
     return
@@ -59,20 +49,12 @@ async def delete_ingestions(database_provider_ingestion_id: UUID,
     tags=["DatabaseProviderIngestion"],
     response_model=DatabaseProviderIngestionItemSchema,
     response_model_exclude_none=True)
-async def update_ingestions(database_provider_ingestion_id: UUID,
-    database_provider_ingestion_data: DatabaseProviderIngestionUpdateSchema,
+async def update_ingestions(database_provider_ingestion_id: UUID=Path(..., description="Identificador"),
+    database_provider_ingestion_data: DatabaseProviderIngestionUpdateSchema=None,
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderIngestionItemSchema:
     """
-    Update a single instance of class DatabaseProviderIngestion.
-
-    :param database_provider_ingestion_id: The ID of the instance to update.
-    :type database_provider_ingestion_id: int
-    :return: A JSON object containing a success message.
-    :rtype: dict
+    Atualiza uma instância da classe DatabaseProviderIngestion.
     """
-        
-    database_provider_ingestion_data.updated_by = "FIXME!!!"
-
     return await DatabaseProviderIngestionService(db).update(
         database_provider_ingestion_id, database_provider_ingestion_data)
 
@@ -87,10 +69,7 @@ async def find_ingestions(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseProviderIngestionListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     ingestions = await DatabaseProviderIngestionService(db).find(query_options)
     model = DatabaseProviderIngestionListSchema()
@@ -101,15 +80,10 @@ async def find_ingestions(
     tags=["DatabaseProviderIngestion"],
     response_model=DatabaseProviderIngestionItemSchema,
     response_model_exclude_none=False)
-async def get_database_provider_ingestion(database_provider_ingestion_id: UUID,
+async def get_database_provider_ingestion(database_provider_ingestion_id: UUID = Path(..., description="Identificador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderIngestionItemSchema:
     """
-    Retrieve a single instance of class DatabaseProviderIngestion.
-
-    :param database_provider_ingestion_id: The ID of the instance to retrieve.
-    :type database_provider_ingestion_id: int
-    :return: A JSON object containing the DatabaseProviderIngestion instance data.
-    :rtype: dict
+    Recupera uma instância da classe DatabaseProviderIngestion.
     """
 
     database_provider_ingestion = await DatabaseProviderIngestionService(db).get(

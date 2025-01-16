@@ -1,6 +1,7 @@
+# 
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Path
 
 from ..schemas import (
     BaseQuerySchema,
@@ -20,15 +21,10 @@ log = logging.getLogger(__name__)
     tags=["DatabaseProviderType"],
     response_model=DatabaseProviderTypeItemSchema,
     response_model_exclude_none=False)
-async def get_database_provider_type(database_provider_type_id: str,
+async def get_database_provider_type(database_provider_type_id: str = Path(..., description="Identicador"),
     db: AsyncSession = Depends(get_session)) -> DatabaseProviderTypeItemSchema:
     """
-    Retrieve a single instance of class DatabaseProviderType.
-
-    :param database_provider_type_id: The ID of the instance to retrieve.
-    :type database_provider_type_id: int
-    :return: A JSON object containing the DatabaseProviderType instance data.
-    :rtype: dict
+    Recupera uma instância da classe DatabaseProviderType.
     """
 
     database_provider_type = await DatabaseProviderTypeService(db).get(
@@ -48,10 +44,7 @@ async def find_database_provider_types(
     db: AsyncSession = Depends(get_session)
 ) -> PaginatedSchema[DatabaseProviderTypeListSchema]:
     """
-    Retrieve a list of instances using query options.
-    :param query_options: Query options for sorting, filtering and paging.
-    :return: A JSON object containing the list of instances data.
-    :rtype: dict
+    Recupera uma lista de instâncias usando as opções de consulta.
     """
     database_provider_types = await DatabaseProviderTypeService(db).find(query_options)
     model = DatabaseProviderTypeListSchema()
