@@ -55,25 +55,28 @@ class IAModelService(BaseService):
 
         # Update "many" side from one to many when association is a composition
         # Add IAModelAttribute to the IAModel
-        for attributes_data in i_a_model_data.attributes:
-            new_attributes = IAModelAttribute(
-                **attributes_data.model_dump(exclude_unset=True)
-            )
-            i_a_model.attributes.append(new_attributes)
+        if i_a_model_data.attributes:
+            for attributes_data in i_a_model_data.attributes:
+                new_attributes = IAModelAttribute(
+                    **attributes_data.model_dump(exclude_unset=True)
+                )
+                i_a_model.attributes.append(new_attributes)
 
         # Add IAModelHyperParameter to the IAModel
-        for hyper_parameters_data in i_a_model_data.hyper_parameters:
-            new_hyper_parameters = IAModelHyperParameter(
-                **hyper_parameters_data.model_dump(exclude_unset=True)
-            )
-            i_a_model.hyper_parameters.append(new_hyper_parameters)
+        if i_a_model_data.hyper_parameters:
+            for hyper_parameters_data in i_a_model_data.hyper_parameters:
+                new_hyper_parameters = IAModelHyperParameter(
+                    **hyper_parameters_data.model_dump(exclude_unset=True)
+                )
+                i_a_model.hyper_parameters.append(new_hyper_parameters)
 
         # Add IAModelResult to the IAModel
-        for results_data in i_a_model_data.results:
-            new_results = IAModelResult(
-                **results_data.model_dump(exclude_unset=True)
-            )
-            i_a_model.results.append(new_results)
+        if i_a_model_data.results:
+            for results_data in i_a_model_data.results:
+                new_results = IAModelResult(
+                    **results_data.model_dump(exclude_unset=True)
+                )
+                i_a_model.results.append(new_results)
 
         self.session.add(i_a_model)
         await self.session.commit()
@@ -155,7 +158,8 @@ class IAModelService(BaseService):
             query = query.order_by(
                 order_func(getattr(IAModel, query_options.sort_by))
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()

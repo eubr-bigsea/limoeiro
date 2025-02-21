@@ -112,12 +112,14 @@ class DomainService(BaseService):
 
         if filters:
             query = query.where(and_(*filters))
+
         if query_options.sort_by and hasattr(Domain, query_options.sort_by):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
                 order_func(getattr(Domain, query_options.sort_by))
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()

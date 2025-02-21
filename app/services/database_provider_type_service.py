@@ -66,7 +66,8 @@ class DatabaseProviderTypeService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseProviderType, query_options.sort_by))
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()

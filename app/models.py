@@ -591,7 +591,9 @@ class DatabaseTable(Base):
         default=uuid.uuid4,
     )
     type = mapped_column(
-        Enum(TableType, name="TableTypeEnumType"), nullable=False
+        Enum(TableType, name="TableTypeEnumType"),
+        default="REGULAR",
+        nullable=False,
     )
     name = mapped_column(String(200), nullable=False)
     display_name = mapped_column(String(200), nullable=False)
@@ -940,7 +942,7 @@ class IAModel(Base):
         Boolean, default=False, nullable=False, server_default="False"
     )
     algorithm = mapped_column(String(200))
-    tecnology = mapped_column(String(200))
+    technology = mapped_column(String(200))
     server = mapped_column(String(1000))
     source = mapped_column(String(1000))
 

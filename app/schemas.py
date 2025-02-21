@@ -1,6 +1,6 @@
 import datetime
 from uuid import UUID
-from typing import Optional, TypeVar, Generic, Sequence
+from typing import Optional, TypeVar, Generic, List
 from pydantic import BaseModel, Field, ConfigDict
 
 from .models import TableType
@@ -16,7 +16,7 @@ class PaginatedSchema(BaseModel, Generic[M]):
     page_count: int = Field(description="Total de páginas")
     page: int = Field(description="Número da página")
     count: int = Field(description="Número de itens retornados na resposta")
-    items: Sequence[M] = Field(description=("Lista de itens retornados"))
+    items: List[M] = Field(description=("Lista de itens retornados"))
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -52,33 +52,40 @@ class DatabaseBaseModel(BaseModel): ...
 class DatabaseCreateSchema(DatabaseBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     retention_period: Optional[str] = Field(
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H."
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
     )
 
     # Associations
@@ -92,32 +99,40 @@ class DatabaseCreateSchema(DatabaseBaseModel):
 class DatabaseUpdateSchema(DatabaseBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     retention_period: Optional[str] = Field(
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H."
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
     )
 
     # Associations
@@ -131,33 +146,41 @@ class DatabaseUpdateSchema(DatabaseBaseModel):
 class DatabaseItemSchema(DatabaseBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     retention_period: Optional[str] = Field(
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H."
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
     )
 
     # Associations
@@ -171,18 +194,19 @@ class DatabaseItemSchema(DatabaseBaseModel):
 class DatabaseListSchema(DatabaseBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
 
     # Associations
@@ -210,41 +234,47 @@ class DatabaseProviderBaseModel(BaseModel): ...
 class DatabaseProviderCreateSchema(DatabaseProviderBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: str = Field(
-        "0.0.0", description="Versão de metadados da instância."
+        default="0.0.0", description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    configuration: Optional[str] = Field(description="Configuração")
+    configuration: Optional[str] = Field(
+        default=None, description="Configuração"
+    )
 
     # Associations
     provider_type_id: str
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
     connection_id: Optional[UUID] = None
-    ingestions: Optional[Sequence["DatabaseProviderIngestionCreateSchema"]] = (
-        None
-    )
+    ingestions: Optional[List["DatabaseProviderIngestionCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -252,40 +282,47 @@ class DatabaseProviderCreateSchema(DatabaseProviderBaseModel):
 class DatabaseProviderUpdateSchema(DatabaseProviderBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    configuration: Optional[str] = Field(description="Configuração")
+    configuration: Optional[str] = Field(
+        default=None, description="Configuração"
+    )
 
     # Associations
     provider_type_id: Optional[str] = None
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
     connection_id: Optional[UUID] = None
-    ingestions: Optional[Sequence["DatabaseProviderIngestionUpdateSchema"]] = (
-        None
-    )
+    ingestions: Optional[List["DatabaseProviderIngestionUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -293,39 +330,48 @@ class DatabaseProviderUpdateSchema(DatabaseProviderBaseModel):
 class DatabaseProviderItemSchema(DatabaseProviderBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    configuration: Optional[str] = Field(description="Configuração")
+    configuration: Optional[str] = Field(
+        default=None, description="Configuração"
+    )
 
     # Associations
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
     domain: Optional["DomainListSchema"] = None
     layer: Optional["LayerListSchema"] = None
     connection_id: Optional[UUID] = None
-    ingestions: Optional[Sequence["DatabaseProviderIngestionItemSchema"]] = None
+    ingestions: Optional[List["DatabaseProviderIngestionItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -333,18 +379,19 @@ class DatabaseProviderItemSchema(DatabaseProviderBaseModel):
 class DatabaseProviderListSchema(DatabaseProviderBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
 
     # Associations
@@ -375,12 +422,14 @@ class DatabaseProviderConnectionCreateSchema(
 ):
     """JSON serialization schema for creating an instance"""
 
-    user_name: str = Field(description="Nome do usuário / login")
-    password: Optional[str] = Field(description="Senha do usuário")
-    host: str = Field(description="Nome do servidor")
-    port: int = Field(description="Porta do servidor")
-    database: Optional[str] = Field(description="Banco de dados")
-    extra_parameters: Optional[str] = Field(description="Parâmetros extras")
+    user_name: str = Field(default=None, description="Nome do usuário / login")
+    password: Optional[str] = Field(default=None, description="Senha do usuário")
+    host: str = Field(default=None, description="Nome do servidor")
+    port: int = Field(default=None, description="Porta do servidor")
+    database: Optional[str] = Field(default=None, description="Banco de dados")
+    extra_parameters: Optional[str] = Field(
+        default=None, description="Parâmetros extras"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -390,12 +439,16 @@ class DatabaseProviderConnectionUpdateSchema(
 ):
     """Optional model for serialization of updating objects"""
 
-    user_name: Optional[str] = Field(description="Nome do usuário / login")
-    password: Optional[str] = Field(description="Senha do usuário")
-    host: Optional[str] = Field(description="Nome do servidor")
-    port: Optional[int] = Field(description="Porta do servidor")
-    database: Optional[str] = Field(description="Banco de dados")
-    extra_parameters: Optional[str] = Field(description="Parâmetros extras")
+    user_name: Optional[str] = Field(
+        default=None, description="Nome do usuário / login"
+    )
+    password: Optional[str] = Field(default=None, description="Senha do usuário")
+    host: Optional[str] = Field(default=None, description="Nome do servidor")
+    port: Optional[int] = Field(default=None, description="Porta do servidor")
+    database: Optional[str] = Field(default=None, description="Banco de dados")
+    extra_parameters: Optional[str] = Field(
+        default=None, description="Parâmetros extras"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -403,13 +456,17 @@ class DatabaseProviderConnectionUpdateSchema(
 class DatabaseProviderConnectionItemSchema(DatabaseProviderConnectionBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    user_name: Optional[str] = Field(description="Nome do usuário / login")
-    password: Optional[str] = Field(description="Senha do usuário")
-    host: Optional[str] = Field(description="Nome do servidor")
-    port: Optional[int] = Field(description="Porta do servidor")
-    database: Optional[str] = Field(description="Banco de dados")
-    extra_parameters: Optional[str] = Field(description="Parâmetros extras")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    user_name: Optional[str] = Field(
+        default=None, description="Nome do usuário / login"
+    )
+    password: Optional[str] = Field(default=None, description="Senha do usuário")
+    host: Optional[str] = Field(default=None, description="Nome do servidor")
+    port: Optional[int] = Field(default=None, description="Porta do servidor")
+    database: Optional[str] = Field(default=None, description="Banco de dados")
+    extra_parameters: Optional[str] = Field(
+        default=None, description="Parâmetros extras"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -417,13 +474,17 @@ class DatabaseProviderConnectionItemSchema(DatabaseProviderConnectionBaseModel):
 class DatabaseProviderConnectionListSchema(DatabaseProviderConnectionBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    user_name: Optional[str] = Field(description="Nome do usuário / login")
-    password: Optional[str] = Field(description="Senha do usuário")
-    host: Optional[str] = Field(description="Nome do servidor")
-    port: Optional[int] = Field(description="Porta do servidor")
-    database: Optional[str] = Field(description="Banco de dados")
-    extra_parameters: Optional[str] = Field(description="Parâmetros extras")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    user_name: Optional[str] = Field(
+        default=None, description="Nome do usuário / login"
+    )
+    password: Optional[str] = Field(default=None, description="Senha do usuário")
+    host: Optional[str] = Field(default=None, description="Nome do servidor")
+    port: Optional[int] = Field(default=None, description="Porta do servidor")
+    database: Optional[str] = Field(default=None, description="Banco de dados")
+    extra_parameters: Optional[str] = Field(
+        default=None, description="Parâmetros extras"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -441,41 +502,51 @@ class DatabaseProviderIngestionBaseModel(BaseModel): ...
 class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: str = Field(description="Tipo de ingestão")
+    type: str = Field(default=None, description="Tipo de ingestão")
     include_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem incluídas na ingestão",
     )
     exclude_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem excluídas da ingestão",
     )
     include_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem incluídos na ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem incluídos na ingestão",
     )
     exclude_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem excluídos da ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem excluídos da ingestão",
     )
     include_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem incluídas na ingestão",
     )
     exclude_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem excluídas da ingestão",
     )
-    include_view: bool = Field(False, description="Considerar views na ingestão")
-    override_mode: Optional[str] = Field(description="Opção para sobrescrita")
-    scheduling: Optional[str] = Field(description="Agendamento")
+    include_view: bool = Field(
+        default=False, description="Considerar views na ingestão"
+    )
+    override_mode: Optional[str] = Field(
+        default=None, description="Opção para sobrescrita"
+    )
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
-        description="Status das últimas execuções"
+        default=None, description="Status das últimas execuções"
     )
-    retries: int = Field(5, description="Max retries")
+    retries: int = Field(default=5, description="Max retries")
 
     # Associations
     provider_id: UUID
-    logs: Optional[Sequence["DatabaseProviderIngestionLogCreateSchema"]] = None
+    logs: Optional[List["DatabaseProviderIngestionLogCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -483,42 +554,51 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
 class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: Optional[str] = Field(description="Tipo de ingestão")
+    type: Optional[str] = Field(default=None, description="Tipo de ingestão")
     include_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem incluídas na ingestão",
     )
     exclude_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem excluídas da ingestão",
     )
     include_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem incluídos na ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem incluídos na ingestão",
     )
     exclude_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem excluídos da ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem excluídos da ingestão",
     )
     include_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem incluídas na ingestão",
     )
     exclude_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem excluídas da ingestão",
     )
     include_view: Optional[bool] = Field(
-        description="Considerar views na ingestão"
+        default=None, description="Considerar views na ingestão"
     )
-    override_mode: Optional[str] = Field(description="Opção para sobrescrita")
-    scheduling: Optional[str] = Field(description="Agendamento")
+    override_mode: Optional[str] = Field(
+        default=None, description="Opção para sobrescrita"
+    )
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
-        description="Status das últimas execuções"
+        default=None, description="Status das últimas execuções"
     )
-    retries: Optional[int] = Field(description="Max retries")
+    retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
     provider_id: Optional[UUID] = None
-    logs: Optional[Sequence["DatabaseProviderIngestionLogUpdateSchema"]] = None
+    logs: Optional[List["DatabaseProviderIngestionLogUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -526,42 +606,51 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
 class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: Optional[str] = Field(description="Tipo de ingestão")
+    type: Optional[str] = Field(default=None, description="Tipo de ingestão")
     include_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem incluídas na ingestão",
     )
     exclude_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem excluídas da ingestão",
     )
     include_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem incluídos na ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem incluídos na ingestão",
     )
     exclude_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem excluídos da ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem excluídos da ingestão",
     )
     include_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem incluídas na ingestão",
     )
     exclude_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem excluídas da ingestão",
     )
     include_view: Optional[bool] = Field(
-        description="Considerar views na ingestão"
+        default=None, description="Considerar views na ingestão"
     )
-    override_mode: Optional[str] = Field(description="Opção para sobrescrita")
-    scheduling: Optional[str] = Field(description="Agendamento")
+    override_mode: Optional[str] = Field(
+        default=None, description="Opção para sobrescrita"
+    )
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
-        description="Status das últimas execuções"
+        default=None, description="Status das últimas execuções"
     )
-    retries: Optional[int] = Field(description="Max retries")
+    retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
-    logs: Optional[Sequence["DatabaseProviderIngestionLogItemSchema"]] = None
+    logs: Optional[List["DatabaseProviderIngestionLogItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -569,42 +658,51 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
 class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: Optional[str] = Field(description="Tipo de ingestão")
+    type: Optional[str] = Field(default=None, description="Tipo de ingestão")
     include_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem incluídas na ingestão",
     )
     exclude_database: Optional[str] = Field(
-        description="Expressão regular para as bases a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as bases a serem excluídas da ingestão",
     )
     include_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem incluídos na ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem incluídos na ingestão",
     )
     exclude_schema: Optional[str] = Field(
-        description="Expressão regular para os esquemas a serem excluídos da ingestão"
+        default=None,
+        description="Expressão regular para os esquemas a serem excluídos da ingestão",
     )
     include_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem incluídas na ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem incluídas na ingestão",
     )
     exclude_table: Optional[str] = Field(
-        description="Expressão regular para as tabelas a serem excluídas da ingestão"
+        default=None,
+        description="Expressão regular para as tabelas a serem excluídas da ingestão",
     )
     include_view: Optional[bool] = Field(
-        description="Considerar views na ingestão"
+        default=None, description="Considerar views na ingestão"
     )
-    override_mode: Optional[str] = Field(description="Opção para sobrescrita")
-    scheduling: Optional[str] = Field(description="Agendamento")
+    override_mode: Optional[str] = Field(
+        default=None, description="Opção para sobrescrita"
+    )
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
-        description="Status das últimas execuções"
+        default=None, description="Status das últimas execuções"
     )
-    retries: Optional[int] = Field(description="Max retries")
+    retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
-    logs: Optional[Sequence["DatabaseProviderIngestionLogListSchema"]] = None
+    logs: Optional[List["DatabaseProviderIngestionLogListSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -625,10 +723,10 @@ class DatabaseProviderIngestionLogCreateSchema(
     """JSON serialization schema for creating an instance"""
 
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
-    status: str = Field(description="Status de execução")
-    log: Optional[str] = Field(description="Log de execução")
+    status: str = Field(default=None, description="Status de execução")
+    log: Optional[str] = Field(default=None, description="Log de execução")
 
     # Associations
     ingestion_id: UUID
@@ -642,10 +740,10 @@ class DatabaseProviderIngestionLogUpdateSchema(
     """Optional model for serialization of updating objects"""
 
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
-    status: Optional[str] = Field(description="Status de execução")
-    log: Optional[str] = Field(description="Log de execução")
+    status: Optional[str] = Field(default=None, description="Status de execução")
+    log: Optional[str] = Field(default=None, description="Log de execução")
 
     # Associations
     ingestion_id: Optional[UUID] = None
@@ -660,10 +758,10 @@ class DatabaseProviderIngestionLogItemSchema(
 
     id: Optional[int] = None
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
-    status: Optional[str] = Field(description="Status de execução")
-    log: Optional[str] = Field(description="Log de execução")
+    status: Optional[str] = Field(default=None, description="Status de execução")
+    log: Optional[str] = Field(default=None, description="Log de execução")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -675,10 +773,10 @@ class DatabaseProviderIngestionLogListSchema(
 
     id: Optional[int] = None
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
-    status: Optional[str] = Field(description="Status de execução")
-    log: Optional[str] = Field(description="Log de execução")
+    status: Optional[str] = Field(default=None, description="Status de execução")
+    log: Optional[str] = Field(default=None, description="Log de execução")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -691,9 +789,11 @@ class DatabaseProviderTypeItemSchema(DatabaseProviderTypeBaseModel):
 
     id: Optional[str] = None
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    image: Optional[str] = Field(description="Imagem do tipo de provedor")
+    image: Optional[str] = Field(
+        default=None, description="Imagem do tipo de provedor"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -703,9 +803,11 @@ class DatabaseProviderTypeListSchema(DatabaseProviderTypeBaseModel):
 
     id: Optional[str] = None
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    image: Optional[str] = Field(description="Imagem do tipo de provedor")
+    image: Optional[str] = Field(
+        default=None, description="Imagem do tipo de provedor"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -716,29 +818,35 @@ class DatabaseSchemaBaseModel(BaseModel): ...
 class DatabaseSchemaCreateSchema(DatabaseSchemaBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: str = Field(
-        "0.0.0", description="Versão de metadados da instância."
+        default="0.0.0", description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -752,29 +860,36 @@ class DatabaseSchemaCreateSchema(DatabaseSchemaBaseModel):
 class DatabaseSchemaUpdateSchema(DatabaseSchemaBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     # Associations
@@ -787,30 +902,37 @@ class DatabaseSchemaUpdateSchema(DatabaseSchemaBaseModel):
 class DatabaseSchemaItemSchema(DatabaseSchemaBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     # Associations
@@ -823,18 +945,19 @@ class DatabaseSchemaItemSchema(DatabaseSchemaBaseModel):
 class DatabaseSchemaListSchema(DatabaseSchemaBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
 
     # Associations
@@ -859,51 +982,60 @@ class DatabaseTableBaseModel(BaseModel): ...
 class DatabaseTableCreateSchema(DatabaseTableBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    type: TableType = Field(description="Tipo da tabela")
-    name: str = Field(description="Nome da instância.")
+    type: TableType = Field(default="REGULAR", description="Tipo da tabela")
+    name: str = Field(default=None, description="Nome da instância.")
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: str = Field(
-        "0.0.0", description="Versão de metadados da instância."
+        default="0.0.0", description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     proxy_enabled: bool = Field(
-        False, description="Indica se a tabela está disponível no proxy."
+        default=False, description="Indica se a tabela está disponível no proxy."
     )
     query: Optional[str] = Field(
-        description="Consulta para gerar os dados, se for uma VIEW."
+        default=None,
+        description="Consulta para gerar os dados, se for uma VIEW.",
     )
-    cache_type: Optional[str] = Field(description="Tipo de cache para a tabela.")
+    cache_type: Optional[str] = Field(
+        default=None, description="Tipo de cache para a tabela."
+    )
     cache_ttl_in_seconds: Optional[int] = Field(
-        description="Tempo de validade do cache da tabela."
+        default=None, description="Tempo de validade do cache da tabela."
     )
     cache_validation: Optional[str] = Field(
-        description="Comando para validar o cache"
+        default=None, description="Comando para validar o cache"
     )
 
     # Associations
     database_id: UUID
     database_schema_id: UUID
     layer_id: Optional[UUID] = None
-    columns: Sequence["TableColumnCreateSchema"]
+    columns: List["TableColumnCreateSchema"]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -911,50 +1043,60 @@ class DatabaseTableCreateSchema(DatabaseTableBaseModel):
 class DatabaseTableUpdateSchema(DatabaseTableBaseModel):
     """Optional model for serialization of updating objects"""
 
-    type: Optional[TableType] = Field(description="Tipo da tabela")
-    name: Optional[str] = Field(description="Nome da instância.")
+    type: Optional[TableType] = Field(default=None, description="Tipo da tabela")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     proxy_enabled: Optional[bool] = Field(
-        description="Indica se a tabela está disponível no proxy."
+        default=None, description="Indica se a tabela está disponível no proxy."
     )
     query: Optional[str] = Field(
-        description="Consulta para gerar os dados, se for uma VIEW."
+        default=None,
+        description="Consulta para gerar os dados, se for uma VIEW.",
     )
-    cache_type: Optional[str] = Field(description="Tipo de cache para a tabela.")
+    cache_type: Optional[str] = Field(
+        default=None, description="Tipo de cache para a tabela."
+    )
     cache_ttl_in_seconds: Optional[int] = Field(
-        description="Tempo de validade do cache da tabela."
+        default=None, description="Tempo de validade do cache da tabela."
     )
     cache_validation: Optional[str] = Field(
-        description="Comando para validar o cache"
+        default=None, description="Comando para validar o cache"
     )
 
     # Associations
     database_id: Optional[UUID] = None
     database_schema_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
-    columns: Optional[Sequence["TableColumnUpdateSchema"]] = None
+    columns: Optional[List["TableColumnUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -962,50 +1104,60 @@ class DatabaseTableUpdateSchema(DatabaseTableBaseModel):
 class DatabaseTableItemSchema(DatabaseTableBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    type: Optional[TableType] = Field(description="Tipo da tabela")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    type: Optional[TableType] = Field(default=None, description="Tipo da tabela")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     proxy_enabled: Optional[bool] = Field(
-        description="Indica se a tabela está disponível no proxy."
+        default=None, description="Indica se a tabela está disponível no proxy."
     )
     query: Optional[str] = Field(
-        description="Consulta para gerar os dados, se for uma VIEW."
+        default=None,
+        description="Consulta para gerar os dados, se for uma VIEW.",
     )
-    cache_type: Optional[str] = Field(description="Tipo de cache para a tabela.")
+    cache_type: Optional[str] = Field(
+        default=None, description="Tipo de cache para a tabela."
+    )
     cache_ttl_in_seconds: Optional[int] = Field(
-        description="Tempo de validade do cache da tabela."
+        default=None, description="Tempo de validade do cache da tabela."
     )
     cache_validation: Optional[str] = Field(
-        description="Comando para validar o cache"
+        default=None, description="Comando para validar o cache"
     )
 
     # Associations
     database_schema: Optional["DatabaseSchemaListSchema"] = None
     layer: Optional["LayerListSchema"] = None
-    columns: Optional[Sequence["TableColumnItemSchema"]] = None
+    columns: Optional[List["TableColumnItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1013,18 +1165,19 @@ class DatabaseTableItemSchema(DatabaseTableBaseModel):
 class DatabaseTableListSchema(DatabaseTableBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
 
     # Associations
@@ -1052,10 +1205,12 @@ class DomainBaseModel(BaseModel): ...
 class DomainCreateSchema(DomainBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -1065,10 +1220,13 @@ class DomainCreateSchema(DomainBaseModel):
 class DomainUpdateSchema(DomainBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1077,11 +1235,14 @@ class DomainUpdateSchema(DomainBaseModel):
 class DomainItemSchema(DomainBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1090,11 +1251,14 @@ class DomainItemSchema(DomainBaseModel):
 class DomainListSchema(DomainBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1113,49 +1277,54 @@ class IAModelBaseModel(BaseModel): ...
 class IAModelCreateSchema(IAModelBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: str = Field(
-        "0.0.0", description="Versão de metadados da instância."
+        default="0.0.0", description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    algorithm: Optional[str] = Field(description="Algoritmo usado")
-    tecnology: Optional[str] = Field(
-        description="Tecnologia usada para o modelo"
+    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
+    technology: Optional[str] = Field(
+        default=None, description="Tecnologia usada para o modelo"
     )
     server: Optional[str] = Field(
-        description="URL do servidor usado para computar predições (inferência)"
+        default=None,
+        description="URL do servidor usado para computar predições (inferência)",
     )
     source: Optional[str] = Field(
-        description="URL de onde está armazenado o modelo"
+        default=None, description="URL de onde está armazenado o modelo"
     )
 
     # Associations
     domain_id: Optional[UUID] = None
-    attributes: Optional[Sequence["IAModelAttributeCreateSchema"]] = None
-    hyper_parameters: Optional[Sequence["IAModelHyperParameterCreateSchema"]] = (
-        None
-    )
-    results: Optional[Sequence["IAModelResultCreateSchema"]] = None
+    attributes: Optional[List["IAModelAttributeCreateSchema"]] = None
+    hyper_parameters: Optional[List["IAModelHyperParameterCreateSchema"]] = None
+    results: Optional[List["IAModelResultCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1163,48 +1332,54 @@ class IAModelCreateSchema(IAModelBaseModel):
 class IAModelUpdateSchema(IAModelBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    algorithm: Optional[str] = Field(description="Algoritmo usado")
-    tecnology: Optional[str] = Field(
-        description="Tecnologia usada para o modelo"
+    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
+    technology: Optional[str] = Field(
+        default=None, description="Tecnologia usada para o modelo"
     )
     server: Optional[str] = Field(
-        description="URL do servidor usado para computar predições (inferência)"
+        default=None,
+        description="URL do servidor usado para computar predições (inferência)",
     )
     source: Optional[str] = Field(
-        description="URL de onde está armazenado o modelo"
+        default=None, description="URL de onde está armazenado o modelo"
     )
 
     # Associations
     domain_id: Optional[UUID] = None
-    attributes: Optional[Sequence["IAModelAttributeUpdateSchema"]] = None
-    hyper_parameters: Optional[Sequence["IAModelHyperParameterUpdateSchema"]] = (
-        None
-    )
-    results: Optional[Sequence["IAModelResultUpdateSchema"]] = None
+    attributes: Optional[List["IAModelAttributeUpdateSchema"]] = None
+    hyper_parameters: Optional[List["IAModelHyperParameterUpdateSchema"]] = None
+    results: Optional[List["IAModelResultUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1212,49 +1387,55 @@ class IAModelUpdateSchema(IAModelBaseModel):
 class IAModelItemSchema(IAModelBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
-        description="Usuário que fez a atualização."
+        default=None, description="Usuário que fez a atualização."
     )
     href: Optional[str] = Field(
-        description="Link para o recurso correspondente a esta instância."
+        default=None,
+        description="Link para o recurso correspondente a esta instância.",
     )
-    owner: Optional[str] = Field(description="Proprietário desta instância.")
+    owner: Optional[str] = Field(
+        default=None, description="Proprietário desta instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    algorithm: Optional[str] = Field(description="Algoritmo usado")
-    tecnology: Optional[str] = Field(
-        description="Tecnologia usada para o modelo"
+    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
+    technology: Optional[str] = Field(
+        default=None, description="Tecnologia usada para o modelo"
     )
     server: Optional[str] = Field(
-        description="URL do servidor usado para computar predições (inferência)"
+        default=None,
+        description="URL do servidor usado para computar predições (inferência)",
     )
     source: Optional[str] = Field(
-        description="URL de onde está armazenado o modelo"
+        default=None, description="URL de onde está armazenado o modelo"
     )
 
     # Associations
     domain: Optional["DomainListSchema"] = None
-    attributes: Optional[Sequence["IAModelAttributeItemSchema"]] = None
-    hyper_parameters: Optional[Sequence["IAModelHyperParameterItemSchema"]] = (
-        None
-    )
-    results: Optional[Sequence["IAModelResultItemSchema"]] = None
+    attributes: Optional[List["IAModelAttributeItemSchema"]] = None
+    hyper_parameters: Optional[List["IAModelHyperParameterItemSchema"]] = None
+    results: Optional[List["IAModelResultItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1262,18 +1443,19 @@ class IAModelItemSchema(IAModelBaseModel):
 class IAModelListSchema(IAModelBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
     fully_qualified_name: Optional[str] = Field(
-        description="Nome que identifica exclusivamente a instância."
+        default=None,
+        description="Nome que identifica exclusivamente a instância.",
     )
     version: Optional[str] = Field(
-        description="Versão de metadados da instância."
+        default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
-        description="Última hora de atualização."
+        default=None, description="Última hora de atualização."
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1292,13 +1474,17 @@ class IAModelAttributeBaseModel(BaseModel): ...
 class IAModelAttributeCreateSchema(IAModelAttributeBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    usage: str = Field("feature", description="Uso do atributo no treinamento")
+    usage: str = Field(
+        default="feature", description="Uso do atributo no treinamento"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1306,12 +1492,17 @@ class IAModelAttributeCreateSchema(IAModelAttributeBaseModel):
 class IAModelAttributeUpdateSchema(IAModelAttributeBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
     )
-    usage: Optional[str] = Field(description="Uso do atributo no treinamento")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1319,13 +1510,18 @@ class IAModelAttributeUpdateSchema(IAModelAttributeBaseModel):
 class IAModelAttributeItemSchema(IAModelAttributeBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
     )
-    usage: Optional[str] = Field(description="Uso do atributo no treinamento")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1333,13 +1529,18 @@ class IAModelAttributeItemSchema(IAModelAttributeBaseModel):
 class IAModelAttributeListSchema(IAModelAttributeBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
     )
-    usage: Optional[str] = Field(description="Uso do atributo no treinamento")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1350,9 +1551,13 @@ class IAModelHyperParameterBaseModel(BaseModel): ...
 class IAModelHyperParameterCreateSchema(IAModelHyperParameterBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    value: Optional[str] = Field(description="Valor do hiperparâmetro (JSON)")
+    name: str = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1360,9 +1565,13 @@ class IAModelHyperParameterCreateSchema(IAModelHyperParameterBaseModel):
 class IAModelHyperParameterUpdateSchema(IAModelHyperParameterBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    value: Optional[str] = Field(description="Valor do hiperparâmetro (JSON)")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1370,10 +1579,14 @@ class IAModelHyperParameterUpdateSchema(IAModelHyperParameterBaseModel):
 class IAModelHyperParameterItemSchema(IAModelHyperParameterBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    value: Optional[str] = Field(description="Valor do hiperparâmetro (JSON)")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1381,10 +1594,14 @@ class IAModelHyperParameterItemSchema(IAModelHyperParameterBaseModel):
 class IAModelHyperParameterListSchema(IAModelHyperParameterBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
-    value: Optional[str] = Field(description="Valor do hiperparâmetro (JSON)")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1395,9 +1612,11 @@ class IAModelResultBaseModel(BaseModel): ...
 class IAModelResultCreateSchema(IAModelResultBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
-    type: str = Field(description="Tipo do resultado")
-    value: Optional[str] = Field(description="Valor do resultado (JSON)")
+    name: str = Field(default=None, description="Nome da instância.")
+    type: str = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1405,9 +1624,11 @@ class IAModelResultCreateSchema(IAModelResultBaseModel):
 class IAModelResultUpdateSchema(IAModelResultBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
-    type: Optional[str] = Field(description="Tipo do resultado")
-    value: Optional[str] = Field(description="Valor do resultado (JSON)")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1415,10 +1636,12 @@ class IAModelResultUpdateSchema(IAModelResultBaseModel):
 class IAModelResultItemSchema(IAModelResultBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    type: Optional[str] = Field(description="Tipo do resultado")
-    value: Optional[str] = Field(description="Valor do resultado (JSON)")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1426,10 +1649,12 @@ class IAModelResultItemSchema(IAModelResultBaseModel):
 class IAModelResultListSchema(IAModelResultBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    type: Optional[str] = Field(description="Tipo do resultado")
-    value: Optional[str] = Field(description="Valor do resultado (JSON)")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1440,10 +1665,12 @@ class LayerBaseModel(BaseModel): ...
 class LayerCreateSchema(LayerBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -1453,10 +1680,13 @@ class LayerCreateSchema(LayerBaseModel):
 class LayerUpdateSchema(LayerBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1465,11 +1695,14 @@ class LayerUpdateSchema(LayerBaseModel):
 class LayerItemSchema(LayerBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1478,11 +1711,14 @@ class LayerItemSchema(LayerBaseModel):
 class LayerListSchema(LayerBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
-    description: Optional[str] = Field(description="Descrição da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1501,35 +1737,42 @@ class TableColumnBaseModel(BaseModel): ...
 class TableColumnCreateSchema(TableColumnBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     display_name: str = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     data_type: DataType = Field(
-        description="Tipo de dados da coluna (int, data etc.)"
+        default=None, description="Tipo de dados da coluna (int, data etc.)"
     )
     array_data_type: Optional[str] = Field(
-        description="Tipo de dados do item do arranjo."
+        default=None, description="Tipo de dados do item do arranjo."
     )
     size: Optional[int] = Field(
-        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo."
+        default=None,
+        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo.",
     )
     precision: Optional[int] = Field(
-        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro."
+        default=None,
+        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro.",
     )
     scale: Optional[int] = Field(
-        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal."
+        default=None,
+        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal.",
     )
     position: Optional[int] = Field(
-        description="Posição ordinal da coluna na tabela."
+        default=None, description="Posição ordinal da coluna na tabela."
     )
     primary_key: bool = Field(
-        False, description="Coluna é chave-primária na tabela."
+        default=False, description="Coluna é chave-primária na tabela."
     )
-    nullable: bool = Field(True, description="Coluna aceita valores nulos.")
-    unique: bool = Field(False, description="Coluna é um índice UNIQUE.")
-    is_metadata: bool = Field(False, description="Coluna é um metadado.")
+    nullable: bool = Field(
+        default=True, description="Coluna aceita valores nulos."
+    )
+    unique: bool = Field(default=False, description="Coluna é um índice UNIQUE.")
+    is_metadata: bool = Field(default=False, description="Coluna é um metadado.")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1537,35 +1780,46 @@ class TableColumnCreateSchema(TableColumnBaseModel):
 class TableColumnUpdateSchema(TableColumnBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     data_type: Optional[DataType] = Field(
-        description="Tipo de dados da coluna (int, data etc.)"
+        default=None, description="Tipo de dados da coluna (int, data etc.)"
     )
     array_data_type: Optional[str] = Field(
-        description="Tipo de dados do item do arranjo."
+        default=None, description="Tipo de dados do item do arranjo."
     )
     size: Optional[int] = Field(
-        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo."
+        default=None,
+        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo.",
     )
     precision: Optional[int] = Field(
-        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro."
+        default=None,
+        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro.",
     )
     scale: Optional[int] = Field(
-        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal."
+        default=None,
+        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal.",
     )
     position: Optional[int] = Field(
-        description="Posição ordinal da coluna na tabela."
+        default=None, description="Posição ordinal da coluna na tabela."
     )
     primary_key: Optional[bool] = Field(
-        description="Coluna é chave-primária na tabela."
+        default=None, description="Coluna é chave-primária na tabela."
     )
-    nullable: Optional[bool] = Field(description="Coluna aceita valores nulos.")
-    unique: Optional[bool] = Field(description="Coluna é um índice UNIQUE.")
-    is_metadata: Optional[bool] = Field(description="Coluna é um metadado.")
+    nullable: Optional[bool] = Field(
+        default=None, description="Coluna aceita valores nulos."
+    )
+    unique: Optional[bool] = Field(
+        default=None, description="Coluna é um índice UNIQUE."
+    )
+    is_metadata: Optional[bool] = Field(
+        default=None, description="Coluna é um metadado."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1573,36 +1827,47 @@ class TableColumnUpdateSchema(TableColumnBaseModel):
 class TableColumnItemSchema(TableColumnBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     display_name: Optional[str] = Field(
-        description="Nome de exibição que identifica a instância."
+        default=None, description="Nome de exibição que identifica a instância."
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     data_type: Optional[DataType] = Field(
-        description="Tipo de dados da coluna (int, data etc.)"
+        default=None, description="Tipo de dados da coluna (int, data etc.)"
     )
     array_data_type: Optional[str] = Field(
-        description="Tipo de dados do item do arranjo."
+        default=None, description="Tipo de dados do item do arranjo."
     )
     size: Optional[int] = Field(
-        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo."
+        default=None,
+        description="Comprimento de char, varchar, binary, varbinary dataTypes, senão nulo.",
     )
     precision: Optional[int] = Field(
-        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro."
+        default=None,
+        description="A precisão de um numérico é a contagem total de dígitos significativos no número inteiro.",
     )
     scale: Optional[int] = Field(
-        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal."
+        default=None,
+        description="A escala de um numérico é a contagem de dígitos decimais na parte fracionária, à direita do ponto decimal.",
     )
     position: Optional[int] = Field(
-        description="Posição ordinal da coluna na tabela."
+        default=None, description="Posição ordinal da coluna na tabela."
     )
     primary_key: Optional[bool] = Field(
-        description="Coluna é chave-primária na tabela."
+        default=None, description="Coluna é chave-primária na tabela."
     )
-    nullable: Optional[bool] = Field(description="Coluna aceita valores nulos.")
-    unique: Optional[bool] = Field(description="Coluna é um índice UNIQUE.")
-    is_metadata: Optional[bool] = Field(description="Coluna é um metadado.")
+    nullable: Optional[bool] = Field(
+        default=None, description="Coluna aceita valores nulos."
+    )
+    unique: Optional[bool] = Field(
+        default=None, description="Coluna é um índice UNIQUE."
+    )
+    is_metadata: Optional[bool] = Field(
+        default=None, description="Coluna é um metadado."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1613,14 +1878,18 @@ class TagBaseModel(BaseModel): ...
 class TagItemSchema(TagBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     applicable_to: Optional[str] = Field(
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula"
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1629,14 +1898,18 @@ class TagItemSchema(TagBaseModel):
 class TagListSchema(TagBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[UUID] = Field(description="Identificador")
-    name: Optional[str] = Field(description="Nome da instância.")
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     applicable_to: Optional[str] = Field(
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula"
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1645,14 +1918,17 @@ class TagListSchema(TagBaseModel):
 class TagCreateSchema(TagBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(description="Nome da instância.")
+    name: str = Field(default=None, description="Nome da instância.")
     deleted: bool = Field(
-        False,
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     applicable_to: Optional[str] = Field(
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula"
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1661,13 +1937,17 @@ class TagCreateSchema(TagBaseModel):
 class TagUpdateSchema(TagBaseModel):
     """Optional model for serialization of updating objects"""
 
-    name: Optional[str] = Field(description="Nome da instância.")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     deleted: Optional[bool] = Field(
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False."
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    description: Optional[str] = Field(description="Descrição da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     applicable_to: Optional[str] = Field(
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula"
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
     )
 
     model_config = ConfigDict(from_attributes=True)

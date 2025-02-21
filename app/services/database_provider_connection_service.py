@@ -5,7 +5,6 @@ from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 
 from ..schemas import (
@@ -116,7 +115,7 @@ class DatabaseProviderConnectionService(BaseService):
 
         query = select(DatabaseProviderConnection)
         filter_opts = {
-            "provider_id": (DatabaseProviderConnection.provider_id, "__eq__"),
+            #"provider_id": (DatabaseProviderConnection.provider_id, "__eq__"),
         }
         filters = self.get_filters(
             DatabaseProviderConnection, filter_opts, query_options
@@ -134,7 +133,8 @@ class DatabaseProviderConnectionService(BaseService):
                     getattr(DatabaseProviderConnection, query_options.sort_by)
                 )
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -171,9 +171,7 @@ class DatabaseProviderConnectionService(BaseService):
             DatabaseProviderConnection: Found instance or None
         """
         result = await self.session.execute(
-            select(DatabaseProviderConnection)
-            .options(selectinload(DatabaseProviderConnection.provider))
-            .filter(
+            select(DatabaseProviderConnection).filter(
                 DatabaseProviderConnection.id == database_provider_connection_id
             )
         )

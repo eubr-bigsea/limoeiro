@@ -1,9 +1,8 @@
 import pytest
 import uuid
 
-from ...schemas import DomainCreateSchema, DomainQuerySchema, DomainUpdateSchema
-from ...services.domain_service import DomainService
-
+from app.schemas import DomainCreateSchema, DomainQuerySchema, DomainUpdateSchema
+from app.services.domain_service import DomainService
 
 @pytest.mark.asyncio
 async def test_add_domain(domain_service, sample_domain_data):
@@ -80,7 +79,7 @@ async def test_find_domains(domain_service: DomainService, sample_domain_data):
 
     assert len(found_domains.items) == 2
     (domain1, domain2) = found_domains.items
-    assert (domain1.name < domain2.name)
+    assert domain1.name < domain2.name
 
 
 @pytest.mark.asyncio

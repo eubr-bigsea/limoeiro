@@ -21,6 +21,10 @@ asyncio_default_fixture_loop_scope = "function"
 
 [dependency-groups]
 dev = [
+    "alembic>=1.14.0",
+    "psycopg2>=2.9.10",
     "pytest>=8.3.3",
     "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "uvicorn>=0.34.0",
 ]

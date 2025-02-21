@@ -134,7 +134,8 @@ class DatabaseProviderIngestionService(BaseService):
                     getattr(DatabaseProviderIngestion, query_options.sort_by)
                 )
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -171,6 +172,7 @@ class DatabaseProviderIngestionService(BaseService):
         result = await self.session.execute(
             select(DatabaseProviderIngestion)
             .options(selectinload(DatabaseProviderIngestion.provider))
+            .options(selectinload(DatabaseProviderIngestion.logs))
             .filter(
                 DatabaseProviderIngestion.id == database_provider_ingestion_id
             )

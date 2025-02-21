@@ -50,11 +50,12 @@ class DatabaseTableService(BaseService):
 
         # Update "many" side from one to many when association is a composition
         # Add TableColumn to the DatabaseTable
-        for columns_data in database_table_data.columns:
-            new_columns = TableColumn(
-                **columns_data.model_dump(exclude_unset=True)
-            )
-            database_table.columns.append(new_columns)
+        if database_table_data.columns:
+            for columns_data in database_table_data.columns:
+                new_columns = TableColumn(
+                    **columns_data.model_dump(exclude_unset=True)
+                )
+                database_table.columns.append(new_columns)
 
         self.session.add(database_table)
         await self.session.commit()
@@ -143,7 +144,8 @@ class DatabaseTableService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseTable, query_options.sort_by))
             )
-        rows = (
+        # ???
+        rows = list(
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -181,7 +183,6 @@ class DatabaseTableService(BaseService):
             .options(selectinload(DatabaseTable.database_schema))
             .options(selectinload(DatabaseTable.layer))
             .options(selectinload(DatabaseTable.columns))
-            .options(selectinload(DatabaseTable.tags))
             .filter(DatabaseTable.id == database_table_id)
         )
         return result.scalars().first()
