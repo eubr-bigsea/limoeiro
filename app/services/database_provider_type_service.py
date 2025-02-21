@@ -11,14 +11,17 @@ from ..schemas import (
 )
 from ..models import DatabaseProviderType
 from . import BaseService
+
 log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
+
 class DatabaseProviderTypeService(BaseService):
-    """ Service class implementing business logic for
+    """Service class implementing business logic for
     DatabaseProviderType entities"""
-    def __init__(self, session: AsyncSession ):
+
+    def __init__(self, session: AsyncSession):
         super().__init__(DatabaseProviderType)
         self.session = session
 
@@ -32,12 +35,15 @@ class DatabaseProviderTypeService(BaseService):
             DatabaseProviderType: Found instance or None
         """
         result = await self.session.execute(
-            select(DatabaseProviderType)
-            .filter(DatabaseProviderType.id == database_provider_type_id))
+            select(DatabaseProviderType).filter(
+                DatabaseProviderType.id == database_provider_type_id
+            )
+        )
         return result.scalars().first()
+
     @handle_db_exceptions("Failed to retrieve {}")
-    async def find(self,
-        query_options: BaseQuerySchema
+    async def find(
+        self, query_options: BaseQuerySchema
     ) -> PaginatedSchema[DatabaseProviderType]:
         """
         Retrieve a paginated, sorted list of DatabaseProviderType instances.
@@ -53,25 +59,31 @@ class DatabaseProviderTypeService(BaseService):
 
         query = select(DatabaseProviderType)
 
-        if (
-            query_options.sort_by and
-                hasattr(DatabaseProviderType, query_options.sort_by)
+        if query_options.sort_by and hasattr(
+            DatabaseProviderType, query_options.sort_by
         ):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
-                order_func(getattr(DatabaseProviderType, query_options.sort_by)))
+                order_func(getattr(DatabaseProviderType, query_options.sort_by))
+            )
         rows = (
-            await self.session.execute(query.offset(offset).limit(limit))
-        ).scalars().unique().all()
-
-        count_query = select(func.count()).select_from(
-            query.selectable.with_only_columns(DatabaseProviderType.id)
+            (await self.session.execute(query.offset(offset).limit(limit)))
+            .scalars()
+            .unique()
+            .all()
         )
+
+        count_query = select(func.count()).select_from(DatabaseProviderType)
+
+        where_clause = query.whereclause
+        if where_clause is not None:
+            count_query = count_query.where(where_clause)
+
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
         return PaginatedSchema[DatabaseProviderType](
             page_size=limit,
-            page_count = math.ceil(total_rows / limit),
+            page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
             items=rows,
