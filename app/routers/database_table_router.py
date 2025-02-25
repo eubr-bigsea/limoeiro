@@ -1,4 +1,4 @@
-# 
+#
 import logging
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,59 +20,73 @@ log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
-@router.post("/tables/",
+
+@router.post(
+    "/tables/",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     status_code=status.HTTP_201_CREATED,
-    response_model_exclude_none=True)
+    response_model_exclude_none=True,
+)
 async def add_database_table(
     database_table_data: DatabaseTableCreateSchema,
-    db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseTableItemSchema:
     """
     Adiciona uma instância da classe DatabaseTable.
     """
-        
+
     database_table_data.updated_by = "FIXME!!!"
 
-    return await DatabaseTableService(db).add(
-        database_table_data)
+    return await DatabaseTableService(db).add(database_table_data)
 
-@router.delete("/tables/{database_table_id}",
+
+@router.delete(
+    "/tables/{database_table_id}",
     tags=["DatabaseTable"],
-    status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tables(database_table_id: UUID,
-    db: AsyncSession = Depends(get_session)) :
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_tables(
+    database_table_id: UUID, db: AsyncSession = Depends(get_session)
+):
     """
     Exclui uma instância da classe DatabaseTable.
     """
     await DatabaseTableService(db).delete(database_table_id)
     return
 
-@router.patch("/tables/{database_table_id}",
+
+@router.patch(
+    "/tables/{database_table_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
-    response_model_exclude_none=True)
-async def update_tables(database_table_id: UUID=Path(..., description="Identificador"),
-    database_table_data: DatabaseTableUpdateSchema=None,
-    db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
+    response_model_exclude_none=True,
+)
+async def update_tables(
+    database_table_id: UUID = Path(..., description="Identificador"),
+    database_table_data: DatabaseTableUpdateSchema = None,
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseTableItemSchema:
     """
     Atualiza uma instância da classe DatabaseTable.
     """
-        
+
     database_table_data.updated_by = "FIXME!!!"
 
     return await DatabaseTableService(db).update(
-        database_table_id, database_table_data)
+        database_table_id, database_table_data
+    )
+
 
 @router.get(
     "/tables/",
     tags=["DatabaseTable"],
     response_model=PaginatedSchema[DatabaseTableListSchema],
-    response_model_exclude_none=True
+    response_model_exclude_none=True,
 )
 async def find_tables(
     query_options: DatabaseTableQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
 ) -> PaginatedSchema[DatabaseTableListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
@@ -82,18 +96,22 @@ async def find_tables(
     tables.items = [model.model_validate(d) for d in tables.items]
     return tables
 
-@router.get("/tables/{database_table_id}",
+
+@router.get(
+    "/tables/{database_table_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
-    response_model_exclude_none=False)
-async def get_database_table(database_table_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session)) -> DatabaseTableItemSchema:
+    response_model_exclude_none=False,
+)
+async def get_database_table(
+    database_table_id: UUID = Path(..., description="Identificador"),
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseTableItemSchema:
     """
     Recupera uma instância da classe DatabaseTable.
     """
 
-    database_table = await DatabaseTableService(db).get(
-        database_table_id)
+    database_table = await DatabaseTableService(db).get(database_table_id)
     if database_table is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_table

@@ -1,5 +1,6 @@
 import logging
 import math
+import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 from ..utils.decorators import handle_db_exceptions
@@ -13,21 +14,22 @@ from ..schemas import (
 )
 from ..models import Domain
 from . import BaseService
+
 log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
+
 class DomainService(BaseService):
-    """ Service class implementing business logic for
+    """Service class implementing business logic for
     Domain entities"""
-    def __init__(self, session: AsyncSession ):
+
+    def __init__(self, session: AsyncSession):
         super().__init__(Domain)
         self.session = session
 
     @handle_db_exceptions("Failed to create {}")
-    async def add(
-        self, domain_data: DomainCreateSchema
-    ) -> Domain:
+    async def add(self, domain_data: DomainCreateSchema) -> Domain:
         """
         Create a new Domain instance.
 
@@ -36,8 +38,7 @@ class DomainService(BaseService):
         Returns:
             Domain: Created instance
         """
-        domain = Domain(**domain_data.model_dump(
-            exclude_unset=True))
+        domain = Domain(**domain_data.model_dump(exclude_unset=True))
         self.session.add(domain)
         await self.session.commit()
         await self.session.refresh(domain)
@@ -58,10 +59,10 @@ class DomainService(BaseService):
             await self.session.commit()
         return domain
 
-    @handle_db_exceptions("Failed to update {}")
-    async def update(self,
-        domain_id: UUID,
-        domain_data: Domain) -> Domain:
+    @handle_db_exceptions("Failed to update {}.")
+    async def update(
+        self, domain_id: UUID, domain_data: Domain
+    ) -> typing.Union[Domain, None]:
         """
         Update a single instance of class Domain.
         Args:
@@ -74,16 +75,16 @@ class DomainService(BaseService):
         domain = await self.get(domain_id)
         if not domain:
             return None
-        for key, value in domain_data.model_dump(
-            exclude_unset=True).items():
+        for key, value in domain_data.model_dump(exclude_unset=True).items():
             setattr(domain, key, value)
         await self.session.commit()
         await self.session.refresh(domain)
 
         return domain
+
     @handle_db_exceptions("Failed to retrieve {}")
-    async def find(self,
-        query_options: DomainQuerySchema
+    async def find(
+        self, query_options: DomainQuerySchema
     ) -> PaginatedSchema[Domain]:
         """
         Retrieve a paginated, sorted list of Domain instances.
@@ -99,35 +100,43 @@ class DomainService(BaseService):
 
         query = select(Domain)
         filter_opts = {
-            "query": ((
-               Domain.name,
-               Domain.description,
-            ), "ilike"),
+            "query": (
+                (
+                    Domain.name,
+                    Domain.description,
+                ),
+                "ilike",
+            ),
         }
         filters = self.get_filters(Domain, filter_opts, query_options)
 
         if filters:
             query = query.where(and_(*filters))
 
-        if (
-            query_options.sort_by and
-                hasattr(Domain, query_options.sort_by)
-        ):
+        if query_options.sort_by and hasattr(Domain, query_options.sort_by):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
-                order_func(getattr(Domain, query_options.sort_by)))
-        rows = (
-            await self.session.execute(query.offset(offset).limit(limit))
-        ).scalars().unique().all()
-
-        count_query = select(func.count()).select_from(
-            query.selectable.with_only_columns(Domain.id)
+                order_func(getattr(Domain, query_options.sort_by))
+            )
+        # ???
+        rows = list(
+            (await self.session.execute(query.offset(offset).limit(limit)))
+            .scalars()
+            .unique()
+            .all()
         )
+
+        count_query = select(func.count()).select_from(Domain)
+
+        where_clause = query.whereclause
+        if where_clause is not None:
+            count_query = count_query.where(where_clause)
+
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
         return PaginatedSchema[Domain](
             page_size=limit,
-            page_count = math.ceil(total_rows / limit),
+            page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
             items=rows,
@@ -143,6 +152,6 @@ class DomainService(BaseService):
             Domain: Found instance or None
         """
         result = await self.session.execute(
-            select(Domain)
-            .filter(Domain.id == domain_id))
+            select(Domain).filter(Domain.id == domain_id)
+        )
         return result.scalars().first()

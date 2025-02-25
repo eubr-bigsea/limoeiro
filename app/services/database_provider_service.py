@@ -1,5 +1,6 @@
 import logging
 import math
+import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 from ..utils.decorators import handle_db_exceptions
@@ -14,14 +15,17 @@ from ..schemas import (
 )
 from ..models import DatabaseProvider
 from . import BaseService
+
 log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
+
 class DatabaseProviderService(BaseService):
-    """ Service class implementing business logic for
+    """Service class implementing business logic for
     DatabaseProvider entities"""
-    def __init__(self, session: AsyncSession ):
+
+    def __init__(self, session: AsyncSession):
         super().__init__(DatabaseProvider)
         self.session = session
 
@@ -37,8 +41,9 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Created instance
         """
-        database_provider = DatabaseProvider(**database_provider_data.model_dump(
-            exclude_unset=True))
+        database_provider = DatabaseProvider(
+            **database_provider_data.model_dump(exclude_unset=True)
+        )
         self.session.add(database_provider)
         await self.session.commit()
         await self.session.refresh(database_provider)
@@ -59,10 +64,12 @@ class DatabaseProviderService(BaseService):
             await self.session.commit()
         return database_provider
 
-    @handle_db_exceptions("Failed to update {}")
-    async def update(self,
+    @handle_db_exceptions("Failed to update {}.")
+    async def update(
+        self,
         database_provider_id: UUID,
-        database_provider_data: DatabaseProvider) -> DatabaseProvider:
+        database_provider_data: DatabaseProvider,
+    ) -> typing.Union[DatabaseProvider, None]:
         """
         Update a single instance of class DatabaseProvider.
         Args:
@@ -76,15 +83,17 @@ class DatabaseProviderService(BaseService):
         if not database_provider:
             return None
         for key, value in database_provider_data.model_dump(
-            exclude_unset=True).items():
+            exclude_unset=True
+        ).items():
             setattr(database_provider, key, value)
         await self.session.commit()
         await self.session.refresh(database_provider)
 
         return database_provider
+
     @handle_db_exceptions("Failed to retrieve {}")
-    async def find(self,
-        query_options: DatabaseProviderQuerySchema
+    async def find(
+        self, query_options: DatabaseProviderQuerySchema
     ) -> PaginatedSchema[DatabaseProvider]:
         """
         Retrieve a paginated, sorted list of DatabaseProvider instances.
@@ -103,36 +112,46 @@ class DatabaseProviderService(BaseService):
             "provider_type_id": (DatabaseProvider.provider_type_id, "__eq__"),
             "domain_id": (DatabaseProvider.domain_id, "__eq__"),
             "layer_id": (DatabaseProvider.layer_id, "__eq__"),
-            "query": ((
-               DatabaseProvider.name,
-               DatabaseProvider.display_name,
-               DatabaseProvider.description,
-            ), "ilike"),
+            "query": (
+                (
+                    DatabaseProvider.name,
+                    DatabaseProvider.display_name,
+                    DatabaseProvider.description,
+                ),
+                "ilike",
+            ),
         }
         filters = self.get_filters(DatabaseProvider, filter_opts, query_options)
 
         if filters:
             query = query.where(and_(*filters))
 
-        if (
-            query_options.sort_by and
-                hasattr(DatabaseProvider, query_options.sort_by)
+        if query_options.sort_by and hasattr(
+            DatabaseProvider, query_options.sort_by
         ):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
-                order_func(getattr(DatabaseProvider, query_options.sort_by)))
-        rows = (
-            await self.session.execute(query.offset(offset).limit(limit))
-        ).scalars().unique().all()
-
-        count_query = select(func.count()).select_from(
-            query.selectable.with_only_columns(DatabaseProvider.id)
+                order_func(getattr(DatabaseProvider, query_options.sort_by))
+            )
+        # ???
+        rows = list(
+            (await self.session.execute(query.offset(offset).limit(limit)))
+            .scalars()
+            .unique()
+            .all()
         )
+
+        count_query = select(func.count()).select_from(DatabaseProvider)
+
+        where_clause = query.whereclause
+        if where_clause is not None:
+            count_query = count_query.where(where_clause)
+
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
         return PaginatedSchema[DatabaseProvider](
             page_size=limit,
-            page_count = math.ceil(total_rows / limit),
+            page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
             items=rows,
@@ -154,5 +173,6 @@ class DatabaseProviderService(BaseService):
             .options(selectinload(DatabaseProvider.layer))
             .options(selectinload(DatabaseProvider.connection))
             .options(selectinload(DatabaseProvider.ingestions))
-            .filter(DatabaseProvider.id == database_provider_id))
+            .filter(DatabaseProvider.id == database_provider_id)
+        )
         return result.scalars().first()

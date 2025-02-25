@@ -1,5 +1,6 @@
 import logging
 import math
+import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 from ..utils.decorators import handle_db_exceptions
@@ -14,14 +15,17 @@ from ..schemas import (
 )
 from ..models import DatabaseSchema
 from . import BaseService
+
 log = logging.getLogger(__name__)
 # region Protected\s*
 # endregion\w*
 
+
 class DatabaseSchemaService(BaseService):
-    """ Service class implementing business logic for
+    """Service class implementing business logic for
     DatabaseSchema entities"""
-    def __init__(self, session: AsyncSession ):
+
+    def __init__(self, session: AsyncSession):
         super().__init__(DatabaseSchema)
         self.session = session
 
@@ -37,8 +41,9 @@ class DatabaseSchemaService(BaseService):
         Returns:
             DatabaseSchema: Created instance
         """
-        database_schema = DatabaseSchema(**database_schema_data.model_dump(
-            exclude_unset=True))
+        database_schema = DatabaseSchema(
+            **database_schema_data.model_dump(exclude_unset=True)
+        )
         self.session.add(database_schema)
         await self.session.commit()
         await self.session.refresh(database_schema)
@@ -59,10 +64,10 @@ class DatabaseSchemaService(BaseService):
             await self.session.commit()
         return database_schema
 
-    @handle_db_exceptions("Failed to update {}")
-    async def update(self,
-        database_schema_id: UUID,
-        database_schema_data: DatabaseSchema) -> DatabaseSchema:
+    @handle_db_exceptions("Failed to update {}.")
+    async def update(
+        self, database_schema_id: UUID, database_schema_data: DatabaseSchema
+    ) -> typing.Union[DatabaseSchema, None]:
         """
         Update a single instance of class DatabaseSchema.
         Args:
@@ -76,15 +81,17 @@ class DatabaseSchemaService(BaseService):
         if not database_schema:
             return None
         for key, value in database_schema_data.model_dump(
-            exclude_unset=True).items():
+            exclude_unset=True
+        ).items():
             setattr(database_schema, key, value)
         await self.session.commit()
         await self.session.refresh(database_schema)
 
         return database_schema
+
     @handle_db_exceptions("Failed to retrieve {}")
-    async def find(self,
-        query_options: DatabaseSchemaQuerySchema
+    async def find(
+        self, query_options: DatabaseSchemaQuerySchema
     ) -> PaginatedSchema[DatabaseSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseSchema instances.
@@ -102,36 +109,46 @@ class DatabaseSchemaService(BaseService):
         filter_opts = {
             "database_id": (DatabaseSchema.database_id, "__eq__"),
             "layer_id": (DatabaseSchema.layer_id, "__eq__"),
-            "query": ((
-               DatabaseSchema.name,
-               DatabaseSchema.display_name,
-               DatabaseSchema.description,
-            ), "ilike"),
+            "query": (
+                (
+                    DatabaseSchema.name,
+                    DatabaseSchema.display_name,
+                    DatabaseSchema.description,
+                ),
+                "ilike",
+            ),
         }
         filters = self.get_filters(DatabaseSchema, filter_opts, query_options)
 
         if filters:
             query = query.where(and_(*filters))
 
-        if (
-            query_options.sort_by and
-                hasattr(DatabaseSchema, query_options.sort_by)
+        if query_options.sort_by and hasattr(
+            DatabaseSchema, query_options.sort_by
         ):
             order_func = asc if query_options.sort_order != "desc" else desc
             query = query.order_by(
-                order_func(getattr(DatabaseSchema, query_options.sort_by)))
-        rows = (
-            await self.session.execute(query.offset(offset).limit(limit))
-        ).scalars().unique().all()
-
-        count_query = select(func.count()).select_from(
-            query.selectable.with_only_columns(DatabaseSchema.id)
+                order_func(getattr(DatabaseSchema, query_options.sort_by))
+            )
+        # ???
+        rows = list(
+            (await self.session.execute(query.offset(offset).limit(limit)))
+            .scalars()
+            .unique()
+            .all()
         )
+
+        count_query = select(func.count()).select_from(DatabaseSchema)
+
+        where_clause = query.whereclause
+        if where_clause is not None:
+            count_query = count_query.where(where_clause)
+
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
         return PaginatedSchema[DatabaseSchema](
             page_size=limit,
-            page_count = math.ceil(total_rows / limit),
+            page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
             items=rows,
@@ -150,5 +167,6 @@ class DatabaseSchemaService(BaseService):
             select(DatabaseSchema)
             .options(selectinload(DatabaseSchema.database))
             .options(selectinload(DatabaseSchema.layer))
-            .filter(DatabaseSchema.id == database_schema_id))
+            .filter(DatabaseSchema.id == database_schema_id)
+        )
         return result.scalars().first()
