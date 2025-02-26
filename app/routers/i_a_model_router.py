@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,10 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(db: AsyncSession = Depends(get_session)) -> IAModelService:
+    return IAModelService(db)
+
+
 @router.post(
     "/ia-models/",
     tags=["IAModel"],
@@ -29,15 +34,17 @@ log = logging.getLogger(__name__)
     response_model_exclude_none=True,
 )
 async def add_i_a_model(
-    i_a_model_data: IAModelCreateSchema, db: AsyncSession = Depends(get_session)
+    i_a_model_data: IAModelCreateSchema,
+    service: IAModelService = Depends(_get_service),
 ) -> IAModelItemSchema:
     """
     Adiciona uma instância da classe IAModel.
     """
 
-    i_a_model_data.updated_by = "FIXME!!!"
+    if i_a_model_data is not None:
+        i_a_model_data.updated_by = "FIXME!!!"
 
-    return await IAModelService(db).add(i_a_model_data)
+    return await service.add(i_a_model_data)
 
 
 @router.delete(
@@ -46,12 +53,12 @@ async def add_i_a_model(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ia_models(
-    i_a_model_id: UUID, db: AsyncSession = Depends(get_session)
+    i_a_model_id: UUID, service: IAModelService = Depends(_get_service)
 ):
     """
     Exclui uma instância da classe IAModel.
     """
-    await IAModelService(db).delete(i_a_model_id)
+    await service.delete(i_a_model_id)
     return
 
 
@@ -63,16 +70,17 @@ async def delete_ia_models(
 )
 async def update_ia_models(
     i_a_model_id: UUID = Path(..., description="Identificador"),
-    i_a_model_data: IAModelUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    i_a_model_data: typing.Optional[IAModelUpdateSchema] = None,
+    service: IAModelService = Depends(_get_service),
 ) -> IAModelItemSchema:
     """
     Atualiza uma instância da classe IAModel.
     """
 
-    i_a_model_data.updated_by = "FIXME!!!"
+    if i_a_model_data is not None:
+        i_a_model_data.updated_by = "FIXME!!!"
 
-    return await IAModelService(db).update(i_a_model_id, i_a_model_data)
+    return await service.update(i_a_model_id, i_a_model_data)
 
 
 @router.get(
@@ -83,12 +91,12 @@ async def update_ia_models(
 )
 async def find_ia_models(
     query_options: IAModelQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: IAModelService = Depends(_get_service),
 ) -> PaginatedSchema[IAModelListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    ia_models = await IAModelService(db).find(query_options)
+    ia_models = await service.find(query_options)
     model = IAModelListSchema()
     ia_models.items = [model.model_validate(d) for d in ia_models.items]
     return ia_models
@@ -102,13 +110,13 @@ async def find_ia_models(
 )
 async def get_i_a_model(
     i_a_model_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: IAModelService = Depends(_get_service),
 ) -> IAModelItemSchema:
     """
     Recupera uma instância da classe IAModel.
     """
 
-    i_a_model = await IAModelService(db).get(i_a_model_id)
+    i_a_model = await service.get(i_a_model_id)
     if i_a_model is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return i_a_model

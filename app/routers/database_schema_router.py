@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,12 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseSchemaService:
+    return DatabaseSchemaService(db)
+
+
 @router.post(
     "/schemas/",
     tags=["DatabaseSchema"],
@@ -30,15 +37,16 @@ log = logging.getLogger(__name__)
 )
 async def add_database_schema(
     database_schema_data: DatabaseSchemaCreateSchema,
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
     """
     Adiciona uma instância da classe DatabaseSchema.
     """
 
-    database_schema_data.updated_by = "FIXME!!!"
+    if database_schema_data is not None:
+        database_schema_data.updated_by = "FIXME!!!"
 
-    return await DatabaseSchemaService(db).add(database_schema_data)
+    return await service.add(database_schema_data)
 
 
 @router.delete(
@@ -47,12 +55,13 @@ async def add_database_schema(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_schemas(
-    database_schema_id: UUID, db: AsyncSession = Depends(get_session)
+    database_schema_id: UUID,
+    service: DatabaseSchemaService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe DatabaseSchema.
     """
-    await DatabaseSchemaService(db).delete(database_schema_id)
+    await service.delete(database_schema_id)
     return
 
 
@@ -64,18 +73,17 @@ async def delete_schemas(
 )
 async def update_schemas(
     database_schema_id: UUID = Path(..., description="Identificador"),
-    database_schema_data: DatabaseSchemaUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    database_schema_data: typing.Optional[DatabaseSchemaUpdateSchema] = None,
+    service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
     """
     Atualiza uma instância da classe DatabaseSchema.
     """
 
-    database_schema_data.updated_by = "FIXME!!!"
+    if database_schema_data is not None:
+        database_schema_data.updated_by = "FIXME!!!"
 
-    return await DatabaseSchemaService(db).update(
-        database_schema_id, database_schema_data
-    )
+    return await service.update(database_schema_id, database_schema_data)
 
 
 @router.get(
@@ -86,12 +94,12 @@ async def update_schemas(
 )
 async def find_schemas(
     query_options: DatabaseSchemaQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseSchemaService = Depends(_get_service),
 ) -> PaginatedSchema[DatabaseSchemaListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    schemas = await DatabaseSchemaService(db).find(query_options)
+    schemas = await service.find(query_options)
     model = DatabaseSchemaListSchema()
     schemas.items = [model.model_validate(d) for d in schemas.items]
     return schemas
@@ -105,13 +113,13 @@ async def find_schemas(
 )
 async def get_database_schema(
     database_schema_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
     """
     Recupera uma instância da classe DatabaseSchema.
     """
 
-    database_schema = await DatabaseSchemaService(db).get(database_schema_id)
+    database_schema = await service.get(database_schema_id)
     if database_schema is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_schema

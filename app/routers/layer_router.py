@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,10 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(db: AsyncSession = Depends(get_session)) -> LayerService:
+    return LayerService(db)
+
+
 @router.post(
     "/layers/",
     tags=["Layer"],
@@ -29,22 +34,24 @@ log = logging.getLogger(__name__)
     response_model_exclude_none=True,
 )
 async def add_layer(
-    layer_data: LayerCreateSchema, db: AsyncSession = Depends(get_session)
+    layer_data: LayerCreateSchema, service: LayerService = Depends(_get_service)
 ) -> LayerItemSchema:
     """
     Adiciona uma instância da classe Layer.
     """
-    return await LayerService(db).add(layer_data)
+    return await service.add(layer_data)
 
 
 @router.delete(
     "/layers/{layer_id}", tags=["Layer"], status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_layers(layer_id: UUID, db: AsyncSession = Depends(get_session)):
+async def delete_layers(
+    layer_id: UUID, service: LayerService = Depends(_get_service)
+):
     """
     Exclui uma instância da classe Layer.
     """
-    await LayerService(db).delete(layer_id)
+    await service.delete(layer_id)
     return
 
 
@@ -56,13 +63,13 @@ async def delete_layers(layer_id: UUID, db: AsyncSession = Depends(get_session))
 )
 async def update_layers(
     layer_id: UUID = Path(..., description="Identificador"),
-    layer_data: LayerUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    layer_data: typing.Optional[LayerUpdateSchema] = None,
+    service: LayerService = Depends(_get_service),
 ) -> LayerItemSchema:
     """
     Atualiza uma instância da classe Layer.
     """
-    return await LayerService(db).update(layer_id, layer_data)
+    return await service.update(layer_id, layer_data)
 
 
 @router.get(
@@ -73,12 +80,12 @@ async def update_layers(
 )
 async def find_layers(
     query_options: LayerQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: LayerService = Depends(_get_service),
 ) -> PaginatedSchema[LayerListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    layers = await LayerService(db).find(query_options)
+    layers = await service.find(query_options)
     model = LayerListSchema()
     layers.items = [model.model_validate(d) for d in layers.items]
     return layers
@@ -92,13 +99,13 @@ async def find_layers(
 )
 async def get_layer(
     layer_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: LayerService = Depends(_get_service),
 ) -> LayerItemSchema:
     """
     Recupera uma instância da classe Layer.
     """
 
-    layer = await LayerService(db).get(layer_id)
+    layer = await service.get(layer_id)
     if layer is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return layer

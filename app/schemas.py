@@ -1035,7 +1035,7 @@ class DatabaseTableCreateSchema(DatabaseTableBaseModel):
     database_id: UUID
     database_schema_id: UUID
     layer_id: Optional[UUID] = None
-    columns: List["TableColumnCreateSchema"]
+    columns: Optional[List["TableColumnCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 

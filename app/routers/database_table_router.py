@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,12 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseTableService:
+    return DatabaseTableService(db)
+
+
 @router.post(
     "/tables/",
     tags=["DatabaseTable"],
@@ -30,15 +37,16 @@ log = logging.getLogger(__name__)
 )
 async def add_database_table(
     database_table_data: DatabaseTableCreateSchema,
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseTableService = Depends(_get_service),
 ) -> DatabaseTableItemSchema:
     """
     Adiciona uma instância da classe DatabaseTable.
     """
 
-    database_table_data.updated_by = "FIXME!!!"
+    if database_table_data is not None:
+        database_table_data.updated_by = "FIXME!!!"
 
-    return await DatabaseTableService(db).add(database_table_data)
+    return await service.add(database_table_data)
 
 
 @router.delete(
@@ -47,12 +55,13 @@ async def add_database_table(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_tables(
-    database_table_id: UUID, db: AsyncSession = Depends(get_session)
+    database_table_id: UUID,
+    service: DatabaseTableService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe DatabaseTable.
     """
-    await DatabaseTableService(db).delete(database_table_id)
+    await service.delete(database_table_id)
     return
 
 
@@ -64,18 +73,17 @@ async def delete_tables(
 )
 async def update_tables(
     database_table_id: UUID = Path(..., description="Identificador"),
-    database_table_data: DatabaseTableUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    database_table_data: typing.Optional[DatabaseTableUpdateSchema] = None,
+    service: DatabaseTableService = Depends(_get_service),
 ) -> DatabaseTableItemSchema:
     """
     Atualiza uma instância da classe DatabaseTable.
     """
 
-    database_table_data.updated_by = "FIXME!!!"
+    if database_table_data is not None:
+        database_table_data.updated_by = "FIXME!!!"
 
-    return await DatabaseTableService(db).update(
-        database_table_id, database_table_data
-    )
+    return await service.update(database_table_id, database_table_data)
 
 
 @router.get(
@@ -86,12 +94,12 @@ async def update_tables(
 )
 async def find_tables(
     query_options: DatabaseTableQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseTableService = Depends(_get_service),
 ) -> PaginatedSchema[DatabaseTableListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    tables = await DatabaseTableService(db).find(query_options)
+    tables = await service.find(query_options)
     model = DatabaseTableListSchema()
     tables.items = [model.model_validate(d) for d in tables.items]
     return tables
@@ -105,13 +113,13 @@ async def find_tables(
 )
 async def get_database_table(
     database_table_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseTableService = Depends(_get_service),
 ) -> DatabaseTableItemSchema:
     """
     Recupera uma instância da classe DatabaseTable.
     """
 
-    database_table = await DatabaseTableService(db).get(database_table_id)
+    database_table = await service.get(database_table_id)
     if database_table is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_table

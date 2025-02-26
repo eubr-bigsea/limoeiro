@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,10 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(db: AsyncSession = Depends(get_session)) -> DatabaseService:
+    return DatabaseService(db)
+
+
 @router.post(
     "/databases/",
     tags=["Database"],
@@ -29,15 +34,17 @@ log = logging.getLogger(__name__)
     response_model_exclude_none=True,
 )
 async def add_database(
-    database_data: DatabaseCreateSchema, db: AsyncSession = Depends(get_session)
+    database_data: DatabaseCreateSchema,
+    service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """
     Adiciona uma instância da classe Database.
     """
 
-    database_data.updated_by = "FIXME!!!"
+    if database_data is not None:
+        database_data.updated_by = "FIXME!!!"
 
-    return await DatabaseService(db).add(database_data)
+    return await service.add(database_data)
 
 
 @router.delete(
@@ -46,12 +53,12 @@ async def add_database(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: UUID, db: AsyncSession = Depends(get_session)
+    database_id: UUID, service: DatabaseService = Depends(_get_service)
 ):
     """
     Exclui uma instância da classe Database.
     """
-    await DatabaseService(db).delete(database_id)
+    await service.delete(database_id)
     return
 
 
@@ -63,16 +70,17 @@ async def delete_databases(
 )
 async def update_databases(
     database_id: UUID = Path(..., description="Identificador"),
-    database_data: DatabaseUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    database_data: typing.Optional[DatabaseUpdateSchema] = None,
+    service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """
     Atualiza uma instância da classe Database.
     """
 
-    database_data.updated_by = "FIXME!!!"
+    if database_data is not None:
+        database_data.updated_by = "FIXME!!!"
 
-    return await DatabaseService(db).update(database_id, database_data)
+    return await service.update(database_id, database_data)
 
 
 @router.get(
@@ -83,12 +91,12 @@ async def update_databases(
 )
 async def find_databases(
     query_options: DatabaseQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseService = Depends(_get_service),
 ) -> PaginatedSchema[DatabaseListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    databases = await DatabaseService(db).find(query_options)
+    databases = await service.find(query_options)
     model = DatabaseListSchema()
     databases.items = [model.model_validate(d) for d in databases.items]
     return databases
@@ -102,13 +110,13 @@ async def find_databases(
 )
 async def get_database(
     database_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """
     Recupera uma instância da classe Database.
     """
 
-    database = await DatabaseService(db).get(database_id)
+    database = await service.get(database_id)
     if database is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database

@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -23,6 +24,12 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseProviderIngestionService:
+    return DatabaseProviderIngestionService(db)
+
+
 @router.post(
     "/ingestions/",
     tags=["DatabaseProviderIngestion"],
@@ -32,14 +39,12 @@ log = logging.getLogger(__name__)
 )
 async def add_database_provider_ingestion(
     database_provider_ingestion_data: DatabaseProviderIngestionCreateSchema,
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseProviderIngestionService = Depends(_get_service),
 ) -> DatabaseProviderIngestionItemSchema:
     """
     Adiciona uma instância da classe DatabaseProviderIngestion.
     """
-    return await DatabaseProviderIngestionService(db).add(
-        database_provider_ingestion_data
-    )
+    return await service.add(database_provider_ingestion_data)
 
 
 @router.delete(
@@ -48,14 +53,13 @@ async def add_database_provider_ingestion(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ingestions(
-    database_provider_ingestion_id: UUID, db: AsyncSession = Depends(get_session)
+    database_provider_ingestion_id: UUID,
+    service: DatabaseProviderIngestionService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe DatabaseProviderIngestion.
     """
-    await DatabaseProviderIngestionService(db).delete(
-        database_provider_ingestion_id
-    )
+    await service.delete(database_provider_ingestion_id)
     return
 
 
@@ -69,13 +73,15 @@ async def update_ingestions(
     database_provider_ingestion_id: UUID = Path(
         ..., description="Identificador"
     ),
-    database_provider_ingestion_data: DatabaseProviderIngestionUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    database_provider_ingestion_data: typing.Optional[
+        DatabaseProviderIngestionUpdateSchema
+    ] = None,
+    service: DatabaseProviderIngestionService = Depends(_get_service),
 ) -> DatabaseProviderIngestionItemSchema:
     """
     Atualiza uma instância da classe DatabaseProviderIngestion.
     """
-    return await DatabaseProviderIngestionService(db).update(
+    return await service.update(
         database_provider_ingestion_id, database_provider_ingestion_data
     )
 
@@ -88,12 +94,12 @@ async def update_ingestions(
 )
 async def find_ingestions(
     query_options: DatabaseProviderIngestionQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseProviderIngestionService = Depends(_get_service),
 ) -> PaginatedSchema[DatabaseProviderIngestionListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    ingestions = await DatabaseProviderIngestionService(db).find(query_options)
+    ingestions = await service.find(query_options)
     model = DatabaseProviderIngestionListSchema()
     ingestions.items = [model.model_validate(d) for d in ingestions.items]
     return ingestions
@@ -109,13 +115,13 @@ async def get_database_provider_ingestion(
     database_provider_ingestion_id: UUID = Path(
         ..., description="Identificador"
     ),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseProviderIngestionService = Depends(_get_service),
 ) -> DatabaseProviderIngestionItemSchema:
     """
     Recupera uma instância da classe DatabaseProviderIngestion.
     """
 
-    database_provider_ingestion = await DatabaseProviderIngestionService(db).get(
+    database_provider_ingestion = await service.get(
         database_provider_ingestion_id
     )
     if database_provider_ingestion is None:

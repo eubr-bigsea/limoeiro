@@ -18,6 +18,12 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(
+    db: AsyncSession = Depends(get_session),
+) -> DatabaseProviderTypeService:
+    return DatabaseProviderTypeService(db)
+
+
 @router.get(
     "/database-provider-types/{database_provider_type_id}",
     tags=["DatabaseProviderType"],
@@ -26,15 +32,13 @@ log = logging.getLogger(__name__)
 )
 async def get_database_provider_type(
     database_provider_type_id: str = Path(..., description="Identicador"),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseProviderTypeService = Depends(_get_service),
 ) -> DatabaseProviderTypeItemSchema:
     """
     Recupera uma instância da classe DatabaseProviderType.
     """
 
-    database_provider_type = await DatabaseProviderTypeService(db).get(
-        database_provider_type_id
-    )
+    database_provider_type = await service.get(database_provider_type_id)
     if database_provider_type is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_provider_type
@@ -48,14 +52,12 @@ async def get_database_provider_type(
 )
 async def find_database_provider_types(
     query_options: BaseQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: DatabaseProviderTypeService = Depends(_get_service),
 ) -> PaginatedSchema[DatabaseProviderTypeListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    database_provider_types = await DatabaseProviderTypeService(db).find(
-        query_options
-    )
+    database_provider_types = await service.find(query_options)
     model = DatabaseProviderTypeListSchema()
     database_provider_types.items = [
         model.model_validate(d) for d in database_provider_types.items

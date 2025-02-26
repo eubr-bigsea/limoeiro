@@ -1,5 +1,6 @@
 #
 import logging
+import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
@@ -21,6 +22,10 @@ log = logging.getLogger(__name__)
 # endregion\w*
 
 
+def _get_service(db: AsyncSession = Depends(get_session)) -> TagService:
+    return TagService(db)
+
+
 @router.post(
     "/tags/",
     tags=["Tag"],
@@ -29,22 +34,22 @@ log = logging.getLogger(__name__)
     response_model_exclude_none=True,
 )
 async def add_tag(
-    tag_data: TagCreateSchema, db: AsyncSession = Depends(get_session)
+    tag_data: TagCreateSchema, service: TagService = Depends(_get_service)
 ) -> TagItemSchema:
     """
     Adiciona uma instância da classe Tag.
     """
-    return await TagService(db).add(tag_data)
+    return await service.add(tag_data)
 
 
 @router.delete(
     "/tags/{tag_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_tags(tag_id: UUID, db: AsyncSession = Depends(get_session)):
+async def delete_tags(tag_id: UUID, service: TagService = Depends(_get_service)):
     """
     Exclui uma instância da classe Tag.
     """
-    await TagService(db).delete(tag_id)
+    await service.delete(tag_id)
     return
 
 
@@ -56,13 +61,13 @@ async def delete_tags(tag_id: UUID, db: AsyncSession = Depends(get_session)):
 )
 async def update_tags(
     tag_id: UUID = Path(..., description="Identificador"),
-    tag_data: TagUpdateSchema = None,
-    db: AsyncSession = Depends(get_session),
+    tag_data: typing.Optional[TagUpdateSchema] = None,
+    service: TagService = Depends(_get_service),
 ) -> TagItemSchema:
     """
     Atualiza uma instância da classe Tag.
     """
-    return await TagService(db).update(tag_id, tag_data)
+    return await service.update(tag_id, tag_data)
 
 
 @router.get(
@@ -73,12 +78,12 @@ async def update_tags(
 )
 async def find_tags(
     query_options: TagQuerySchema = Depends(),
-    db: AsyncSession = Depends(get_session),
+    service: TagService = Depends(_get_service),
 ) -> PaginatedSchema[TagListSchema]:
     """
     Recupera uma lista de instâncias usando as opções de consulta.
     """
-    tags = await TagService(db).find(query_options)
+    tags = await service.find(query_options)
     model = TagListSchema()
     tags.items = [model.model_validate(d) for d in tags.items]
     return tags
@@ -92,13 +97,13 @@ async def find_tags(
 )
 async def get_tag(
     tag_id: UUID = Path(..., description="Identificador"),
-    db: AsyncSession = Depends(get_session),
+    service: TagService = Depends(_get_service),
 ) -> TagItemSchema:
     """
     Recupera uma instância da classe Tag.
     """
 
-    tag = await TagService(db).get(tag_id)
+    tag = await service.get(tag_id)
     if tag is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return tag
