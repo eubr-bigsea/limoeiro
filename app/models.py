@@ -139,7 +139,7 @@ class Layer(Base):
     """Camada lógica para organização dos dados"""
 
     __tablename__ = "tb_layer"
-    __table_args__ = (UniqueConstraint("name"),)
+    __table_args__ = (UniqueConstraint("name", name="inx_uq_layer"),)
 
     # Fields
     id = mapped_column(
@@ -155,7 +155,7 @@ class Layer(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -165,7 +165,7 @@ class Domain(Base):
     """Um domínio é um contexto delimitado que está alinhado com uma Unidade de Negócios ou uma função dentro de uma organização."""
 
     __tablename__ = "tb_domain"
-    __table_args__ = (UniqueConstraint("name"),)
+    __table_args__ = (UniqueConstraint("name", name="inx_uq_domain"),)
 
     # Fields
     id = mapped_column(
@@ -181,7 +181,7 @@ class Domain(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -212,7 +212,7 @@ class Tag(Base):
     """Tag"""
 
     __tablename__ = "tb_tag"
-    __table_args__ = (UniqueConstraint("name"),)
+    __table_args__ = (UniqueConstraint("name", name="inx_uq_tag"),)
 
     # Fields
     id = mapped_column(
@@ -229,7 +229,7 @@ class Tag(Base):
     applicable_to = mapped_column(String(200))
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -239,7 +239,9 @@ class EntityTag(Base):
     """Tags associadas às entidades"""
 
     __tablename__ = "tb_entity_tag"
-    __table_args__ = (UniqueConstraint("entity_type", "entity_id"),)
+    __table_args__ = (
+        UniqueConstraint("entity_type", "entity_id", name="inx_uq_entity_tag"),
+    )
 
     # Fields
     id = mapped_column(
@@ -267,11 +269,13 @@ class EntityTag(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class DatabaseProvider(Base):
-    """Provedor de banco de dados"""
+class Asset(Base):
+    """Ativo no catalogo de dados"""
 
-    __tablename__ = "tb_database_provider"
-    __table_args__ = (UniqueConstraint("fully_qualified_name"),)
+    __tablename__ = "tb_asset"
+    __table_args__ = (
+        UniqueConstraint("fully_qualified_name", name="inx_uq_asset"),
+    )
 
     # Fields
     id = mapped_column(
@@ -286,13 +290,58 @@ class DatabaseProvider(Base):
     )
     display_name = mapped_column(String(200), nullable=False)
     description = mapped_column(String(8000))
+    deleted = mapped_column(
+        Boolean, default=False, nullable=False, server_default="False"
+    )
     version = mapped_column(String(200), default="0.0.0", nullable=False)
     updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
     updated_by = mapped_column(String(200), nullable=False)
-    owner = mapped_column(String(200))
-    href = mapped_column(String(2000))
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
+    asset_type = mapped_column(String(20), nullable=False)
+
+    # Associations
+    domain_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_domain.id", name="fk_asset_domain_id", ondelete="set null"
+        ),
+        index=True,
+    )
+    domain = relationship("Domain", foreign_keys=[domain_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "asset",
+        "polymorphic_on": asset_type,
+    }
+    layer_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_layer.id", name="fk_asset_layer_id", ondelete="set null"),
+        index=True,
+    )
+    layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "asset",
+        "polymorphic_on": asset_type,
+    }
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class DatabaseProvider(Asset):
+    """Provedor de banco de dados"""
+
+    __tablename__ = "tb_database_provider"
+
+    # Fields
+    id = mapped_column(
+        ForeignKey("tb_asset.id"),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
     )
     configuration = mapped_column(JSON)
 
@@ -309,26 +358,11 @@ class DatabaseProvider(Base):
     provider_type = relationship(
         "DatabaseProviderType", foreign_keys=[provider_type_id], lazy="joined"
     )
-    domain_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "tb_domain.id",
-            name="fk_database_provider_domain_id",
-            ondelete="set null",
-        ),
-        index=True,
-    )
-    domain = relationship("Domain", foreign_keys=[domain_id], lazy="joined")
-    layer_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "tb_layer.id",
-            name="fk_database_provider_layer_id",
-            ondelete="set null",
-        ),
-        index=True,
-    )
-    layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "provider",
+        "inherit_condition": (id == Asset.id),
+    }
     connection_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
@@ -340,10 +374,20 @@ class DatabaseProvider(Base):
     connection = relationship(
         "DatabaseProviderConnection", foreign_keys=[connection_id], lazy="raise"
     )
+
+    __mapper_args__ = {
+        "polymorphic_identity": "provider",
+        "inherit_condition": (id == Asset.id),
+    }
     ingestions = relationship("DatabaseProviderIngestion", lazy="joined")
 
+    __mapper_args__ = {
+        "polymorphic_identity": "provider",
+        "inherit_condition": (id == Asset.id),
+    }
+
     def __str__(self):
-        return str(self.display_name)
+        return str("")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -422,7 +466,7 @@ class DatabaseProviderIngestion(Base):
     logs = relationship("DatabaseProviderIngestionLog", lazy="joined")
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -466,32 +510,17 @@ class DatabaseProviderIngestionLog(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class Database(Base):
+class Database(Asset):
     """Banco de dados"""
 
     __tablename__ = "tb_database"
-    __table_args__ = (UniqueConstraint("fully_qualified_name"),)
 
     # Fields
     id = mapped_column(
-        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id"),
         primary_key=True,
         autoincrement=False,
         default=uuid.uuid4,
-    )
-    name = mapped_column(String(200), nullable=False)
-    fully_qualified_name = mapped_column(
-        String(500), nullable=False, index=True, unique=True
-    )
-    display_name = mapped_column(String(200), nullable=False)
-    description = mapped_column(String(8000))
-    version = mapped_column(String(200), default="0.0.0", nullable=False)
-    updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
-    updated_by = mapped_column(String(200), nullable=False)
-    owner = mapped_column(String(200))
-    href = mapped_column(String(2000))
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
     )
     retention_period = mapped_column(String(100))
 
@@ -505,52 +534,30 @@ class Database(Base):
     provider = relationship(
         "DatabaseProvider", foreign_keys=[provider_id], lazy="joined"
     )
-    domain_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("tb_domain.id", name="fk_database_domain_id"),
-        index=True,
-    )
-    domain = relationship("Domain", foreign_keys=[domain_id], lazy="joined")
-    layer_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("tb_layer.id", name="fk_database_layer_id"),
-        index=True,
-    )
-    layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "database",
+        "inherit_condition": (id == Asset.id),
+    }
 
     def __str__(self):
-        return str(self.display_name)
+        return str("")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class DatabaseSchema(Base):
+class DatabaseSchema(Asset):
     """Esquema"""
 
     __tablename__ = "tb_database_schema"
-    __table_args__ = (UniqueConstraint("fully_qualified_name"),)
 
     # Fields
     id = mapped_column(
-        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id"),
         primary_key=True,
         autoincrement=False,
         default=uuid.uuid4,
-    )
-    name = mapped_column(String(200), nullable=False)
-    display_name = mapped_column(String(200), nullable=False)
-    fully_qualified_name = mapped_column(
-        String(500), nullable=False, index=True, unique=True
-    )
-    description = mapped_column(String(8000))
-    version = mapped_column(String(200), default="0.0.0", nullable=False)
-    updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
-    updated_by = mapped_column(String(200), nullable=False)
-    href = mapped_column(String(2000))
-    owner = mapped_column(String(200))
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
     )
 
     # Associations
@@ -563,29 +570,27 @@ class DatabaseSchema(Base):
     database = relationship(
         "Database", foreign_keys=[database_id], lazy="joined"
     )
-    layer_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("tb_layer.id", name="fk_database_schema_layer_id"),
-        index=True,
-    )
-    layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "schema",
+        "inherit_condition": (id == Asset.id),
+    }
 
     def __str__(self):
-        return str(self.display_name)
+        return str("DatabaseSchema")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class DatabaseTable(Base):
+class DatabaseTable(Asset):
     """Tabela"""
 
     __tablename__ = "tb_database_table"
-    __table_args__ = (UniqueConstraint("fully_qualified_name"),)
 
     # Fields
     id = mapped_column(
-        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id"),
         primary_key=True,
         autoincrement=False,
         default=uuid.uuid4,
@@ -594,20 +599,6 @@ class DatabaseTable(Base):
         Enum(TableType, name="TableTypeEnumType"),
         default="REGULAR",
         nullable=False,
-    )
-    name = mapped_column(String(200), nullable=False)
-    display_name = mapped_column(String(200), nullable=False)
-    fully_qualified_name = mapped_column(
-        String(500), nullable=False, index=True, unique=True
-    )
-    description = mapped_column(String(8000))
-    version = mapped_column(String(200), default="0.0.0", nullable=False)
-    updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
-    updated_by = mapped_column(String(200), nullable=False)
-    href = mapped_column(String(2000))
-    owner = mapped_column(String(200))
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
     )
     proxy_enabled = mapped_column(Boolean, default=False, nullable=False)
     query = mapped_column(String(8000))
@@ -625,6 +616,11 @@ class DatabaseTable(Base):
     database = relationship(
         "Database", foreign_keys=[database_id], lazy="joined"
     )
+
+    __mapper_args__ = {
+        "polymorphic_identity": "table",
+        "inherit_condition": (id == Asset.id),
+    }
     database_schema_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
@@ -636,16 +632,20 @@ class DatabaseTable(Base):
     database_schema = relationship(
         "DatabaseSchema", foreign_keys=[database_schema_id], lazy="joined"
     )
-    layer_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("tb_layer.id", name="fk_database_table_layer_id"),
-        index=True,
-    )
-    layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "table",
+        "inherit_condition": (id == Asset.id),
+    }
     columns = relationship("TableColumn", lazy="joined")
 
+    __mapper_args__ = {
+        "polymorphic_identity": "table",
+        "inherit_condition": (id == Asset.id),
+    }
+
     def __str__(self):
-        return str(self.display_name)
+        return str("")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -757,7 +757,7 @@ class TableColumn(Base):
     )
 
     def __str__(self):
-        return str(self.display_name)
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -844,7 +844,7 @@ class Role(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -869,7 +869,7 @@ class Action(Base):
     applies_to = mapped_column(String(200), nullable=False)
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -914,32 +914,17 @@ class TableRole(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class IAModel(Base):
+class IAModel(Asset):
     """Modelo de inteligência artificial"""
 
     __tablename__ = "tb_i_a_model"
-    __table_args__ = (UniqueConstraint("fully_qualified_name"),)
 
     # Fields
     id = mapped_column(
-        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id"),
         primary_key=True,
         autoincrement=False,
         default=uuid.uuid4,
-    )
-    name = mapped_column(String(200), nullable=False)
-    display_name = mapped_column(String(200), nullable=False)
-    fully_qualified_name = mapped_column(
-        String(500), nullable=False, index=True, unique=True
-    )
-    description = mapped_column(String(8000))
-    version = mapped_column(String(200), default="0.0.0", nullable=False)
-    updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
-    updated_by = mapped_column(String(200), nullable=False)
-    href = mapped_column(String(2000))
-    owner = mapped_column(String(200))
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
     )
     algorithm = mapped_column(String(200))
     technology = mapped_column(String(200))
@@ -947,20 +932,27 @@ class IAModel(Base):
     source = mapped_column(String(1000))
 
     # Associations
-    domain_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "tb_domain.id", name="fk_i_a_model_domain_id", ondelete="set null"
-        ),
-        index=True,
-    )
-    domain = relationship("Domain", foreign_keys=[domain_id], lazy="joined")
     attributes = relationship("IAModelAttribute", lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "model",
+        "inherit_condition": (id == Asset.id),
+    }
     hyper_parameters = relationship("IAModelHyperParameter", lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "model",
+        "inherit_condition": (id == Asset.id),
+    }
     results = relationship("IAModelResult", lazy="joined")
 
+    __mapper_args__ = {
+        "polymorphic_identity": "model",
+        "inherit_condition": (id == Asset.id),
+    }
+
     def __str__(self):
-        return str(self.display_name)
+        return str("")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -994,7 +986,7 @@ class IAModelAttribute(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -1027,7 +1019,7 @@ class IAModelHyperParameter(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -1058,7 +1050,7 @@ class IAModelResult(Base):
     )
 
     def __str__(self):
-        return str("")
+        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
