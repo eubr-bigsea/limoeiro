@@ -1,6 +1,8 @@
 import logging
 import math
+import typing
 from sqlalchemy import asc, desc, func
+
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -8,6 +10,8 @@ from sqlalchemy.future import select
 from ..schemas import (
     BaseQuerySchema,
     PaginatedSchema,
+    DatabaseProviderTypeItemSchema,
+    DatabaseProviderTypeListSchema,
 )
 from ..models import DatabaseProviderType
 from . import BaseService
@@ -25,15 +29,9 @@ class DatabaseProviderTypeService(BaseService):
         super().__init__(DatabaseProviderType)
         self.session = session
 
-    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_provider_type_id: int) -> DatabaseProviderType:
-        """
-        Retrieve a DatabaseProviderType instance by id.
-        Args:
-            database_provider_type_id: The ID of the DatabaseProviderType instance to retrieve.
-        Returns:
-            DatabaseProviderType: Found instance or None
-        """
+    async def _get(
+        self, database_provider_type_id: int
+    ) -> typing.Optional[DatabaseProviderType]:
         result = await self.session.execute(
             select(DatabaseProviderType).filter(
                 DatabaseProviderType.id == database_provider_type_id
@@ -41,10 +39,25 @@ class DatabaseProviderTypeService(BaseService):
         )
         return result.scalars().first()
 
+    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
+    async def get(
+        self, database_provider_type_id: int
+    ) -> DatabaseProviderTypeItemSchema:
+        """
+        Retrieve a DatabaseProviderType instance by id.
+        Args:
+            database_provider_type_id: The ID of the DatabaseProviderType instance to retrieve.
+        Returns:
+            DatabaseProviderType: Found instance or None
+        """
+        return DatabaseProviderTypeItemSchema.model_validate(
+            await self._get(database_provider_type_id)
+        )
+
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: BaseQuerySchema
-    ) -> PaginatedSchema[DatabaseProviderType]:
+    ) -> PaginatedSchema[DatabaseProviderTypeListSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseProviderType instances.
 
@@ -82,10 +95,13 @@ class DatabaseProviderTypeService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[DatabaseProviderType](
+        return PaginatedSchema[DatabaseProviderTypeListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[
+                DatabaseProviderTypeListSchema.model_validate(row)
+                for row in rows
+            ],
         )

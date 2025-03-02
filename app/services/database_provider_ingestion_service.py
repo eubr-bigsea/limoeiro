@@ -3,6 +3,8 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DatabaseProviderIngestionCreateSchema,
+    DatabaseProviderIngestionUpdateSchema,
+    DatabaseProviderIngestionItemSchema,
+    DatabaseProviderIngestionListSchema,
     DatabaseProviderIngestionQuerySchema,
 )
 from ..models import DatabaseProviderIngestion
@@ -29,11 +34,24 @@ class DatabaseProviderIngestionService(BaseService):
         super().__init__(DatabaseProviderIngestion)
         self.session = session
 
+    async def _get(
+        self, database_provider_ingestion_id: UUID
+    ) -> typing.Optional[DatabaseProviderIngestion]:
+        result = await self.session.execute(
+            select(DatabaseProviderIngestion)
+            .options(selectinload(DatabaseProviderIngestion.provider))
+            .options(selectinload(DatabaseProviderIngestion.logs))
+            .filter(
+                DatabaseProviderIngestion.id == database_provider_ingestion_id
+            )
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self,
         database_provider_ingestion_data: DatabaseProviderIngestionCreateSchema,
-    ) -> DatabaseProviderIngestion:
+    ) -> DatabaseProviderIngestionItemSchema:
         """
         Create a new DatabaseProviderIngestion instance.
 
@@ -48,12 +66,14 @@ class DatabaseProviderIngestionService(BaseService):
         self.session.add(database_provider_ingestion)
         await self.session.commit()
         await self.session.refresh(database_provider_ingestion)
-        return database_provider_ingestion
+        return DatabaseProviderIngestionItemSchema.model_validate(
+            database_provider_ingestion
+        )
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
         self, database_provider_ingestion_id: UUID
-    ) -> DatabaseProviderIngestion:
+    ) -> typing.Optional[DatabaseProviderIngestionItemSchema]:
         """
         Delete DatabaseProviderIngestion instance.
         Args:
@@ -61,20 +81,25 @@ class DatabaseProviderIngestionService(BaseService):
         Returns:
             DatabaseProviderIngestion: Deleted instance if found or None
         """
-        database_provider_ingestion = await self.get(
+        database_provider_ingestion = await self._get(
             database_provider_ingestion_id
         )
         if database_provider_ingestion:
             await self.session.delete(database_provider_ingestion)
             await self.session.commit()
-        return database_provider_ingestion
+            return DatabaseProviderIngestionItemSchema.model_validate(
+                database_provider_ingestion
+            )
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
         database_provider_ingestion_id: UUID,
-        database_provider_ingestion_data: DatabaseProviderIngestion,
-    ) -> typing.Union[DatabaseProviderIngestion, None]:
+        database_provider_ingestion_data: typing.Optional[
+            DatabaseProviderIngestionUpdateSchema
+        ],
+    ) -> DatabaseProviderIngestionItemSchema:
         """
         Update a single instance of class DatabaseProviderIngestion.
         Args:
@@ -84,24 +109,29 @@ class DatabaseProviderIngestionService(BaseService):
             DatabaseProviderIngestion: The updated instance if found, None otheriwse
 
         """
-        database_provider_ingestion = await self.get(
+        database_provider_ingestion = await self._get(
             database_provider_ingestion_id
         )
         if not database_provider_ingestion:
-            return None
-        for key, value in database_provider_ingestion_data.model_dump(
-            exclude_unset=True
-        ).items():
-            setattr(database_provider_ingestion, key, value)
+            raise ex.EntityNotFoundException(
+                "{cls_name}", database_provider_ingestion_id
+            )
+        if database_provider_ingestion_data is not None:
+            for key, value in database_provider_ingestion_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(database_provider_ingestion, key, value)
+
         await self.session.commit()
         await self.session.refresh(database_provider_ingestion)
-
-        return database_provider_ingestion
+        return DatabaseProviderIngestionItemSchema.model_validate(
+            database_provider_ingestion
+        )
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DatabaseProviderIngestionQuerySchema
-    ) -> PaginatedSchema[DatabaseProviderIngestion]:
+    ) -> PaginatedSchema[DatabaseProviderIngestionListSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseProviderIngestion instances.
 
@@ -150,18 +180,21 @@ class DatabaseProviderIngestionService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[DatabaseProviderIngestion](
+        return PaginatedSchema[DatabaseProviderIngestionListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[
+                DatabaseProviderIngestionListSchema.model_validate(row)
+                for row in rows
+            ],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_ingestion_id: UUID
-    ) -> DatabaseProviderIngestion:
+    ) -> DatabaseProviderIngestionItemSchema:
         """
         Retrieve a DatabaseProviderIngestion instance by id.
         Args:
@@ -169,12 +202,6 @@ class DatabaseProviderIngestionService(BaseService):
         Returns:
             DatabaseProviderIngestion: Found instance or None
         """
-        result = await self.session.execute(
-            select(DatabaseProviderIngestion)
-            .options(selectinload(DatabaseProviderIngestion.provider))
-            .options(selectinload(DatabaseProviderIngestion.logs))
-            .filter(
-                DatabaseProviderIngestion.id == database_provider_ingestion_id
-            )
+        return DatabaseProviderIngestionItemSchema.model_validate(
+            await self._get(database_provider_ingestion_id)
         )
-        return result.scalars().first()

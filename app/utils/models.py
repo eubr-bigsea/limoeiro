@@ -1,58 +1,67 @@
-from typing import List, Type, TypeVar, Union
-from uuid import UUID
+import typing
+
 from pydantic import BaseModel
-from sqlalchemy.ext.declarative import DeclarativeMeta
 
-from app.exceptions import EntityNotFoundException
+from ..database import Base
 
-T = TypeVar("T", bound=DeclarativeMeta)
-
-
-async def update_model_instance(instance: T, update_data: BaseModel) -> None:
-    """Generic method to update model instance attributes"""
-    for field, value in update_data.dict(exclude_unset=True).items():
-        if field != "id" and value is not None:
-            setattr(instance, field, value)
+# async def update_model_instance(instance: T, update_data: BaseModel) -> None:
+#     """Generic method to update model instance attributes"""
+#     for field, value in update_data.dict(exclude_unset=True).items():
+#         if field != "id" and value is not None:
+#             setattr(instance, field, value)
 
 
-async def update_collection(
-    pk: Union[str, int, UUID],
-    current_collection: List[T],
-    updates: List[BaseModel],
-    model_class: Type[T],
-) -> List[T]:
+def update_related_collection(
+    collection: typing.List[typing.Any],
+    updates: typing.Sequence[BaseModel],
+    model_class: typing.Type[Base],
+    parent_id_field: str,
+    parent_id_value: typing.Any,
+) -> typing.List[BaseModel]:
     """
-    Generic method to update a collection of related models (Items or Addresses)
+    Generic function to update a collection of related objects.
 
     Args:
-        pk: The ID of the parent order
-        current_collection: Current list of model instances
-        updates: List of update data
-        model_class: The model class (Item or Address)
+        collection: The collection in the parent object
+        updates: List of Pydantic models containing the updates
+        model_class: The SQLAlchemy model class for creating new instances
+        parent_id_field: The field name that links to the parent in the model
+        parent_id_value: The value of the parent ID
+        delete_missing: Whether to delete items not included in updates
     """
-    if not updates:
-        return current_collection
 
-    current_dict = {item.id: item for item in current_collection}
-    updated_collection = []
+    # Create a mapping of existing items by ID
+    item_map = {str(item.id): item for item in collection}  # type: ignore
 
-    for update_data in updates:
-        if update_data.id:
-            # Update existing instance
-            instance = current_dict.get(update_data.id)
-            if not instance:
-                raise EntityNotFoundException(
-                    entity_type=str(model_class), entity_id=pk
-                )
-            await update_model_instance(instance, update_data)
-            del current_dict[update_data.id]
-            updated_collection.append(instance)
+    # Keep track of processed IDs
+    processed_ids = set()
+
+    # Process updates
+    ok_updates = filter(
+        lambda u: u,
+        map(
+            lambda u: u.model_dump(exclude_unset=True, exclude_none=True),
+            updates,
+        ),
+    )
+    for item_update in ok_updates:
+        item_data = item_update
+        item_id = item_data.pop("id", None)
+
+        if item_id and str(item_id) in item_map:
+            # Update existing item
+            for field, value in item_data.items():
+                setattr(item_map[str(item_id)], field, value)
+            processed_ids.add(str(item_id))
         else:
-            # Create new instance
-            new_data = update_data.model_dump(exclude_unset=True)
-            new_instance = model_class(**new_data, order_id=pk)
-            updated_collection.append(new_instance)
+            # Create new item
+            item_data[parent_id_field] = parent_id_value
+            new_item = model_class(**item_data)
+            collection.append(new_item)
 
-    # Keep remaining instances not included in the update
-    updated_collection.extend(current_dict.values())
-    return updated_collection
+    # Optionally remove items not in the update
+    return [
+        item
+        for item in collection
+        if item.id and str(item.id) not in processed_ids
+    ]

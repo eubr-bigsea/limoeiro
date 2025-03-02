@@ -3,6 +3,8 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DatabaseProviderCreateSchema,
+    DatabaseProviderUpdateSchema,
+    DatabaseProviderItemSchema,
+    DatabaseProviderListSchema,
     DatabaseProviderQuerySchema,
 )
 from ..models import DatabaseProvider
@@ -29,10 +34,20 @@ class DatabaseProviderService(BaseService):
         super().__init__(DatabaseProvider)
         self.session = session
 
+    async def _get(
+        self, database_provider_id: UUID
+    ) -> typing.Optional[DatabaseProvider]:
+        result = await self.session.execute(
+            select(DatabaseProvider)
+            .options(selectinload(DatabaseProvider.provider_type))
+            .filter(DatabaseProvider.id == database_provider_id)
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, database_provider_data: DatabaseProviderCreateSchema
-    ) -> DatabaseProvider:
+    ) -> DatabaseProviderItemSchema:
         """
         Create a new DatabaseProvider instance.
 
@@ -47,10 +62,12 @@ class DatabaseProviderService(BaseService):
         self.session.add(database_provider)
         await self.session.commit()
         await self.session.refresh(database_provider)
-        return database_provider
+        return DatabaseProviderItemSchema.model_validate(database_provider)
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, database_provider_id: UUID) -> DatabaseProvider:
+    async def delete(
+        self, database_provider_id: UUID
+    ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Delete DatabaseProvider instance.
         Args:
@@ -58,18 +75,19 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Deleted instance if found or None
         """
-        database_provider = await self.get(database_provider_id)
+        database_provider = await self._get(database_provider_id)
         if database_provider:
             await self.session.delete(database_provider)
             await self.session.commit()
-        return database_provider
+            return DatabaseProviderItemSchema.model_validate(database_provider)
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
         database_provider_id: UUID,
-        database_provider_data: DatabaseProvider,
-    ) -> typing.Union[DatabaseProvider, None]:
+        database_provider_data: typing.Optional[DatabaseProviderUpdateSchema],
+    ) -> DatabaseProviderItemSchema:
         """
         Update a single instance of class DatabaseProvider.
         Args:
@@ -79,22 +97,23 @@ class DatabaseProviderService(BaseService):
             DatabaseProvider: The updated instance if found, None otheriwse
 
         """
-        database_provider = await self.get(database_provider_id)
+        database_provider = await self._get(database_provider_id)
         if not database_provider:
-            return None
-        for key, value in database_provider_data.model_dump(
-            exclude_unset=True
-        ).items():
-            setattr(database_provider, key, value)
+            raise ex.EntityNotFoundException("{cls_name}", database_provider_id)
+        if database_provider_data is not None:
+            for key, value in database_provider_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(database_provider, key, value)
+
         await self.session.commit()
         await self.session.refresh(database_provider)
-
-        return database_provider
+        return DatabaseProviderItemSchema.model_validate(database_provider)
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DatabaseProviderQuerySchema
-    ) -> PaginatedSchema[DatabaseProvider]:
+    ) -> PaginatedSchema[DatabaseProviderListSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseProvider instances.
 
@@ -149,16 +168,20 @@ class DatabaseProviderService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[DatabaseProvider](
+        return PaginatedSchema[DatabaseProviderListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[
+                DatabaseProviderListSchema.model_validate(row) for row in rows
+            ],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_provider_id: UUID) -> DatabaseProvider:
+    async def get(
+        self, database_provider_id: UUID
+    ) -> DatabaseProviderItemSchema:
         """
         Retrieve a DatabaseProvider instance by id.
         Args:
@@ -166,13 +189,6 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Found instance or None
         """
-        result = await self.session.execute(
-            select(DatabaseProvider)
-            .options(selectinload(DatabaseProvider.provider_type))
-            .options(selectinload(DatabaseProvider.domain))
-            .options(selectinload(DatabaseProvider.layer))
-            .options(selectinload(DatabaseProvider.connection))
-            .options(selectinload(DatabaseProvider.ingestions))
-            .filter(DatabaseProvider.id == database_provider_id)
+        return DatabaseProviderItemSchema.model_validate(
+            await self._get(database_provider_id)
         )
-        return result.scalars().first()

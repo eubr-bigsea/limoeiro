@@ -3,6 +3,8 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -10,6 +12,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DatabaseProviderConnectionCreateSchema,
+    DatabaseProviderConnectionUpdateSchema,
+    DatabaseProviderConnectionItemSchema,
+    DatabaseProviderConnectionListSchema,
     DatabaseProviderConnectionQuerySchema,
 )
 from ..models import DatabaseProviderConnection
@@ -28,11 +33,21 @@ class DatabaseProviderConnectionService(BaseService):
         super().__init__(DatabaseProviderConnection)
         self.session = session
 
+    async def _get(
+        self, database_provider_connection_id: UUID
+    ) -> typing.Optional[DatabaseProviderConnection]:
+        result = await self.session.execute(
+            select(DatabaseProviderConnection).filter(
+                DatabaseProviderConnection.id == database_provider_connection_id
+            )
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self,
         database_provider_connection_data: DatabaseProviderConnectionCreateSchema,
-    ) -> DatabaseProviderConnection:
+    ) -> DatabaseProviderConnectionItemSchema:
         """
         Create a new DatabaseProviderConnection instance.
 
@@ -47,12 +62,14 @@ class DatabaseProviderConnectionService(BaseService):
         self.session.add(database_provider_connection)
         await self.session.commit()
         await self.session.refresh(database_provider_connection)
-        return database_provider_connection
+        return DatabaseProviderConnectionItemSchema.model_validate(
+            database_provider_connection
+        )
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
         self, database_provider_connection_id: UUID
-    ) -> DatabaseProviderConnection:
+    ) -> typing.Optional[DatabaseProviderConnectionItemSchema]:
         """
         Delete DatabaseProviderConnection instance.
         Args:
@@ -60,20 +77,25 @@ class DatabaseProviderConnectionService(BaseService):
         Returns:
             DatabaseProviderConnection: Deleted instance if found or None
         """
-        database_provider_connection = await self.get(
+        database_provider_connection = await self._get(
             database_provider_connection_id
         )
         if database_provider_connection:
             await self.session.delete(database_provider_connection)
             await self.session.commit()
-        return database_provider_connection
+            return DatabaseProviderConnectionItemSchema.model_validate(
+                database_provider_connection
+            )
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
         database_provider_connection_id: UUID,
-        database_provider_connection_data: DatabaseProviderConnection,
-    ) -> typing.Union[DatabaseProviderConnection, None]:
+        database_provider_connection_data: typing.Optional[
+            DatabaseProviderConnectionUpdateSchema
+        ],
+    ) -> DatabaseProviderConnectionItemSchema:
         """
         Update a single instance of class DatabaseProviderConnection.
         Args:
@@ -83,24 +105,29 @@ class DatabaseProviderConnectionService(BaseService):
             DatabaseProviderConnection: The updated instance if found, None otheriwse
 
         """
-        database_provider_connection = await self.get(
+        database_provider_connection = await self._get(
             database_provider_connection_id
         )
         if not database_provider_connection:
-            return None
-        for key, value in database_provider_connection_data.model_dump(
-            exclude_unset=True
-        ).items():
-            setattr(database_provider_connection, key, value)
+            raise ex.EntityNotFoundException(
+                "{cls_name}", database_provider_connection_id
+            )
+        if database_provider_connection_data is not None:
+            for key, value in database_provider_connection_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(database_provider_connection, key, value)
+
         await self.session.commit()
         await self.session.refresh(database_provider_connection)
-
-        return database_provider_connection
+        return DatabaseProviderConnectionItemSchema.model_validate(
+            database_provider_connection
+        )
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DatabaseProviderConnectionQuerySchema
-    ) -> PaginatedSchema[DatabaseProviderConnection]:
+    ) -> PaginatedSchema[DatabaseProviderConnectionListSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseProviderConnection instances.
 
@@ -115,7 +142,7 @@ class DatabaseProviderConnectionService(BaseService):
 
         query = select(DatabaseProviderConnection)
         filter_opts = {
-            #"provider_id": (DatabaseProviderConnection.provider_id, "__eq__"),
+            "provider_id": (DatabaseProviderConnection.provider_id, "__eq__"),
         }
         filters = self.get_filters(
             DatabaseProviderConnection, filter_opts, query_options
@@ -151,18 +178,21 @@ class DatabaseProviderConnectionService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[DatabaseProviderConnection](
+        return PaginatedSchema[DatabaseProviderConnectionListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[
+                DatabaseProviderConnectionListSchema.model_validate(row)
+                for row in rows
+            ],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_connection_id: UUID
-    ) -> DatabaseProviderConnection:
+    ) -> DatabaseProviderConnectionItemSchema:
         """
         Retrieve a DatabaseProviderConnection instance by id.
         Args:
@@ -170,9 +200,6 @@ class DatabaseProviderConnectionService(BaseService):
         Returns:
             DatabaseProviderConnection: Found instance or None
         """
-        result = await self.session.execute(
-            select(DatabaseProviderConnection).filter(
-                DatabaseProviderConnection.id == database_provider_connection_id
-            )
+        return DatabaseProviderConnectionItemSchema.model_validate(
+            await self._get(database_provider_connection_id)
         )
-        return result.scalars().first()

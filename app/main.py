@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
+from app.exceptions import DatabaseException
 from app.routers import (
     database_provider_router,
     database_provider_type_router,
@@ -10,13 +12,13 @@ from app.routers import (
     database_table_router,
     layer_router,
     tag_router,
-    i_a_model_router
 )
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import domain_router
 from dotenv import load_dotenv
 from .utils.middlewares import add_middlewares
-
+from sqlalchemy.exc import IntegrityError
+from fastapi import Request
 
 load_dotenv()
 
@@ -40,9 +42,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 add_middlewares(app)
-# @app.exception_handler(AppExceptionCase)
-# async def custom_app_exception_handler(request, e):
-#     return await app_exception_handler(request, e)
+
+@app.exception_handler(DatabaseException)
+async def integrity_error_handler(request: Request, exc: IntegrityError):
+    """Global handler for PostgreSQL IntegrityError."""
+    detail = str(exc)
+    return JSONResponse(
+        status_code=400,
+        content={"error": detail}
+    )
 
 
 routers = [
@@ -56,7 +64,6 @@ routers = [
     database_table_router.router,
     layer_router.router,
     tag_router.router,
-    i_a_model_router.router
 ]
 for router in routers:
     app.include_router(router)

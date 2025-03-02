@@ -3,6 +3,8 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DatabaseCreateSchema,
+    DatabaseUpdateSchema,
+    DatabaseItemSchema,
+    DatabaseListSchema,
     DatabaseQuerySchema,
 )
 from ..models import Database
@@ -29,8 +34,18 @@ class DatabaseService(BaseService):
         super().__init__(Database)
         self.session = session
 
+    async def _get(self, database_id: UUID) -> typing.Optional[Database]:
+        result = await self.session.execute(
+            select(Database)
+            .options(selectinload(Database.provider))
+            .filter(Database.id == database_id)
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
-    async def add(self, database_data: DatabaseCreateSchema) -> Database:
+    async def add(
+        self, database_data: DatabaseCreateSchema
+    ) -> DatabaseItemSchema:
         """
         Create a new Database instance.
 
@@ -43,10 +58,12 @@ class DatabaseService(BaseService):
         self.session.add(database)
         await self.session.commit()
         await self.session.refresh(database)
-        return database
+        return DatabaseItemSchema.model_validate(database)
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, database_id: UUID) -> Database:
+    async def delete(
+        self, database_id: UUID
+    ) -> typing.Optional[DatabaseItemSchema]:
         """
         Delete Database instance.
         Args:
@@ -54,16 +71,19 @@ class DatabaseService(BaseService):
         Returns:
             Database: Deleted instance if found or None
         """
-        database = await self.get(database_id)
+        database = await self._get(database_id)
         if database:
             await self.session.delete(database)
             await self.session.commit()
-        return database
+            return DatabaseItemSchema.model_validate(database)
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
-        self, database_id: UUID, database_data: Database
-    ) -> typing.Union[Database, None]:
+        self,
+        database_id: UUID,
+        database_data: typing.Optional[DatabaseUpdateSchema],
+    ) -> DatabaseItemSchema:
         """
         Update a single instance of class Database.
         Args:
@@ -73,20 +93,23 @@ class DatabaseService(BaseService):
             Database: The updated instance if found, None otheriwse
 
         """
-        database = await self.get(database_id)
+        database = await self._get(database_id)
         if not database:
-            return None
-        for key, value in database_data.model_dump(exclude_unset=True).items():
-            setattr(database, key, value)
+            raise ex.EntityNotFoundException("{cls_name}", database_id)
+        if database_data is not None:
+            for key, value in database_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(database, key, value)
+
         await self.session.commit()
         await self.session.refresh(database)
-
-        return database
+        return DatabaseItemSchema.model_validate(database)
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DatabaseQuerySchema
-    ) -> PaginatedSchema[Database]:
+    ) -> PaginatedSchema[DatabaseListSchema]:
         """
         Retrieve a paginated, sorted list of Database instances.
 
@@ -140,16 +163,16 @@ class DatabaseService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[Database](
+        return PaginatedSchema[DatabaseListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[DatabaseListSchema.model_validate(row) for row in rows],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_id: UUID) -> Database:
+    async def get(self, database_id: UUID) -> DatabaseItemSchema:
         """
         Retrieve a Database instance by id.
         Args:
@@ -157,11 +180,4 @@ class DatabaseService(BaseService):
         Returns:
             Database: Found instance or None
         """
-        result = await self.session.execute(
-            select(Database)
-            .options(selectinload(Database.provider))
-            .options(selectinload(Database.domain))
-            .options(selectinload(Database.layer))
-            .filter(Database.id == database_id)
-        )
-        return result.scalars().first()
+        return DatabaseItemSchema.model_validate(await self._get(database_id))

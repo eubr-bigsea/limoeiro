@@ -3,6 +3,7 @@ from uuid import UUID
 from typing import Optional, TypeVar, Generic, List
 from pydantic import BaseModel, Field, ConfigDict
 
+from .models import LinkType
 from .models import TableType
 from .models import DataType
 
@@ -46,23 +47,386 @@ class BaseQuerySchema(BaseModel):
     )
 
 
+class ResponsibilityTypeBaseModel(BaseModel): ...
+
+
+class ResponsibilityTypeItemSchema(ResponsibilityTypeBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponsibilityTypeListSchema(ResponsibilityTypeBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssetLinkBaseModel(BaseModel): ...
+
+
+class AssetLinkCreateSchema(AssetLinkBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    url: Optional[str] = Field(
+        default=None,
+        description="Url para o recurso correspondente a esta instância.",
+    )
+    type: LinkType = Field(description="Tipo do link")
+
+    # Associations
+    asset: "AssetCreateSchema"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssetLinkUpdateSchema(AssetLinkBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    url: Optional[str] = Field(
+        default=None,
+        description="Url para o recurso correspondente a esta instância.",
+    )
+    type: Optional[LinkType] = Field(default=None, description="Tipo do link")
+
+    # Associations
+    asset: Optional["AssetListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssetLinkItemSchema(AssetLinkBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    url: Optional[str] = Field(
+        default=None,
+        description="Url para o recurso correspondente a esta instância.",
+    )
+    type: Optional[LinkType] = Field(default=None, description="Tipo do link")
+
+    # Associations
+    asset: Optional["AssetListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AssetLinkListSchema(AssetLinkBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    url: Optional[str] = Field(
+        default=None,
+        description="Url para o recurso correspondente a esta instância.",
+    )
+    type: Optional[LinkType] = Field(default=None, description="Tipo do link")
+
+    # Associations
+    asset: Optional["AssetListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LayerBaseModel(BaseModel): ...
+
+
+class LayerCreateSchema(LayerBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LayerUpdateSchema(LayerBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LayerItemSchema(LayerBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LayerListSchema(LayerBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LayerQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
+class DomainBaseModel(BaseModel): ...
+
+
+class DomainCreateSchema(DomainBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DomainUpdateSchema(DomainBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DomainItemSchema(DomainBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DomainListSchema(DomainBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DomainQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
+class DatabaseProviderTypeBaseModel(BaseModel): ...
+
+
+class DatabaseProviderTypeItemSchema(DatabaseProviderTypeBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[str] = None
+    display_name: Optional[str] = Field(
+        default=None, description="Nome de exibição que identifica a instância."
+    )
+    image: Optional[str] = Field(
+        default=None, description="Imagem do tipo de provedor"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderTypeListSchema(DatabaseProviderTypeBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[str] = None
+    display_name: Optional[str] = Field(
+        default=None, description="Nome de exibição que identifica a instância."
+    )
+    image: Optional[str] = Field(
+        default=None, description="Imagem do tipo de provedor"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagBaseModel(BaseModel): ...
+
+
+class TagItemSchema(TagBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    applicable_to: Optional[str] = Field(
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagListSchema(TagBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    applicable_to: Optional[str] = Field(
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagCreateSchema(TagBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    applicable_to: Optional[str] = Field(
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagUpdateSchema(TagBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    applicable_to: Optional[str] = Field(
+        default=None,
+        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
 class AssetBaseModel(BaseModel): ...
 
 
 class AssetCreateSchema(AssetBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(default=None, description="Nome da instância.")
-    fully_qualified_name: Optional[str] = Field(
-        default=None,
-        description="Nome que identifica exclusivamente a instância.",
+    name: str = Field(description="Nome da instância.")
+    fully_qualified_name: str = Field(
+        description="Nome que identifica exclusivamente a instância."
     )
     display_name: str = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+        description="Nome de exibição que identifica a instância."
     )
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
+    notes: Optional[str] = Field(default=None, description="Observação.")
     deleted: bool = Field(
         default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
@@ -76,11 +440,11 @@ class AssetCreateSchema(AssetBaseModel):
     updated_by: Optional[str] = Field(
         default=None, description="Usuário que fez a atualização."
     )
-    asset_type: str = Field(default=None, description="Tipo de ativo")
 
     # Associations
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
+    links: Optional[List["AssetLinkCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -99,6 +463,7 @@ class AssetUpdateSchema(AssetBaseModel):
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
+    notes: Optional[str] = Field(default=None, description="Observação.")
     deleted: Optional[bool] = Field(
         default=None,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
@@ -112,11 +477,11 @@ class AssetUpdateSchema(AssetBaseModel):
     updated_by: Optional[str] = Field(
         default=None, description="Usuário que fez a atualização."
     )
-    asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
 
     # Associations
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
+    links: Optional[List["AssetLinkUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -136,6 +501,7 @@ class AssetItemSchema(AssetBaseModel):
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
+    notes: Optional[str] = Field(default=None, description="Observação.")
     deleted: Optional[bool] = Field(
         default=None,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
@@ -149,11 +515,11 @@ class AssetItemSchema(AssetBaseModel):
     updated_by: Optional[str] = Field(
         default=None, description="Usuário que fez a atualização."
     )
-    asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
 
     # Associations
     domain: Optional["DomainListSchema"] = None
     layer: Optional["LayerListSchema"] = None
+    links: Optional[List["AssetLinkItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -181,74 +547,6 @@ class AssetListSchema(AssetBaseModel):
     layer: Optional["LayerListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class DatabaseBaseModel(BaseModel): ...
-
-
-class DatabaseCreateSchema(AssetCreateSchema, DatabaseBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    retention_period: Optional[str] = Field(
-        default=None,
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
-    )
-
-    # Associations
-    provider_id: UUID
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DatabaseUpdateSchema(AssetUpdateSchema, DatabaseBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    retention_period: Optional[str] = Field(
-        default=None,
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
-    )
-
-    # Associations
-    provider_id: Optional[UUID] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DatabaseItemSchema(AssetItemSchema, DatabaseBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    retention_period: Optional[str] = Field(
-        default=None,
-        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
-    )
-
-    # Associations
-    provider: Optional["DatabaseProviderListSchema"] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DatabaseListSchema(AssetListSchema, DatabaseBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-
-    # Associations
-    provider: Optional["DatabaseProviderListSchema"] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DatabaseQuerySchema(BaseQuerySchema):
-    """Used for querying data"""
-
-    provider_id: Optional[str] = Field(default=None, description="Provider")
-    domain_id: Optional[UUID] = Field(default=None, description="Domínio")
-    layer_id: Optional[UUID] = Field(default=None, description="Camada")
-    query: Optional[str] = Field(default=None, description="Consulta")
-    tags: Optional[str] = Field(default=None, description="Tags")
-    ...
 
 
 class DatabaseProviderBaseModel(BaseModel): ...
@@ -331,10 +629,10 @@ class DatabaseProviderConnectionCreateSchema(
 ):
     """JSON serialization schema for creating an instance"""
 
-    user_name: str = Field(default=None, description="Nome do usuário / login")
+    user_name: str = Field(description="Nome do usuário / login")
     password: Optional[str] = Field(default=None, description="Senha do usuário")
-    host: str = Field(default=None, description="Nome do servidor")
-    port: int = Field(default=None, description="Porta do servidor")
+    host: str = Field(description="Nome do servidor")
+    port: int = Field(description="Porta do servidor")
     database: Optional[str] = Field(default=None, description="Banco de dados")
     extra_parameters: Optional[str] = Field(
         default=None, description="Parâmetros extras"
@@ -411,12 +709,12 @@ class DatabaseProviderIngestionBaseModel(BaseModel): ...
 class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(default=None, description="Nome da instância.")
+    name: str = Field(description="Nome da instância.")
     deleted: bool = Field(
         default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: str = Field(default=None, description="Tipo de ingestão")
+    type: str = Field(description="Tipo de ingestão")
     include_database: Optional[str] = Field(
         default=None,
         description="Expressão regular para as bases a serem incluídas na ingestão",
@@ -634,7 +932,7 @@ class DatabaseProviderIngestionLogCreateSchema(
     updated_at: Optional[datetime.datetime] = Field(
         default=None, description="Última hora de atualização."
     )
-    status: str = Field(default=None, description="Status de execução")
+    status: str = Field(description="Status de execução")
     log: Optional[str] = Field(default=None, description="Log de execução")
 
     # Associations
@@ -690,35 +988,72 @@ class DatabaseProviderIngestionLogListSchema(
     model_config = ConfigDict(from_attributes=True)
 
 
-class DatabaseProviderTypeBaseModel(BaseModel): ...
+class DatabaseBaseModel(BaseModel): ...
 
 
-class DatabaseProviderTypeItemSchema(DatabaseProviderTypeBaseModel):
+class DatabaseCreateSchema(AssetCreateSchema, DatabaseBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    retention_period: Optional[str] = Field(
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
+    )
+
+    # Associations
+    provider_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseUpdateSchema(AssetUpdateSchema, DatabaseBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    retention_period: Optional[str] = Field(
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
+    )
+
+    # Associations
+    provider_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseItemSchema(AssetItemSchema, DatabaseBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[str] = None
-    display_name: Optional[str] = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    retention_period: Optional[str] = Field(
+        default=None,
+        description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
     )
-    image: Optional[str] = Field(
-        default=None, description="Imagem do tipo de provedor"
-    )
+
+    # Associations
+    provider: Optional["DatabaseProviderListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class DatabaseProviderTypeListSchema(DatabaseProviderTypeBaseModel):
+class DatabaseListSchema(AssetListSchema, DatabaseBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
-    id: Optional[str] = None
-    display_name: Optional[str] = Field(
-        default=None, description="Nome de exibição que identifica a instância."
-    )
-    image: Optional[str] = Field(
-        default=None, description="Imagem do tipo de provedor"
-    )
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+
+    # Associations
+    provider: Optional["DatabaseProviderListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    provider_id: Optional[str] = Field(default=None, description="Provider")
+    domain_id: Optional[UUID] = Field(default=None, description="Domínio")
+    layer_id: Optional[UUID] = Field(default=None, description="Camada")
+    query: Optional[str] = Field(default=None, description="Consulta")
+    tags: Optional[str] = Field(default=None, description="Tags")
+    ...
 
 
 class DatabaseSchemaBaseModel(BaseModel): ...
@@ -886,427 +1221,81 @@ class DatabaseTableQuerySchema(BaseQuerySchema):
     ...
 
 
-class DomainBaseModel(BaseModel): ...
+class DatabaseTableSampleBaseModel(BaseModel): ...
 
 
-class DomainCreateSchema(DomainBaseModel):
+class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: bool = Field(
-        default=False,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DomainUpdateSchema(DomainBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DomainItemSchema(DomainBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DomainListSchema(DomainBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class DomainQuerySchema(BaseQuerySchema):
-    """Used for querying data"""
-
-    query: Optional[str] = Field(default=None, description="Consulta")
-    ...
-
-
-class IAModelBaseModel(BaseModel): ...
-
-
-class IAModelCreateSchema(AssetCreateSchema, IAModelBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
-    technology: Optional[str] = Field(
-        default=None, description="Tecnologia usada para o modelo"
-    )
-    server: Optional[str] = Field(
-        default=None,
-        description="URL do servidor usado para computar predições (inferência)",
-    )
-    source: Optional[str] = Field(
-        default=None, description="URL de onde está armazenado o modelo"
+    date: datetime.datetime = Field(description="Data e hora da amosrta")
+    content: str = Field(description="Conteúdo da amostra (JSON).")
+    is_visible: bool = Field(
+        default=True, description="Amostra pode ser visualizada"
     )
 
     # Associations
-    attributes: Optional[List["IAModelAttributeCreateSchema"]] = None
-    hyper_parameters: Optional[List["IAModelHyperParameterCreateSchema"]] = None
-    results: Optional[List["IAModelResultCreateSchema"]] = None
+    database_table_id: UUID
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class IAModelUpdateSchema(AssetUpdateSchema, IAModelBaseModel):
+class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     """Optional model for serialization of updating objects"""
 
-    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
-    technology: Optional[str] = Field(
-        default=None, description="Tecnologia usada para o modelo"
+    date: Optional[datetime.datetime] = Field(
+        default=None, description="Data e hora da amosrta"
     )
-    server: Optional[str] = Field(
-        default=None,
-        description="URL do servidor usado para computar predições (inferência)",
+    content: Optional[str] = Field(
+        default=None, description="Conteúdo da amostra (JSON)."
     )
-    source: Optional[str] = Field(
-        default=None, description="URL de onde está armazenado o modelo"
+    is_visible: Optional[bool] = Field(
+        default=None, description="Amostra pode ser visualizada"
     )
 
     # Associations
-    attributes: Optional[List["IAModelAttributeUpdateSchema"]] = None
-    hyper_parameters: Optional[List["IAModelHyperParameterUpdateSchema"]] = None
-    results: Optional[List["IAModelResultUpdateSchema"]] = None
+    database_table_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class IAModelItemSchema(AssetItemSchema, IAModelBaseModel):
+class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    algorithm: Optional[str] = Field(default=None, description="Algoritmo usado")
-    technology: Optional[str] = Field(
-        default=None, description="Tecnologia usada para o modelo"
+    date: Optional[datetime.datetime] = Field(
+        default=None, description="Data e hora da amosrta"
     )
-    server: Optional[str] = Field(
-        default=None,
-        description="URL do servidor usado para computar predições (inferência)",
+    content: Optional[str] = Field(
+        default=None, description="Conteúdo da amostra (JSON)."
     )
-    source: Optional[str] = Field(
-        default=None, description="URL de onde está armazenado o modelo"
+    is_visible: Optional[bool] = Field(
+        default=None, description="Amostra pode ser visualizada"
     )
 
     # Associations
-    attributes: Optional[List["IAModelAttributeItemSchema"]] = None
-    hyper_parameters: Optional[List["IAModelHyperParameterItemSchema"]] = None
-    results: Optional[List["IAModelResultItemSchema"]] = None
+    database_table: Optional["DatabaseTableListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class IAModelListSchema(AssetListSchema, IAModelBaseModel):
+class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
+    date: Optional[datetime.datetime] = Field(
+        default=None, description="Data e hora da amosrta"
+    )
+    content: Optional[str] = Field(
+        default=None, description="Conteúdo da amostra (JSON)."
+    )
+    is_visible: Optional[bool] = Field(
+        default=None, description="Amostra pode ser visualizada"
+    )
+
+    # Associations
+    database_table: Optional["DatabaseTableListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelQuerySchema(BaseQuerySchema):
-    """Used for querying data"""
-
-    query: Optional[str] = Field(default=None, description="Consulta")
-    ...
-
-
-class IAModelAttributeBaseModel(BaseModel): ...
-
-
-class IAModelAttributeCreateSchema(IAModelAttributeBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    name: str = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: bool = Field(
-        default=False,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    usage: str = Field(
-        default="feature", description="Uso do atributo no treinamento"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelAttributeUpdateSchema(IAModelAttributeBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    usage: Optional[str] = Field(
-        default=None, description="Uso do atributo no treinamento"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelAttributeItemSchema(IAModelAttributeBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    usage: Optional[str] = Field(
-        default=None, description="Uso do atributo no treinamento"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelAttributeListSchema(IAModelAttributeBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    usage: Optional[str] = Field(
-        default=None, description="Uso do atributo no treinamento"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelHyperParameterBaseModel(BaseModel): ...
-
-
-class IAModelHyperParameterCreateSchema(IAModelHyperParameterBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    name: str = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    value: Optional[str] = Field(
-        default=None, description="Valor do hiperparâmetro (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelHyperParameterUpdateSchema(IAModelHyperParameterBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    value: Optional[str] = Field(
-        default=None, description="Valor do hiperparâmetro (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelHyperParameterItemSchema(IAModelHyperParameterBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    value: Optional[str] = Field(
-        default=None, description="Valor do hiperparâmetro (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelHyperParameterListSchema(IAModelHyperParameterBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    value: Optional[str] = Field(
-        default=None, description="Valor do hiperparâmetro (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelResultBaseModel(BaseModel): ...
-
-
-class IAModelResultCreateSchema(IAModelResultBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    name: str = Field(default=None, description="Nome da instância.")
-    type: str = Field(default=None, description="Tipo do resultado")
-    value: Optional[str] = Field(
-        default=None, description="Valor do resultado (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelResultUpdateSchema(IAModelResultBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    type: Optional[str] = Field(default=None, description="Tipo do resultado")
-    value: Optional[str] = Field(
-        default=None, description="Valor do resultado (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelResultItemSchema(IAModelResultBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    type: Optional[str] = Field(default=None, description="Tipo do resultado")
-    value: Optional[str] = Field(
-        default=None, description="Valor do resultado (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IAModelResultListSchema(IAModelResultBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    type: Optional[str] = Field(default=None, description="Tipo do resultado")
-    value: Optional[str] = Field(
-        default=None, description="Valor do resultado (JSON)"
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LayerBaseModel(BaseModel): ...
-
-
-class LayerCreateSchema(LayerBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    name: str = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: bool = Field(
-        default=False,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LayerUpdateSchema(LayerBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LayerItemSchema(LayerBaseModel):
-    """JSON serialization schema for serializing a single object"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LayerListSchema(LayerBaseModel):
-    """JSON serialization schema for serializing a list of objects"""
-
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LayerQuerySchema(BaseQuerySchema):
-    """Used for querying data"""
-
-    query: Optional[str] = Field(default=None, description="Consulta")
-    ...
 
 
 class TableColumnBaseModel(BaseModel): ...
@@ -1315,15 +1304,15 @@ class TableColumnBaseModel(BaseModel): ...
 class TableColumnCreateSchema(TableColumnBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    name: str = Field(default=None, description="Nome da instância.")
+    name: str = Field(description="Nome da instância.")
     display_name: str = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+        description="Nome de exibição que identifica a instância."
     )
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
     data_type: DataType = Field(
-        default=None, description="Tipo de dados da coluna (int, data etc.)"
+        description="Tipo de dados da coluna (int, data etc.)"
     )
     array_data_type: Optional[str] = Field(
         default=None, description="Tipo de dados do item do arranjo."
@@ -1450,89 +1439,289 @@ class TableColumnItemSchema(TableColumnBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class TagBaseModel(BaseModel): ...
+class AIModelBaseModel(BaseModel): ...
 
 
-class TagItemSchema(TagBaseModel):
+class AIModelCreateSchema(AssetCreateSchema, AIModelBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    type: str = Field(description="Tipo de modelo")
+    algorithms: Optional[str] = Field(
+        default=None, description="Algoritmos usado"
+    )
+    technologies: Optional[str] = Field(
+        default=None, description="Tecnologias usada para o modelo"
+    )
+    server: Optional[str] = Field(
+        default=None,
+        description="URL do servidor usado para computar predições (inferência)",
+    )
+    source: Optional[str] = Field(
+        default=None, description="URL de onde está armazenado o modelo"
+    )
+
+    # Associations
+    attributes: Optional[List["AIModelAttributeCreateSchema"]] = None
+    hyper_parameters: Optional[List["AIModelHyperParameterCreateSchema"]] = None
+    results: Optional[List["AIModelResultCreateSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelUpdateSchema(AssetUpdateSchema, AIModelBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    type: Optional[str] = Field(default=None, description="Tipo de modelo")
+    algorithms: Optional[str] = Field(
+        default=None, description="Algoritmos usado"
+    )
+    technologies: Optional[str] = Field(
+        default=None, description="Tecnologias usada para o modelo"
+    )
+    server: Optional[str] = Field(
+        default=None,
+        description="URL do servidor usado para computar predições (inferência)",
+    )
+    source: Optional[str] = Field(
+        default=None, description="URL de onde está armazenado o modelo"
+    )
+
+    # Associations
+    attributes: Optional[List["AIModelAttributeUpdateSchema"]] = None
+    hyper_parameters: Optional[List["AIModelHyperParameterUpdateSchema"]] = None
+    results: Optional[List["AIModelResultUpdateSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelItemSchema(AssetItemSchema, AIModelBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
+    type: Optional[str] = Field(default=None, description="Tipo de modelo")
+    algorithms: Optional[str] = Field(
+        default=None, description="Algoritmos usado"
+    )
+    technologies: Optional[str] = Field(
+        default=None, description="Tecnologias usada para o modelo"
+    )
+    server: Optional[str] = Field(
         default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+        description="URL do servidor usado para computar predições (inferência)",
     )
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
+    source: Optional[str] = Field(
+        default=None, description="URL de onde está armazenado o modelo"
     )
-    applicable_to: Optional[str] = Field(
-        default=None,
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
-    )
+
+    # Associations
+    attributes: Optional[List["AIModelAttributeItemSchema"]] = None
+    hyper_parameters: Optional[List["AIModelHyperParameterItemSchema"]] = None
+    results: Optional[List["AIModelResultItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class TagListSchema(TagBaseModel):
+class AIModelListSchema(AssetListSchema, AIModelBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    applicable_to: Optional[str] = Field(
-        default=None,
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
-    )
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class TagCreateSchema(TagBaseModel):
-    """JSON serialization schema for creating an instance"""
-
-    name: str = Field(default=None, description="Nome da instância.")
-    deleted: bool = Field(
-        default=False,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    applicable_to: Optional[str] = Field(
-        default=None,
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TagUpdateSchema(TagBaseModel):
-    """Optional model for serialization of updating objects"""
-
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
-        default=None,
-        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
-    )
-    description: Optional[str] = Field(
-        default=None, description="Descrição da instância."
-    )
-    applicable_to: Optional[str] = Field(
-        default=None,
-        description="Aplicável a qual tipo de entidade. Lista de tipos separados por vírgula",
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class TagQuerySchema(BaseQuerySchema):
+class AIModelQuerySchema(BaseQuerySchema):
     """Used for querying data"""
 
     query: Optional[str] = Field(default=None, description="Consulta")
     ...
+
+
+class AIModelAttributeBaseModel(BaseModel): ...
+
+
+class AIModelAttributeCreateSchema(AIModelAttributeBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: str = Field(
+        default="feature", description="Uso do atributo no treinamento"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelAttributeUpdateSchema(AIModelAttributeBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelAttributeItemSchema(AIModelAttributeBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelAttributeListSchema(AIModelAttributeBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    usage: Optional[str] = Field(
+        default=None, description="Uso do atributo no treinamento"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelHyperParameterBaseModel(BaseModel): ...
+
+
+class AIModelHyperParameterCreateSchema(AIModelHyperParameterBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelHyperParameterUpdateSchema(AIModelHyperParameterBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelHyperParameterItemSchema(AIModelHyperParameterBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelHyperParameterListSchema(AIModelHyperParameterBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    value: Optional[str] = Field(
+        default=None, description="Valor do hiperparâmetro (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelResultBaseModel(BaseModel): ...
+
+
+class AIModelResultCreateSchema(AIModelResultBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    type: str = Field(description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelResultUpdateSchema(AIModelResultBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelResultItemSchema(AIModelResultBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AIModelResultListSchema(AIModelResultBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    value: Optional[str] = Field(
+        default=None, description="Valor do resultado (JSON)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)

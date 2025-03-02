@@ -1,8 +1,8 @@
 """Initial version
 
-Revision ID: f2d8ddc8ad77
+Revision ID: d78983e7e563
 Revises: 
-Create Date: 2025-01-16 17:36:08.267202
+Create Date: 2025-02-28 19:35:11.165662
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f2d8ddc8ad77'
+revision: str = 'd78983e7e563'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,35 +27,6 @@ def upgrade() -> None:
     sa.Column('applies_to', sa.String(length=200), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('tb_database_provider',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('fully_qualified_name', sa.String(length=500), nullable=False),
-    sa.Column('display_name', sa.String(length=200), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('version', sa.String(length=200), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_by', sa.String(length=200), nullable=False),
-    sa.Column('owner', sa.String(length=200), nullable=True),
-    sa.Column('href', sa.String(length=2000), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
-    sa.Column('configuration', postgresql.JSON(astext_type=sa.Text()), nullable=True),
-    sa.Column('provider_type_id', sa.String(length=200), nullable=False),
-    sa.Column('domain_id', sa.UUID(), nullable=True),
-    sa.Column('layer_id', sa.UUID(), nullable=True),
-    sa.Column('connection_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['connection_id'], ['tb_database_provider_connection.id'], name='fk_database_provider_connection_id'),
-    sa.ForeignKeyConstraint(['domain_id'], ['tb_domain.id'], name='fk_database_provider_domain_id', ondelete='set null'),
-    sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_database_provider_layer_id', ondelete='set null'),
-    sa.ForeignKeyConstraint(['provider_type_id'], ['tb_database_provider_type.id'], name='fk_database_provider_provider_type_id'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name')
-    )
-    op.create_index(op.f('ix_tb_database_provider_connection_id'), 'tb_database_provider', ['connection_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_provider_domain_id'), 'tb_database_provider', ['domain_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_provider_fully_qualified_name'), 'tb_database_provider', ['fully_qualified_name'], unique=True)
-    op.create_index(op.f('ix_tb_database_provider_layer_id'), 'tb_database_provider', ['layer_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_provider_provider_type_id'), 'tb_database_provider', ['provider_type_id'], unique=False)
     op.create_table('tb_database_provider_connection',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('user_name', sa.String(length=100), nullable=False),
@@ -64,11 +35,8 @@ def upgrade() -> None:
     sa.Column('port', sa.Integer(), nullable=False),
     sa.Column('database', sa.String(length=200), nullable=True),
     sa.Column('extra_parameters', postgresql.JSON(astext_type=sa.Text()), nullable=True),
-    sa.Column('provider_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['provider_id'], ['tb_database_provider.id'], name='fk_database_provider_connection_provider_id'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_tb_database_provider_connection_provider_id'), 'tb_database_provider_connection', ['provider_id'], unique=False)
     op.create_table('tb_database_provider_type',
     sa.Column('id', sa.String(length=200), autoincrement=False, nullable=False),
     sa.Column('display_name', sa.String(length=200), nullable=False),
@@ -81,7 +49,7 @@ def upgrade() -> None:
     sa.Column('description', sa.String(length=8000), nullable=True),
     sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name', name='inx_uq_domain')
     )
     op.create_table('tb_layer',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
@@ -89,7 +57,15 @@ def upgrade() -> None:
     sa.Column('description', sa.String(length=8000), nullable=True),
     sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name', name='inx_uq_layer')
+    )
+    op.create_table('tb_responsibility_type',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.String(length=8000), nullable=True),
+    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name', name='inx_uq_responsibility_type')
     )
     op.create_table('tb_role',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
@@ -104,33 +80,118 @@ def upgrade() -> None:
     sa.Column('description', sa.String(length=8000), nullable=True),
     sa.Column('applicable_to', sa.String(length=200), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name', name='inx_uq_tag')
     )
-    op.create_table('tb_database',
+    op.create_table('tb_user',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
+    sa.Column('login', sa.String(length=200), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('login', name='inx_uq_user')
+    )
+    op.create_table('tb_asset',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
     sa.Column('fully_qualified_name', sa.String(length=500), nullable=False),
     sa.Column('display_name', sa.String(length=200), nullable=False),
     sa.Column('description', sa.String(length=8000), nullable=True),
+    sa.Column('notes', sa.String(length=8000), nullable=True),
+    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
     sa.Column('version', sa.String(length=200), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('updated_by', sa.String(length=200), nullable=False),
-    sa.Column('owner', sa.String(length=200), nullable=True),
-    sa.Column('href', sa.String(length=2000), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
-    sa.Column('retention_period', sa.String(length=100), nullable=True),
-    sa.Column('provider_id', sa.UUID(), nullable=False),
+    sa.Column('asset_type', sa.String(length=20), nullable=False),
     sa.Column('domain_id', sa.UUID(), nullable=True),
     sa.Column('layer_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['domain_id'], ['tb_domain.id'], name='fk_database_domain_id'),
-    sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_database_layer_id'),
-    sa.ForeignKeyConstraint(['provider_id'], ['tb_database_provider.id'], name='fk_database_provider_id'),
+    sa.ForeignKeyConstraint(['domain_id'], ['tb_domain.id'], name='fk_asset_domain_id', ondelete='set null'),
+    sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_asset_layer_id', ondelete='set null'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name')
+    sa.UniqueConstraint('fully_qualified_name', name='inx_uq_asset')
     )
-    op.create_index(op.f('ix_tb_database_domain_id'), 'tb_database', ['domain_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_fully_qualified_name'), 'tb_database', ['fully_qualified_name'], unique=True)
-    op.create_index(op.f('ix_tb_database_layer_id'), 'tb_database', ['layer_id'], unique=False)
+    op.create_index(op.f('ix_tb_asset_domain_id'), 'tb_asset', ['domain_id'], unique=False)
+    op.create_index(op.f('ix_tb_asset_fully_qualified_name'), 'tb_asset', ['fully_qualified_name'], unique=True)
+    op.create_index(op.f('ix_tb_asset_layer_id'), 'tb_asset', ['layer_id'], unique=False)
+    op.create_table('tb_entity_tag',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('entity_type', sa.String(length=200), nullable=False),
+    sa.Column('entity_id', sa.UUID(), nullable=False),
+    sa.Column('tag_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['tag_id'], ['tb_tag.id'], name='fk_entity_tag_tag_id'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('entity_type', 'entity_id', name='inx_uq_entity_tag')
+    )
+    op.create_index(op.f('ix_tb_entity_tag_tag_id'), 'tb_entity_tag', ['tag_id'], unique=False)
+    op.create_table('tb_a_i_model',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('type', sa.String(length=200), nullable=False),
+    sa.Column('algorithms', sa.String(length=500), nullable=True),
+    sa.Column('technologies', sa.String(length=1000), nullable=True),
+    sa.Column('server', sa.String(length=1000), nullable=True),
+    sa.Column('source', sa.String(length=1000), nullable=True),
+    sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('tb_asset_link',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('url', sa.String(length=2000), nullable=True),
+    sa.Column('type', sa.Enum('DOCUMENTATION', 'SOURCE_CODE', 'DEPLOYMENT', 'OTHER', name='LinkTypeEnumType'), nullable=False),
+    sa.Column('asset_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['asset_id'], ['tb_asset.id'], name='fk_asset_link_asset_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_asset_link_asset_id'), 'tb_asset_link', ['asset_id'], unique=False)
+    op.create_table('tb_database_provider',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('configuration', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+    sa.Column('provider_type_id', sa.String(length=200), nullable=False),
+    sa.Column('connection_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['connection_id'], ['tb_database_provider_connection.id'], name='fk_database_provider_connection_id'),
+    sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
+    sa.ForeignKeyConstraint(['provider_type_id'], ['tb_database_provider_type.id'], name='fk_database_provider_provider_type_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_database_provider_connection_id'), 'tb_database_provider', ['connection_id'], unique=False)
+    op.create_index(op.f('ix_tb_database_provider_provider_type_id'), 'tb_database_provider', ['provider_type_id'], unique=False)
+    op.create_table('tb_a_i_model_attribute',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.String(length=8000), nullable=True),
+    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
+    sa.Column('usage', sa.String(length=100), nullable=False),
+    sa.Column('model_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['model_id'], ['tb_a_i_model.id'], name='fk_a_i_model_attribute_model_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_a_i_model_attribute_model_id'), 'tb_a_i_model_attribute', ['model_id'], unique=False)
+    op.create_table('tb_a_i_model_hyper_parameter',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.String(length=8000), nullable=True),
+    sa.Column('value', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+    sa.Column('model_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['model_id'], ['tb_a_i_model.id'], name='fk_a_i_model_hyper_parameter_model_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_a_i_model_hyper_parameter_model_id'), 'tb_a_i_model_hyper_parameter', ['model_id'], unique=False)
+    op.create_table('tb_a_i_model_result',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('type', sa.String(length=100), nullable=False),
+    sa.Column('value', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+    sa.Column('model_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['model_id'], ['tb_a_i_model.id'], name='fk_a_i_model_result_model_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_a_i_model_result_model_id'), 'tb_a_i_model_result', ['model_id'], unique=False)
+    op.create_table('tb_database',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('retention_period', sa.String(length=100), nullable=True),
+    sa.Column('provider_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
+    sa.ForeignKeyConstraint(['provider_id'], ['tb_database_provider.id'], name='fk_database_provider_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_index(op.f('ix_tb_database_provider_id'), 'tb_database', ['provider_id'], unique=False)
     op.create_table('tb_database_provider_ingestion',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
@@ -153,39 +214,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tb_database_provider_ingestion_provider_id'), 'tb_database_provider_ingestion', ['provider_id'], unique=False)
-    op.create_table('tb_entity_tag',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('entity_type', sa.String(length=200), nullable=False),
-    sa.Column('entity_id', sa.UUID(), nullable=False),
-    sa.Column('tag_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['tag_id'], ['tb_tag.id'], name='fk_entity_tag_tag_id'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('entity_type', 'entity_id')
-    )
-    op.create_index(op.f('ix_tb_entity_tag_tag_id'), 'tb_entity_tag', ['tag_id'], unique=False)
-    op.create_table('tb_i_a_model',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('display_name', sa.String(length=200), nullable=False),
-    sa.Column('fully_qualified_name', sa.String(length=500), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('version', sa.String(length=200), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_by', sa.String(length=200), nullable=False),
-    sa.Column('href', sa.String(length=2000), nullable=True),
-    sa.Column('owner', sa.String(length=200), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
-    sa.Column('algorithm', sa.String(length=200), nullable=True),
-    sa.Column('tecnology', sa.String(length=200), nullable=True),
-    sa.Column('server', sa.String(length=1000), nullable=True),
-    sa.Column('source', sa.String(length=1000), nullable=True),
-    sa.Column('domain_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['domain_id'], ['tb_domain.id'], name='fk_i_a_model_domain_id', ondelete='set null'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name')
-    )
-    op.create_index(op.f('ix_tb_i_a_model_domain_id'), 'tb_i_a_model', ['domain_id'], unique=False)
-    op.create_index(op.f('ix_tb_i_a_model_fully_qualified_name'), 'tb_i_a_model', ['fully_qualified_name'], unique=True)
     op.create_table('tb_database_provider_ingestion_log',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
@@ -198,70 +226,15 @@ def upgrade() -> None:
     op.create_index(op.f('ix_tb_database_provider_ingestion_log_ingestion_id'), 'tb_database_provider_ingestion_log', ['ingestion_id'], unique=False)
     op.create_table('tb_database_schema',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('display_name', sa.String(length=200), nullable=False),
-    sa.Column('fully_qualified_name', sa.String(length=500), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('version', sa.String(length=200), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_by', sa.String(length=200), nullable=False),
-    sa.Column('href', sa.String(length=2000), nullable=True),
-    sa.Column('owner', sa.String(length=200), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
     sa.Column('database_id', sa.UUID(), nullable=False),
-    sa.Column('layer_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['database_id'], ['tb_database.id'], name='fk_database_schema_database_id'),
-    sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_database_schema_layer_id'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name')
+    sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tb_database_schema_database_id'), 'tb_database_schema', ['database_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_schema_fully_qualified_name'), 'tb_database_schema', ['fully_qualified_name'], unique=True)
-    op.create_index(op.f('ix_tb_database_schema_layer_id'), 'tb_database_schema', ['layer_id'], unique=False)
-    op.create_table('tb_i_a_model_attribute',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
-    sa.Column('usage', sa.String(length=100), nullable=False),
-    sa.Column('model_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['model_id'], ['tb_i_a_model.id'], name='fk_i_a_model_attribute_model_id'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_tb_i_a_model_attribute_model_id'), 'tb_i_a_model_attribute', ['model_id'], unique=False)
-    op.create_table('tb_i_a_model_hyper_parameter',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('value', postgresql.JSON(astext_type=sa.Text()), nullable=True),
-    sa.Column('model_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['model_id'], ['tb_i_a_model.id'], name='fk_i_a_model_hyper_parameter_model_id'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_tb_i_a_model_hyper_parameter_model_id'), 'tb_i_a_model_hyper_parameter', ['model_id'], unique=False)
-    op.create_table('tb_i_a_model_result',
-    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('type', sa.String(length=100), nullable=False),
-    sa.Column('value', postgresql.JSON(astext_type=sa.Text()), nullable=True),
-    sa.Column('model_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['model_id'], ['tb_i_a_model.id'], name='fk_i_a_model_result_model_id'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_tb_i_a_model_result_model_id'), 'tb_i_a_model_result', ['model_id'], unique=False)
     op.create_table('tb_database_table',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('type', sa.Enum('REGULAR', 'EXTERNAL', 'VIEW', 'SECURE_VIEW', 'MATERIALIZED_VIEW', 'ICEBERG', 'LOCAL', 'PARTITIONED', 'FOREIGN', 'TRANSIENT', name='TableTypeEnumType'), nullable=False),
-    sa.Column('name', sa.String(length=200), nullable=False),
-    sa.Column('display_name', sa.String(length=200), nullable=False),
-    sa.Column('fully_qualified_name', sa.String(length=500), nullable=False),
-    sa.Column('description', sa.String(length=8000), nullable=True),
-    sa.Column('version', sa.String(length=200), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_by', sa.String(length=200), nullable=False),
-    sa.Column('href', sa.String(length=2000), nullable=True),
-    sa.Column('owner', sa.String(length=200), nullable=True),
-    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
     sa.Column('proxy_enabled', sa.Boolean(), nullable=False),
     sa.Column('query', sa.String(length=8000), nullable=True),
     sa.Column('cache_type', sa.String(length=200), nullable=True),
@@ -269,17 +242,23 @@ def upgrade() -> None:
     sa.Column('cache_validation', sa.String(length=8000), nullable=True),
     sa.Column('database_id', sa.UUID(), nullable=False),
     sa.Column('database_schema_id', sa.UUID(), nullable=False),
-    sa.Column('layer_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['database_id'], ['tb_database.id'], name='fk_database_table_database_id'),
     sa.ForeignKeyConstraint(['database_schema_id'], ['tb_database_schema.id'], name='fk_database_table_database_schema_id'),
-    sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_database_table_layer_id'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name')
+    sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tb_database_table_database_id'), 'tb_database_table', ['database_id'], unique=False)
     op.create_index(op.f('ix_tb_database_table_database_schema_id'), 'tb_database_table', ['database_schema_id'], unique=False)
-    op.create_index(op.f('ix_tb_database_table_fully_qualified_name'), 'tb_database_table', ['fully_qualified_name'], unique=True)
-    op.create_index(op.f('ix_tb_database_table_layer_id'), 'tb_database_table', ['layer_id'], unique=False)
+    op.create_table('tb_database_table_sample',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('date', sa.DateTime(), nullable=False),
+    sa.Column('content', postgresql.JSON(astext_type=sa.Text()), nullable=False),
+    sa.Column('is_visible', sa.Boolean(), nullable=False),
+    sa.Column('database_table_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['database_table_id'], ['tb_database_table.id'], name='fk_database_table_sample_database_table_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_database_table_sample_database_table_id'), 'tb_database_table_sample', ['database_table_id'], unique=False)
     op.create_table('tb_table_column',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
@@ -389,47 +368,44 @@ def downgrade() -> None:
     op.drop_table('tb_table_constraint')
     op.drop_index(op.f('ix_tb_table_column_table_id'), table_name='tb_table_column')
     op.drop_table('tb_table_column')
-    op.drop_index(op.f('ix_tb_database_table_layer_id'), table_name='tb_database_table')
-    op.drop_index(op.f('ix_tb_database_table_fully_qualified_name'), table_name='tb_database_table')
+    op.drop_index(op.f('ix_tb_database_table_sample_database_table_id'), table_name='tb_database_table_sample')
+    op.drop_table('tb_database_table_sample')
     op.drop_index(op.f('ix_tb_database_table_database_schema_id'), table_name='tb_database_table')
     op.drop_index(op.f('ix_tb_database_table_database_id'), table_name='tb_database_table')
     op.drop_table('tb_database_table')
-    op.drop_index(op.f('ix_tb_i_a_model_result_model_id'), table_name='tb_i_a_model_result')
-    op.drop_table('tb_i_a_model_result')
-    op.drop_index(op.f('ix_tb_i_a_model_hyper_parameter_model_id'), table_name='tb_i_a_model_hyper_parameter')
-    op.drop_table('tb_i_a_model_hyper_parameter')
-    op.drop_index(op.f('ix_tb_i_a_model_attribute_model_id'), table_name='tb_i_a_model_attribute')
-    op.drop_table('tb_i_a_model_attribute')
-    op.drop_index(op.f('ix_tb_database_schema_layer_id'), table_name='tb_database_schema')
-    op.drop_index(op.f('ix_tb_database_schema_fully_qualified_name'), table_name='tb_database_schema')
     op.drop_index(op.f('ix_tb_database_schema_database_id'), table_name='tb_database_schema')
     op.drop_table('tb_database_schema')
     op.drop_index(op.f('ix_tb_database_provider_ingestion_log_ingestion_id'), table_name='tb_database_provider_ingestion_log')
     op.drop_table('tb_database_provider_ingestion_log')
-    op.drop_index(op.f('ix_tb_i_a_model_fully_qualified_name'), table_name='tb_i_a_model')
-    op.drop_index(op.f('ix_tb_i_a_model_domain_id'), table_name='tb_i_a_model')
-    op.drop_table('tb_i_a_model')
-    op.drop_index(op.f('ix_tb_entity_tag_tag_id'), table_name='tb_entity_tag')
-    op.drop_table('tb_entity_tag')
     op.drop_index(op.f('ix_tb_database_provider_ingestion_provider_id'), table_name='tb_database_provider_ingestion')
     op.drop_table('tb_database_provider_ingestion')
     op.drop_index(op.f('ix_tb_database_provider_id'), table_name='tb_database')
-    op.drop_index(op.f('ix_tb_database_layer_id'), table_name='tb_database')
-    op.drop_index(op.f('ix_tb_database_fully_qualified_name'), table_name='tb_database')
-    op.drop_index(op.f('ix_tb_database_domain_id'), table_name='tb_database')
     op.drop_table('tb_database')
+    op.drop_index(op.f('ix_tb_a_i_model_result_model_id'), table_name='tb_a_i_model_result')
+    op.drop_table('tb_a_i_model_result')
+    op.drop_index(op.f('ix_tb_a_i_model_hyper_parameter_model_id'), table_name='tb_a_i_model_hyper_parameter')
+    op.drop_table('tb_a_i_model_hyper_parameter')
+    op.drop_index(op.f('ix_tb_a_i_model_attribute_model_id'), table_name='tb_a_i_model_attribute')
+    op.drop_table('tb_a_i_model_attribute')
+    op.drop_index(op.f('ix_tb_database_provider_provider_type_id'), table_name='tb_database_provider')
+    op.drop_index(op.f('ix_tb_database_provider_connection_id'), table_name='tb_database_provider')
+    op.drop_table('tb_database_provider')
+    op.drop_index(op.f('ix_tb_asset_link_asset_id'), table_name='tb_asset_link')
+    op.drop_table('tb_asset_link')
+    op.drop_table('tb_a_i_model')
+    op.drop_index(op.f('ix_tb_entity_tag_tag_id'), table_name='tb_entity_tag')
+    op.drop_table('tb_entity_tag')
+    op.drop_index(op.f('ix_tb_asset_layer_id'), table_name='tb_asset')
+    op.drop_index(op.f('ix_tb_asset_fully_qualified_name'), table_name='tb_asset')
+    op.drop_index(op.f('ix_tb_asset_domain_id'), table_name='tb_asset')
+    op.drop_table('tb_asset')
+    op.drop_table('tb_user')
     op.drop_table('tb_tag')
     op.drop_table('tb_role')
+    op.drop_table('tb_responsibility_type')
     op.drop_table('tb_layer')
     op.drop_table('tb_domain')
     op.drop_table('tb_database_provider_type')
-    op.drop_index(op.f('ix_tb_database_provider_connection_provider_id'), table_name='tb_database_provider_connection')
     op.drop_table('tb_database_provider_connection')
-    op.drop_index(op.f('ix_tb_database_provider_provider_type_id'), table_name='tb_database_provider')
-    op.drop_index(op.f('ix_tb_database_provider_layer_id'), table_name='tb_database_provider')
-    op.drop_index(op.f('ix_tb_database_provider_fully_qualified_name'), table_name='tb_database_provider')
-    op.drop_index(op.f('ix_tb_database_provider_domain_id'), table_name='tb_database_provider')
-    op.drop_index(op.f('ix_tb_database_provider_connection_id'), table_name='tb_database_provider')
-    op.drop_table('tb_database_provider')
     op.drop_table('tb_action')
     # ### end Alembic commands ###

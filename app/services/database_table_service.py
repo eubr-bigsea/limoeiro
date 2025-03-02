@@ -3,7 +3,10 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
+from ..utils.models import update_related_collection
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
@@ -11,6 +14,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DatabaseTableCreateSchema,
+    DatabaseTableUpdateSchema,
+    DatabaseTableItemSchema,
+    DatabaseTableListSchema,
     DatabaseTableQuerySchema,
 )
 from ..models import DatabaseTable, TableColumn
@@ -29,10 +35,22 @@ class DatabaseTableService(BaseService):
         super().__init__(DatabaseTable)
         self.session = session
 
+    async def _get(
+        self, database_table_id: UUID
+    ) -> typing.Optional[DatabaseTable]:
+        result = await self.session.execute(
+            select(DatabaseTable)
+            .options(selectinload(DatabaseTable.database))
+            .options(selectinload(DatabaseTable.database_schema))
+            .options(selectinload(DatabaseTable.columns))
+            .filter(DatabaseTable.id == database_table_id)
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, database_table_data: DatabaseTableCreateSchema
-    ) -> DatabaseTable:
+    ) -> DatabaseTableItemSchema:
         """
         Create a new DatabaseTable instance.
 
@@ -60,10 +78,12 @@ class DatabaseTableService(BaseService):
         self.session.add(database_table)
         await self.session.commit()
         await self.session.refresh(database_table)
-        return database_table
+        return DatabaseTableItemSchema.model_validate(database_table)
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, database_table_id: UUID) -> DatabaseTable:
+    async def delete(
+        self, database_table_id: UUID
+    ) -> typing.Optional[DatabaseTableItemSchema]:
         """
         Delete DatabaseTable instance.
         Args:
@@ -71,16 +91,19 @@ class DatabaseTableService(BaseService):
         Returns:
             DatabaseTable: Deleted instance if found or None
         """
-        database_table = await self.get(database_table_id)
+        database_table = await self._get(database_table_id)
         if database_table:
             await self.session.delete(database_table)
             await self.session.commit()
-        return database_table
+            return DatabaseTableItemSchema.model_validate(database_table)
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
-        self, database_table_id: UUID, database_table_data: DatabaseTable
-    ) -> typing.Union[DatabaseTable, None]:
+        self,
+        database_table_id: UUID,
+        database_table_data: typing.Optional[DatabaseTableUpdateSchema],
+    ) -> DatabaseTableItemSchema:
         """
         Update a single instance of class DatabaseTable.
         Args:
@@ -90,22 +113,37 @@ class DatabaseTableService(BaseService):
             DatabaseTable: The updated instance if found, None otheriwse
 
         """
-        database_table = await self.get(database_table_id)
+        database_table = await self._get(database_table_id)
         if not database_table:
-            return None
-        for key, value in database_table_data.model_dump(
-            exclude_unset=True
-        ).items():
-            setattr(database_table, key, value)
+            raise ex.EntityNotFoundException("{cls_name}", database_table_id)
+        if database_table_data is not None:
+            for key, value in database_table_data.model_dump(
+                exclude_unset=True,
+                exclude={
+                    "columns",
+                },
+            ).items():
+                setattr(database_table, key, value)
+            # Update collection of columns
+            if database_table_data.columns:
+                deletion_list = update_related_collection(
+                    collection=database_table.columns,
+                    updates=database_table_data.columns,
+                    model_class=TableColumn,
+                    parent_id_field="table_id",
+                    parent_id_value=database_table_id,
+                )
+                for to_delete in deletion_list:
+                    await self.session.delete(to_delete)
+
         await self.session.commit()
         await self.session.refresh(database_table)
-
-        return database_table
+        return DatabaseTableItemSchema.model_validate(database_table)
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DatabaseTableQuerySchema
-    ) -> PaginatedSchema[DatabaseTable]:
+    ) -> PaginatedSchema[DatabaseTableListSchema]:
         """
         Retrieve a paginated, sorted list of DatabaseTable instances.
 
@@ -160,16 +198,16 @@ class DatabaseTableService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[DatabaseTable](
+        return PaginatedSchema[DatabaseTableListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[DatabaseTableListSchema.model_validate(row) for row in rows],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_table_id: UUID) -> DatabaseTable:
+    async def get(self, database_table_id: UUID) -> DatabaseTableItemSchema:
         """
         Retrieve a DatabaseTable instance by id.
         Args:
@@ -177,12 +215,6 @@ class DatabaseTableService(BaseService):
         Returns:
             DatabaseTable: Found instance or None
         """
-        result = await self.session.execute(
-            select(DatabaseTable)
-            .options(selectinload(DatabaseTable.database))
-            .options(selectinload(DatabaseTable.database_schema))
-            .options(selectinload(DatabaseTable.layer))
-            .options(selectinload(DatabaseTable.columns))
-            .filter(DatabaseTable.id == database_table_id)
+        return DatabaseTableItemSchema.model_validate(
+            await self._get(database_table_id)
         )
-        return result.scalars().first()

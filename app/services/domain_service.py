@@ -3,6 +3,8 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -10,6 +12,9 @@ from sqlalchemy.future import select
 from ..schemas import (
     PaginatedSchema,
     DomainCreateSchema,
+    DomainUpdateSchema,
+    DomainItemSchema,
+    DomainListSchema,
     DomainQuerySchema,
 )
 from ..models import Domain
@@ -28,8 +33,14 @@ class DomainService(BaseService):
         super().__init__(Domain)
         self.session = session
 
+    async def _get(self, domain_id: UUID) -> typing.Optional[Domain]:
+        result = await self.session.execute(
+            select(Domain).filter(Domain.id == domain_id)
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
-    async def add(self, domain_data: DomainCreateSchema) -> Domain:
+    async def add(self, domain_data: DomainCreateSchema) -> DomainItemSchema:
         """
         Create a new Domain instance.
 
@@ -42,10 +53,10 @@ class DomainService(BaseService):
         self.session.add(domain)
         await self.session.commit()
         await self.session.refresh(domain)
-        return domain
+        return DomainItemSchema.model_validate(domain)
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, domain_id: UUID) -> Domain:
+    async def delete(self, domain_id: UUID) -> typing.Optional[DomainItemSchema]:
         """
         Delete Domain instance.
         Args:
@@ -53,16 +64,17 @@ class DomainService(BaseService):
         Returns:
             Domain: Deleted instance if found or None
         """
-        domain = await self.get(domain_id)
+        domain = await self._get(domain_id)
         if domain:
             await self.session.delete(domain)
             await self.session.commit()
-        return domain
+            return DomainItemSchema.model_validate(domain)
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
-        self, domain_id: UUID, domain_data: Domain
-    ) -> typing.Union[Domain, None]:
+        self, domain_id: UUID, domain_data: typing.Optional[DomainUpdateSchema]
+    ) -> DomainItemSchema:
         """
         Update a single instance of class Domain.
         Args:
@@ -72,20 +84,23 @@ class DomainService(BaseService):
             Domain: The updated instance if found, None otheriwse
 
         """
-        domain = await self.get(domain_id)
+        domain = await self._get(domain_id)
         if not domain:
-            return None
-        for key, value in domain_data.model_dump(exclude_unset=True).items():
-            setattr(domain, key, value)
+            raise ex.EntityNotFoundException("{cls_name}", domain_id)
+        if domain_data is not None:
+            for key, value in domain_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(domain, key, value)
+
         await self.session.commit()
         await self.session.refresh(domain)
-
-        return domain
+        return DomainItemSchema.model_validate(domain)
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
         self, query_options: DomainQuerySchema
-    ) -> PaginatedSchema[Domain]:
+    ) -> PaginatedSchema[DomainListSchema]:
         """
         Retrieve a paginated, sorted list of Domain instances.
 
@@ -134,16 +149,16 @@ class DomainService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[Domain](
+        return PaginatedSchema[DomainListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[DomainListSchema.model_validate(row) for row in rows],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, domain_id: UUID) -> Domain:
+    async def get(self, domain_id: UUID) -> DomainItemSchema:
         """
         Retrieve a Domain instance by id.
         Args:
@@ -151,7 +166,4 @@ class DomainService(BaseService):
         Returns:
             Domain: Found instance or None
         """
-        result = await self.session.execute(
-            select(Domain).filter(Domain.id == domain_id)
-        )
-        return result.scalars().first()
+        return DomainItemSchema.model_validate(await self._get(domain_id))

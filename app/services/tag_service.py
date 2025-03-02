@@ -3,13 +3,18 @@ import math
 import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
+
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ..schemas import (
     PaginatedSchema,
+    TagItemSchema,
+    TagListSchema,
     TagCreateSchema,
+    TagUpdateSchema,
     TagQuerySchema,
 )
 from ..models import Tag
@@ -28,8 +33,12 @@ class TagService(BaseService):
         super().__init__(Tag)
         self.session = session
 
+    async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
+        result = await self.session.execute(select(Tag).filter(Tag.id == tag_id))
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
-    async def add(self, tag_data: TagCreateSchema) -> Tag:
+    async def add(self, tag_data: TagCreateSchema) -> TagItemSchema:
         """
         Create a new Tag instance.
 
@@ -42,10 +51,10 @@ class TagService(BaseService):
         self.session.add(tag)
         await self.session.commit()
         await self.session.refresh(tag)
-        return tag
+        return TagItemSchema.model_validate(tag)
 
     @handle_db_exceptions("Failed to delete {}")
-    async def delete(self, tag_id: UUID) -> Tag:
+    async def delete(self, tag_id: UUID) -> typing.Optional[TagItemSchema]:
         """
         Delete Tag instance.
         Args:
@@ -53,16 +62,17 @@ class TagService(BaseService):
         Returns:
             Tag: Deleted instance if found or None
         """
-        tag = await self.get(tag_id)
+        tag = await self._get(tag_id)
         if tag:
             await self.session.delete(tag)
             await self.session.commit()
-        return tag
+            return TagItemSchema.model_validate(tag)
+        return None
 
     @handle_db_exceptions("Failed to update {}.")
     async def update(
-        self, tag_id: UUID, tag_data: Tag
-    ) -> typing.Union[Tag, None]:
+        self, tag_id: UUID, tag_data: typing.Optional[TagUpdateSchema]
+    ) -> TagItemSchema:
         """
         Update a single instance of class Tag.
         Args:
@@ -72,18 +82,23 @@ class TagService(BaseService):
             Tag: The updated instance if found, None otheriwse
 
         """
-        tag = await self.get(tag_id)
+        tag = await self._get(tag_id)
         if not tag:
-            return None
-        for key, value in tag_data.model_dump(exclude_unset=True).items():
-            setattr(tag, key, value)
+            raise ex.EntityNotFoundException("{cls_name}", tag_id)
+        if tag_data is not None:
+            for key, value in tag_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                setattr(tag, key, value)
+
         await self.session.commit()
         await self.session.refresh(tag)
-
-        return tag
+        return TagItemSchema.model_validate(tag)
 
     @handle_db_exceptions("Failed to retrieve {}")
-    async def find(self, query_options: TagQuerySchema) -> PaginatedSchema[Tag]:
+    async def find(
+        self, query_options: TagQuerySchema
+    ) -> PaginatedSchema[TagListSchema]:
         """
         Retrieve a paginated, sorted list of Tag instances.
 
@@ -132,16 +147,16 @@ class TagService(BaseService):
 
         total_rows = (await self.session.execute(count_query)).scalar_one()
 
-        return PaginatedSchema[Tag](
+        return PaginatedSchema[TagListSchema](
             page_size=limit,
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=rows,
+            items=[TagListSchema.model_validate(row) for row in rows],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, tag_id: UUID) -> Tag:
+    async def get(self, tag_id: UUID) -> TagItemSchema:
         """
         Retrieve a Tag instance by id.
         Args:
@@ -149,5 +164,4 @@ class TagService(BaseService):
         Returns:
             Tag: Found instance or None
         """
-        result = await self.session.execute(select(Tag).filter(Tag.id == tag_id))
-        return result.scalars().first()
+        return TagItemSchema.model_validate(await self._get(tag_id))

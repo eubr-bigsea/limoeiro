@@ -24,6 +24,17 @@ def utc_now() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
 
+class LinkType(str, enum.Enum):
+    DOCUMENTATION = "DOCUMENTATION"
+    SOURCE_CODE = "SOURCE_CODE"
+    DEPLOYMENT = "DEPLOYMENT"
+    OTHER = "OTHER"
+
+    @staticmethod
+    def values():
+        return [item.value for item in LinkType]
+
+
 class TableConstraintType(str, enum.Enum):
     UNIQUE = "UNIQUE"
     PRIMARY_KEY = "PRIMARY_KEY"
@@ -133,6 +144,91 @@ class DataType(str, enum.Enum):
 
 
 # Model classes
+
+
+class User(Base):
+    """Usuário"""
+
+    __tablename__ = "tb_user"
+    __table_args__ = (UniqueConstraint("login", name="inx_uq_user"),)
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    name = mapped_column(String(200), nullable=False)
+    deleted = mapped_column(
+        Boolean, default=False, nullable=False, server_default="False"
+    )
+    login = mapped_column(String(200), nullable=False)
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class ResponsibilityType(Base):
+    """Tipo de responsabilidade"""
+
+    __tablename__ = "tb_responsibility_type"
+    __table_args__ = (
+        UniqueConstraint("name", name="inx_uq_responsibility_type"),
+    )
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    name = mapped_column(String(200), nullable=False)
+    description = mapped_column(String(8000))
+    deleted = mapped_column(
+        Boolean, default=False, nullable=False, server_default="False"
+    )
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class AssetLink(Base):
+    """Link (url) para um ativo."""
+
+    __tablename__ = "tb_asset_link"
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    url = mapped_column(String(2000))
+    type = mapped_column(Enum(LinkType, name="LinkTypeEnumType"), nullable=False)
+
+    # Associations
+    asset_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id", name="fk_asset_link_asset_id"),
+        nullable=False,
+        index=True,
+    )
+    asset = relationship("Asset", foreign_keys=[asset_id])
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
 
 
 class Layer(Base):
@@ -274,7 +370,9 @@ class Asset(Base):
 
     __tablename__ = "tb_asset"
     __table_args__ = (
-        UniqueConstraint("fully_qualified_name", name="inx_uq_asset"),
+        UniqueConstraint(
+            "fully_qualified_name", "asset_type", name="inx_uq_asset"
+        ),
     )
 
     # Fields
@@ -290,6 +388,7 @@ class Asset(Base):
     )
     display_name = mapped_column(String(200), nullable=False)
     description = mapped_column(String(8000))
+    notes = mapped_column(String(8000))
     deleted = mapped_column(
         Boolean, default=False, nullable=False, server_default="False"
     )
@@ -318,6 +417,12 @@ class Asset(Base):
         index=True,
     )
     layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
+
+    __mapper_args__ = {
+        "polymorphic_identity": "asset",
+        "polymorphic_on": asset_type,
+    }
+    links = relationship("AssetLink", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "asset",
@@ -651,6 +756,43 @@ class DatabaseTable(Asset):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
+class DatabaseTableSample(Base):
+    """Amostra de Tabela"""
+
+    __tablename__ = "tb_database_table_sample"
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    date = mapped_column(DateTime, nullable=False)
+    content = mapped_column(JSON, nullable=False)
+    is_visible = mapped_column(Boolean, default=True, nullable=False)
+
+    # Associations
+    database_table_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_database_table.id",
+            name="fk_database_table_sample_database_table_id",
+        ),
+        nullable=False,
+        index=True,
+    )
+    database_table = relationship(
+        "DatabaseTable", foreign_keys=[database_table_id], lazy="joined"
+    )
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
 class TableConstraint(Base):
     """Restrição de tabela"""
 
@@ -914,10 +1056,10 @@ class TableRole(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class IAModel(Asset):
+class AIModel(Asset):
     """Modelo de inteligência artificial"""
 
-    __tablename__ = "tb_i_a_model"
+    __tablename__ = "tb_a_i_model"
 
     # Fields
     id = mapped_column(
@@ -926,25 +1068,26 @@ class IAModel(Asset):
         autoincrement=False,
         default=uuid.uuid4,
     )
-    algorithm = mapped_column(String(200))
-    technology = mapped_column(String(200))
+    type = mapped_column(String(200), nullable=False)
+    algorithms = mapped_column(String(500))
+    technologies = mapped_column(String(1000))
     server = mapped_column(String(1000))
     source = mapped_column(String(1000))
 
     # Associations
-    attributes = relationship("IAModelAttribute", lazy="joined")
+    attributes = relationship("AIModelAttribute", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "model",
         "inherit_condition": (id == Asset.id),
     }
-    hyper_parameters = relationship("IAModelHyperParameter", lazy="joined")
+    hyper_parameters = relationship("AIModelHyperParameter", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "model",
         "inherit_condition": (id == Asset.id),
     }
-    results = relationship("IAModelResult", lazy="joined")
+    results = relationship("AIModelResult", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "model",
@@ -958,10 +1101,10 @@ class IAModel(Asset):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class IAModelAttribute(Base):
+class AIModelAttribute(Base):
     """Atributo (coluna) usada como feature ou rótulo no modelo"""
 
-    __tablename__ = "tb_i_a_model_attribute"
+    __tablename__ = "tb_a_i_model_attribute"
 
     # Fields
     id = mapped_column(
@@ -980,7 +1123,7 @@ class IAModelAttribute(Base):
     # Associations
     model_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("tb_i_a_model.id", name="fk_i_a_model_attribute_model_id"),
+        ForeignKey("tb_a_i_model.id", name="fk_a_i_model_attribute_model_id"),
         nullable=False,
         index=True,
     )
@@ -992,10 +1135,10 @@ class IAModelAttribute(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class IAModelHyperParameter(Base):
+class AIModelHyperParameter(Base):
     """Hiper parâmetro usado no modelo"""
 
-    __tablename__ = "tb_i_a_model_hyper_parameter"
+    __tablename__ = "tb_a_i_model_hyper_parameter"
 
     # Fields
     id = mapped_column(
@@ -1012,7 +1155,7 @@ class IAModelHyperParameter(Base):
     model_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
-            "tb_i_a_model.id", name="fk_i_a_model_hyper_parameter_model_id"
+            "tb_a_i_model.id", name="fk_a_i_model_hyper_parameter_model_id"
         ),
         nullable=False,
         index=True,
@@ -1025,10 +1168,10 @@ class IAModelHyperParameter(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class IAModelResult(Base):
+class AIModelResult(Base):
     """Resultado no modelo. Pode ser métrica ou outra informação."""
 
-    __tablename__ = "tb_i_a_model_result"
+    __tablename__ = "tb_a_i_model_result"
 
     # Fields
     id = mapped_column(
@@ -1044,7 +1187,7 @@ class IAModelResult(Base):
     # Associations
     model_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("tb_i_a_model.id", name="fk_i_a_model_result_model_id"),
+        ForeignKey("tb_a_i_model.id", name="fk_a_i_model_result_model_id"),
         nullable=False,
         index=True,
     )
