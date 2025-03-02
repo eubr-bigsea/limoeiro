@@ -1,0 +1,56 @@
+### Tests for entity DatabaseProviderIngestion API ###
+@path = ingestions
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Russell Meyer" , 
+    "deleted": true , 
+    "type": "type" , 
+    "include_database": "include_database" , 
+    "exclude_database": "exclude_database" , 
+    "include_schema": "include_schema" , 
+    "exclude_schema": "exclude_schema" , 
+    "include_table": "include_table" , 
+    "exclude_table": "exclude_table" , 
+    "include_view": "include_view" , 
+    "override_mode": "override_mode" , 
+    "scheduling": "scheduling" , 
+    "recent_runs_statuses": "recent_runs_statuses" , 
+    "retries": "retries" , 
+    "provider_id": "provider" , 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Kenneth Lopez" , 
+    "deleted": false , 
+    "type": "type" , 
+    "include_database": "include_database" , 
+    "exclude_database": "exclude_database" , 
+    "include_schema": "include_schema" , 
+    "exclude_schema": "exclude_schema" , 
+    "include_table": "include_table" , 
+    "exclude_table": "exclude_table" , 
+    "include_view": "include_view" , 
+    "override_mode": "override_mode" , 
+    "scheduling": "scheduling" , 
+    "recent_runs_statuses": "recent_runs_statuses" , 
+    "retries": "retries" , 
+    "provider_id": "provider" , 
+}

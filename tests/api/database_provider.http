@@ -1,0 +1,52 @@
+### Tests for entity DatabaseProvider API ###
+@path = database-providers
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Servidor01" ,
+    "fully_qualified_name": "web-82.garcia.biz" ,
+    "display_name": "Servidor01" ,
+    "description": "Challenge manager data how." ,
+    "notes": "Gun former good enjoy." ,
+    "deleted": true ,
+    "version": "83.5.24" ,
+    "updated_at": "2025-02-21T10:46:30.268860" ,
+    "updated_by": "tester" ,
+    "configuration": "configuration" ,
+    "domain_id": "37f36652-0e4e-4014-8749-299550d3538a" ,
+    "layer_id": "ca518e23-870c-4f9f-b4c4-8829716f9ca8" ,
+    "provider_type_id": "postgres"
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Servidor01.uucp" ,
+    "fully_qualified_name": "web-82.garcia.uucp" ,
+    "display_name": "Servidor01" ,
+    "description": "Challenge manager data how." ,
+    "notes": "Gun former good enjoy." ,
+    "deleted": true ,
+    "version": "83.5.24" ,
+    "updated_at": "2025-02-21T10:46:30.268860" ,
+    "updated_by": "tester" ,
+    "configuration": "configuration" ,
+    "domain_id": "37f36652-0e4e-4014-8749-299550d3538a" ,
+    "layer_id": "ca518e23-870c-4f9f-b4c4-8829716f9ca8" ,
+    "provider_type_id": "postgres"
+}

@@ -1,0 +1,58 @@
+### Tests for entity AIModel API ###
+@path = ai-models
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Steven Crawford" , 
+    "fully_qualified_name": "srv-07.allen.info" , 
+    "display_name": "Daniel Winters" , 
+    "description": "Church later just court seem." , 
+    "notes": "Agency only become rule speak." , 
+    "deleted": true , 
+    "version": "9.56.17" , 
+    "updated_at": "2025-01-18T08:11:39.722921" , 
+    "updated_by": "tester" , 
+    "type": "type" , 
+    "algorithms": "algorithms" , 
+    "technologies": "technologies" , 
+    "server": "server" , 
+    "source": "source" , 
+    "domain_id": "domain" , 
+    "layer_id": "layer" , 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Kenneth Horton" , 
+    "fully_qualified_name": "desktop-45.molina.net" , 
+    "display_name": "Chase Warner" , 
+    "description": "I serve society." , 
+    "notes": "Product actually own walk establish." , 
+    "deleted": false , 
+    "version": "328.8.985" , 
+    "updated_at": "2025-03-01T02:27:13.385611" , 
+    "updated_by": "tester" , 
+    "type": "type" , 
+    "algorithms": "algorithms" , 
+    "technologies": "technologies" , 
+    "server": "server" , 
+    "source": "source" , 
+    "domain_id": "domain" , 
+    "layer_id": "layer" , 
+}

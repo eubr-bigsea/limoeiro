@@ -1,0 +1,13 @@
+### Tests for entity DatabaseProviderType API ###
+@path = database-provider-types
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+

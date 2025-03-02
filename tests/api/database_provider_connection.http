@@ -1,0 +1,38 @@
+### Tests for entity DatabaseProviderConnection API ###
+@path = connections
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "user_name": "user_name" , 
+    "password": "password" , 
+    "host": "host" , 
+    "port": "port" , 
+    "database": "database" , 
+    "extra_parameters": "extra_parameters" 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "user_name": "user_name" , 
+    "password": "password" , 
+    "host": "host" , 
+    "port": "port" , 
+    "database": "database" , 
+    "extra_parameters": "extra_parameters" 
+}

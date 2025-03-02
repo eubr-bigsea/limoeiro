@@ -1,0 +1,144 @@
+### Tests for entity DatabaseTable API ###
+@path = tables
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "customers" ,
+    "fully_qualified_name": "customers.mcpherson-schroeder.biz" ,
+    "display_name": "customers" ,
+    "description": "Sample table." ,
+    "notes": "Friend to evening." ,
+    "deleted": false ,
+    "version": "2.60.65" ,
+    "updated_at": "2025-01-19T00:39:09.235650" ,
+    "updated_by": "tester" ,
+    "type": "REGULAR" ,
+    "proxy_enabled": false,
+    "query": "query" ,
+    "cache_type": "memory",
+    "cache_ttl_in_seconds": 10,
+    "cache_validation": "cache_validation" ,
+    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50" ,
+    "database_schema_id": "732c6f06-6cf8-47a3-8095-98bc62eee6f8"
+
+}
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "products" ,
+    "fully_qualified_name": "products.mcpherson-schroeder.biz" ,
+    "display_name": "products" ,
+    "description": "Sample table." ,
+    "notes": "Sold products." ,
+    "deleted": false ,
+    "version": "2.60.65" ,
+    "updated_at": "2025-01-19T00:39:09.235650" ,
+    "updated_by": "tester" ,
+    "type": "REGULAR" ,
+    "proxy_enabled": false,
+    "query": "query" ,
+    "cache_type": "memory",
+    "cache_ttl_in_seconds": 10,
+    "cache_validation": "cache_validation" ,
+    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50" ,
+    "database_schema_id": "732c6f06-6cf8-47a3-8095-98bc62eee6f8",
+    "columns": [
+        {
+            "name": "id",
+            "data_type": "INT",
+            "display_name": "id",
+            "nullable": true,
+            "primary_key": true
+        }
+    ]
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "notes": "Test table"
+}
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "notes": "Test table",
+    "columns": [
+        {}
+    ]
+}
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "notes": "Test table",
+    "columns": [
+         {
+            "name": "id",
+            "data_type": "INT",
+            "display_name": "id",
+            "nullable": true,
+            "primary_key": true
+        }
+    ]
+}
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "notes": "Test table",
+    "columns": [
+         {
+            "name": "id",
+            "data_type": "INT",
+            "display_name": "id",
+            "nullable": false,
+            "primary_key": true
+        },
+         {
+            "name": "name",
+            "data_type": "VARCHAR",
+            "display_name": "name",
+            "nullable": false,
+            "primary_key": false
+        }
+    ]
+}
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "notes": "Test table",
+    "columns": [
+         {
+            "name": "id",
+            "data_type": "INT",
+            "display_name": "id",
+            "nullable": false,
+            "primary_key": true
+        },
+         {
+            "name": "qty",
+            "data_type": "INT",
+            "display_name": "qty",
+            "nullable": true,
+            "primary_key": false
+        }
+    ]
+}

@@ -1,0 +1,39 @@
+### Tests for entity Layer API ###
+@path = layers
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Raw" ,
+    "description": "Raw Layer." ,
+    "deleted": false
+}
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Dataset" ,
+    "description": "Dataset Layer." ,
+    "deleted": false
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Raw - New" ,
+    "description": "New Raw Layer." ,
+    "deleted": true
+}
