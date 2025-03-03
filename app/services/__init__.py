@@ -1,7 +1,7 @@
 from sqlalchemy import ScalarSelect, or_, select
 import typing
 
-from app.models import EntityTag, Tag
+from app.models import Tag
 from app.schemas import BaseQuerySchema
 from app.database import Base
 

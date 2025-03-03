@@ -99,7 +99,9 @@ class DatabaseProviderService(BaseService):
         """
         database_provider = await self._get(database_provider_id)
         if not database_provider:
-            raise ex.EntityNotFoundException("{cls_name}", database_provider_id)
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )
         if database_provider_data is not None:
             for key, value in database_provider_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -181,7 +183,7 @@ class DatabaseProviderService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_id: UUID
-    ) -> DatabaseProviderItemSchema:
+    ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Retrieve a DatabaseProvider instance by id.
         Args:
@@ -189,6 +191,10 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Found instance or None
         """
-        return DatabaseProviderItemSchema.model_validate(
-            await self._get(database_provider_id)
-        )
+        database_provider = await self._get(database_provider_id)
+        if database_provider:
+            return DatabaseProviderItemSchema.model_validate(database_provider)
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )

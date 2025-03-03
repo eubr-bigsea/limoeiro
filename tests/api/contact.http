@@ -1,0 +1,40 @@
+### Tests for entity Contact API ###
+@path = contacts
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Ana Julia Freitas" , 
+    "description": "Odit quae necessitatibus." , 
+    "deleted": false , 
+    "phone_number": "0300 260 7132" , 
+    "cell_phone_number": "+55 (088) 92759-5949" , 
+    "email": "maria-claracardoso@example.org" , 
+    "type": "type" 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Isabel Costela" , 
+    "description": "Autem minima quas." , 
+    "deleted": true , 
+    "phone_number": "41 8067 0538" , 
+    "cell_phone_number": "+55 21 96982 5254" , 
+    "email": "claricejesus@example.com" , 
+    "type": "type" 
+}

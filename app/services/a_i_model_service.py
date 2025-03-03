@@ -136,7 +136,7 @@ class AIModelService(BaseService):
         """
         a_i_model = await self._get(a_i_model_id)
         if not a_i_model:
-            raise ex.EntityNotFoundException("{cls_name}", a_i_model_id)
+            raise ex.EntityNotFoundException("AIModel", a_i_model_id)
         if a_i_model_data is not None:
             for key, value in a_i_model_data.model_dump(
                 exclude_unset=True,
@@ -247,7 +247,9 @@ class AIModelService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, a_i_model_id: UUID) -> AIModelItemSchema:
+    async def get(
+        self, a_i_model_id: UUID
+    ) -> typing.Optional[AIModelItemSchema]:
         """
         Retrieve a AIModel instance by id.
         Args:
@@ -255,4 +257,8 @@ class AIModelService(BaseService):
         Returns:
             AIModel: Found instance or None
         """
-        return AIModelItemSchema.model_validate(await self._get(a_i_model_id))
+        a_i_model = await self._get(a_i_model_id)
+        if a_i_model:
+            return AIModelItemSchema.model_validate(a_i_model)
+        else:
+            raise ex.EntityNotFoundException("AIModel", a_i_model_id)

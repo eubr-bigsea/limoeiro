@@ -5,7 +5,7 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "Russell Meyer" , 
+    "name": "Lunna da Rosa" , 
     "deleted": true , 
     "type": "type" , 
     "include_database": "include_database" , 
@@ -38,8 +38,8 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Kenneth Lopez" , 
-    "deleted": false , 
+    "name": "Jade Fonseca" , 
+    "deleted": true , 
     "type": "type" , 
     "include_database": "include_database" , 
     "exclude_database": "exclude_database" , 

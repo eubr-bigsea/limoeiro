@@ -10,7 +10,8 @@ POST {{host}}/{{path}} HTTP/1.1
     "host": "host" , 
     "port": "port" , 
     "database": "database" , 
-    "extra_parameters": "extra_parameters" 
+    "extra_parameters": "extra_parameters" , 
+    "provider_id": "provider" 
 
 }
 
@@ -34,5 +35,6 @@ PATCH {{host}}/{{path}}/{{id}}
     "host": "host" , 
     "port": "port" , 
     "database": "database" , 
-    "extra_parameters": "extra_parameters" 
+    "extra_parameters": "extra_parameters" , 
+    "provider_id": "provider" 
 }

@@ -120,6 +120,7 @@ async def get_database_provider(
     """
     Recupera uma instância da classe DatabaseProvider.
     """
+
     database_provider = await service.get(database_provider_id)
     if database_provider is None:
         raise HTTPException(status_code=404, detail="Item not found")

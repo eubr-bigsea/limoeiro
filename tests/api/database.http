@@ -5,19 +5,20 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "customers" ,
-    "fully_qualified_name": "customers.curry-barber.com" ,
-    "display_name": "Customers" ,
-    "description": "Back radio treatment give." ,
-    "notes": "Science season room tree between." ,
-    "deleted": false ,
-    "version": "947.693.807" ,
-    "updated_at": "2025-02-24T15:32:50.952903" ,
-    "updated_by": "tester" ,
-    "retention_period": "retention_period" ,
-    "domain_id": null ,
-    "layer_id": "ca518e23-870c-4f9f-b4c4-8829716f9ca8" ,
-    "provider_id": "2dc97fdc-7086-404a-90b9-1ab285f7645d"
+    "name": "Oliver Moreira" , 
+    "fully_qualified_name": "lt-95.costela.br" , 
+    "display_name": "Anna Liz Vieira" , 
+    "description": "Modi hic veniam deleniti." , 
+    "notes": "Aperiam accusamus in." , 
+    "deleted": true , 
+    "version": "15.1.7" , 
+    "updated_at": "2025-02-09T01:42:47.694268" , 
+    "updated_by": "tester" , 
+    "retention_period": "retention_period" , 
+    "domain_id": "domain" , 
+    "layer_id": "layer" , 
+    "provider_id": "provider" 
+
 }
 
 ###
@@ -35,19 +36,17 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "customers" ,
-    "fully_qualified_name": "customers.curry-barber.com" ,
-    "display_name": "Customers" ,
-    "description": "Back radio treatment give." ,
-    "notes": "Science season room tree between." ,
-    "deleted": false ,
-    "version": "947.693.807" ,
-    "updated_at": "2025-02-24T15:32:50.952903" ,
-    "updated_by": "tester" ,
-    "retention_period": "retention_period" ,
-    "domain_id": null ,
-    "layer_id": "ca518e23-870c-4f9f-b4c4-8829716f9ca8" ,
-    "provider_id": "2dc97fdc-7086-404a-90b9-1ab285f7645d"
-}
-
+    "name": "Lara Silveira" , 
+    "fully_qualified_name": "db-48.vasconcelos.br" , 
+    "display_name": "Theodoro da Cunha" , 
+    "description": "Eius officia assumenda ad." , 
+    "notes": "Mollitia nisi nesciunt maiores." , 
+    "deleted": false , 
+    "version": "714.572.307" , 
+    "updated_at": "2025-03-06T00:53:40.089592" , 
+    "updated_by": "tester" , 
+    "retention_period": "retention_period" , 
+    "domain_id": "domain" , 
+    "layer_id": "layer" , 
+    "provider_id": "provider" 
 }
