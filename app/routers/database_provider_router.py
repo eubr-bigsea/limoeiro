@@ -5,6 +5,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, HTTPException, Depends, status, Path
 
+from app.routers import get_lookup_filter
+
 from ..schemas import (
     PaginatedSchema,
     DatabaseProviderCreateSchema,
@@ -114,12 +116,13 @@ async def find_database_providers(
     response_model_exclude_none=False,
 )
 async def get_database_provider(
-    database_provider_id: UUID = Path(..., description="Identificador"),
+    database_provider_id = Depends(get_lookup_filter),
     service: DatabaseProviderService = Depends(_get_service),
 ) -> DatabaseProviderItemSchema:
     """
     Recupera uma instância da classe DatabaseProvider.
     """
+
     database_provider = await service.get(database_provider_id)
     if database_provider is None:
         raise HTTPException(status_code=404, detail="Item not found")

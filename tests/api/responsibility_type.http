@@ -5,9 +5,9 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "Brenda Cooper" , 
-    "description": "We imagine town theory." , 
-    "deleted": false 
+    "name": "Ravi Lucca Guerra" , 
+    "description": "Quia animi hic." , 
+    "deleted": true 
 
 }
 
@@ -26,7 +26,7 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Stacy Chavez" , 
-    "description": "Early happen bed major." , 
+    "name": "Isaac Sousa" , 
+    "description": "Eos porro optio nam ut dicta." , 
     "deleted": true 
 }

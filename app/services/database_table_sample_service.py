@@ -30,7 +30,7 @@ class DatabaseTableSampleService(BaseService):
     DatabaseTableSample entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseTableSample)
+        super().__init__(DatabaseTableSample, session)
         self.session = session
 
     async def _get(
@@ -105,7 +105,7 @@ class DatabaseTableSampleService(BaseService):
         database_table_sample = await self._get(database_table_sample_id)
         if not database_table_sample:
             raise ex.EntityNotFoundException(
-                "{cls_name}", database_table_sample_id
+                "DatabaseTableSample", database_table_sample_id
             )
         if database_table_sample_data is not None:
             for key, value in database_table_sample_data.model_dump(
@@ -173,7 +173,7 @@ class DatabaseTableSampleService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_table_sample_id: UUID
-    ) -> DatabaseTableSampleItemSchema:
+    ) -> typing.Optional[DatabaseTableSampleItemSchema]:
         """
         Retrieve a DatabaseTableSample instance by id.
         Args:
@@ -181,6 +181,12 @@ class DatabaseTableSampleService(BaseService):
         Returns:
             DatabaseTableSample: Found instance or None
         """
-        return DatabaseTableSampleItemSchema.model_validate(
-            await self._get(database_table_sample_id)
-        )
+        database_table_sample = await self._get(database_table_sample_id)
+        if database_table_sample:
+            return DatabaseTableSampleItemSchema.model_validate(
+                database_table_sample
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseTableSample", database_table_sample_id
+            )

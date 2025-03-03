@@ -1,0 +1,46 @@
+### Tests for entity Company API ###
+@path = companies
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Alexandre Gonçalves" , 
+    "description": "Libero dicta corrupti magni." , 
+    "deleted": false , 
+    "phone_number": "+55 11 0152-2511" , 
+    "cell_phone_number": "+55 (07) 9 7227 4558" , 
+    "email": "marcela44@example.com" , 
+    "organization": "organization" , 
+    "document": "75.238.496/0001-35" , 
+    "document_type": "document_type" , 
+    "contact_name": "Catarina Sousa" 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Vitor Gabriel Freitas" , 
+    "description": "Maiores nihil illo hic." , 
+    "deleted": false , 
+    "phone_number": "0300-712-6251" , 
+    "cell_phone_number": "+55 (022) 95570-6389" , 
+    "email": "diogo85@example.org" , 
+    "organization": "organization" , 
+    "document": "27.809.635/0001-90" , 
+    "document_type": "document_type" , 
+    "contact_name": "João Guilherme Pastor" 
+}

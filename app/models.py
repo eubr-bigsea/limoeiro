@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.types import UUID
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.schema import UniqueConstraint, PrimaryKeyConstraint
 
 
 def utc_now() -> datetime.datetime:
@@ -200,6 +200,154 @@ class ResponsibilityType(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
+class Contact(Base):
+    """Contato"""
+
+    __tablename__ = "tb_contact"
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    name = mapped_column(String(200), nullable=False)
+    description = mapped_column(String(8000))
+    deleted = mapped_column(
+        Boolean, default=False, nullable=False, server_default="False"
+    )
+    phone_number = mapped_column(String(40))
+    cell_phone_number = mapped_column(String(40))
+    email = mapped_column(String(250))
+    type = mapped_column(String(50), nullable=False)
+
+    __mapper_args__ = {
+        "polymorphic_identity": "contact",
+        "polymorphic_on": type,
+    }
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class Company(Contact):
+    """Empresa"""
+
+    __tablename__ = "tb_company"
+
+    # Fields
+    id = mapped_column(
+        ForeignKey("tb_contact.id"),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    organization = mapped_column(String(100))
+    document = mapped_column(String(100))
+    document_type = mapped_column(String(20), default="CNPJ")
+    contact_name = mapped_column(String(100))
+
+    __mapper_args__ = {
+        "polymorphic_identity": "company",
+        "inherit_condition": (id == Contact.id),
+    }
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class Person(Contact):
+    """Pessoa"""
+
+    __tablename__ = "tb_person"
+
+    # Fields
+    id = mapped_column(
+        ForeignKey("tb_contact.id"),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    organization = mapped_column(String(100))
+    document = mapped_column(String(100))
+    document_type = mapped_column(String(20), default="CPF")
+    company = mapped_column(String(200))
+
+    # Associations
+    user_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_user.id", name="fk_person_user_id"),
+        index=True,
+    )
+    user = relationship("User", foreign_keys=[user_id])
+
+    __mapper_args__ = {
+        "polymorphic_identity": "person",
+        "inherit_condition": (id == Contact.id),
+    }
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class Responsibility(Base):
+    """Responsabilidade"""
+
+    __tablename__ = "tb_responsibility"
+    __table_args__ = (
+        PrimaryKeyConstraint("asset_id", "contact_id", "type_id"),
+        UniqueConstraint(
+            "asset_id", "contact_id", "type_id", name="inx_uq_responsibility"
+        ),
+    )
+
+    # Fields
+
+    # Associations
+    contact_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_contact.id", name="fk_responsibility_contact_id"),
+        primary_key=True,
+        nullable=False,
+        index=True,
+    )
+    contact = relationship("Contact", foreign_keys=[contact_id])
+    type_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_responsibility_type.id", name="fk_responsibility_type_id"
+        ),
+        primary_key=True,
+        nullable=False,
+        index=True,
+    )
+    type = relationship("ResponsibilityType", foreign_keys=[type_id])
+    asset_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_asset.id", name="fk_responsibility_asset_id"),
+        primary_key=True,
+        nullable=False,
+        index=True,
+    )
+    asset = relationship("Asset", foreign_keys=[asset_id])
+
+    def __str__(self):
+        return str("Responsibility")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}>"
+
+
 class AssetLink(Base):
     """Link (url) para um ativo."""
 
@@ -296,6 +444,7 @@ class DatabaseProviderType(Base):
     )
     display_name = mapped_column(String(200), nullable=False)
     image = mapped_column(String(8000))
+    supports_schema = mapped_column(Boolean, default=True, nullable=False)
 
     def __str__(self):
         return str(self.display_name)
@@ -331,38 +480,35 @@ class Tag(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
-class EntityTag(Base):
-    """Tags associadas às entidades"""
+class AssetTag(Base):
+    """Tags associadas aos ativos"""
 
-    __tablename__ = "tb_entity_tag"
-    __table_args__ = (
-        UniqueConstraint("entity_type", "entity_id", name="inx_uq_entity_tag"),
-    )
+    __tablename__ = "tb_asset_tag"
+    __table_args__ = (PrimaryKeyConstraint("asset_id", "tag_id"),)
 
     # Fields
-    id = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        autoincrement=False,
-        default=uuid.uuid4,
-    )
-    entity_type = mapped_column(String(200), nullable=False)
-    entity_id = mapped_column(UUID(as_uuid=True), nullable=False)
 
     # Associations
-    tag_id = mapped_column(
+    asset_id = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("tb_tag.id", name="fk_entity_tag_tag_id"),
+        ForeignKey("tb_asset.id", name="fk_asset_tag_asset_id"),
         nullable=False,
         index=True,
     )
-    tag = relationship("Tag", foreign_keys=[tag_id])
+    asset = relationship("Asset", foreign_keys=[asset_id], lazy="joined")
+    tag_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tb_tag.id", name="fk_asset_tag_tag_id"),
+        nullable=False,
+        index=True,
+    )
+    tag = relationship("Tag", foreign_keys=[tag_id], lazy="joined")
 
     def __str__(self):
-        return str("")
+        return str("AssetTag")
 
     def __repr__(self):
-        return f"<Instance {self.__class__}: {self.id}>"
+        return f"<Instance {self.__class__}>"
 
 
 class Asset(Base):
@@ -406,23 +552,12 @@ class Asset(Base):
         index=True,
     )
     domain = relationship("Domain", foreign_keys=[domain_id], lazy="joined")
-
-    __mapper_args__ = {
-        "polymorphic_identity": "asset",
-        "polymorphic_on": asset_type,
-    }
     layer_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tb_layer.id", name="fk_asset_layer_id", ondelete="set null"),
         index=True,
     )
     layer = relationship("Layer", foreign_keys=[layer_id], lazy="joined")
-
-    __mapper_args__ = {
-        "polymorphic_identity": "asset",
-        "polymorphic_on": asset_type,
-    }
-    links = relationship("AssetLink", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "asset",
@@ -458,33 +593,12 @@ class DatabaseProvider(Asset):
             name="fk_database_provider_provider_type_id",
         ),
         nullable=False,
+        onupdate="CASCADE",
         index=True,
     )
     provider_type = relationship(
         "DatabaseProviderType", foreign_keys=[provider_type_id], lazy="joined"
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "provider",
-        "inherit_condition": (id == Asset.id),
-    }
-    connection_id = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey(
-            "tb_database_provider_connection.id",
-            name="fk_database_provider_connection_id",
-        ),
-        index=True,
-    )
-    connection = relationship(
-        "DatabaseProviderConnection", foreign_keys=[connection_id], lazy="raise"
-    )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "provider",
-        "inherit_condition": (id == Asset.id),
-    }
-    ingestions = relationship("DatabaseProviderIngestion", lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "provider",
@@ -516,6 +630,18 @@ class DatabaseProviderConnection(Base):
     port = mapped_column(Integer, nullable=False)
     database = mapped_column(String(200))
     extra_parameters = mapped_column(JSON)
+
+    # Associations
+    provider_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_database_provider.id",
+            name="fk_database_provider_connection_provider_id",
+        ),
+        nullable=False,
+        index=True,
+    )
+    provider = relationship("DatabaseProvider", foreign_keys=[provider_id])
 
     def __str__(self):
         return str("")
@@ -563,11 +689,7 @@ class DatabaseProviderIngestion(Base):
         nullable=False,
         index=True,
     )
-    provider = relationship(
-        "DatabaseProvider",
-        back_populates="ingestions",
-        foreign_keys=[provider_id],
-    )
+    provider = relationship("DatabaseProvider", foreign_keys=[provider_id])
     logs = relationship("DatabaseProviderIngestionLog", lazy="joined")
 
     def __str__(self):
@@ -721,27 +843,16 @@ class DatabaseTable(Asset):
     database = relationship(
         "Database", foreign_keys=[database_id], lazy="joined"
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "table",
-        "inherit_condition": (id == Asset.id),
-    }
     database_schema_id = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "tb_database_schema.id", name="fk_database_table_database_schema_id"
         ),
-        nullable=False,
         index=True,
     )
     database_schema = relationship(
         "DatabaseSchema", foreign_keys=[database_schema_id], lazy="joined"
     )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "table",
-        "inherit_condition": (id == Asset.id),
-    }
     columns = relationship("TableColumn", lazy="joined")
 
     __mapper_args__ = {
@@ -1053,7 +1164,7 @@ class TableRole(Base):
         return str("")
 
     def __repr__(self):
-        return f"<Instance {self.__class__}: {self.id}>"
+        return f"<Instance {self.__class__}>"
 
 
 class AIModel(Asset):
@@ -1076,17 +1187,7 @@ class AIModel(Asset):
 
     # Associations
     attributes = relationship("AIModelAttribute", lazy="joined")
-
-    __mapper_args__ = {
-        "polymorphic_identity": "model",
-        "inherit_condition": (id == Asset.id),
-    }
     hyper_parameters = relationship("AIModelHyperParameter", lazy="joined")
-
-    __mapper_args__ = {
-        "polymorphic_identity": "model",
-        "inherit_condition": (id == Asset.id),
-    }
     results = relationship("AIModelResult", lazy="joined")
 
     __mapper_args__ = {

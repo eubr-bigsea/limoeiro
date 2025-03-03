@@ -30,7 +30,7 @@ class LayerService(BaseService):
     Layer entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(Layer)
+        super().__init__(Layer, session)
         self.session = session
 
     async def _get(self, layer_id: UUID) -> typing.Optional[Layer]:
@@ -86,7 +86,7 @@ class LayerService(BaseService):
         """
         layer = await self._get(layer_id)
         if not layer:
-            raise ex.EntityNotFoundException("{cls_name}", layer_id)
+            raise ex.EntityNotFoundException("Layer", layer_id)
         if layer_data is not None:
             for key, value in layer_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -158,7 +158,7 @@ class LayerService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, layer_id: UUID) -> LayerItemSchema:
+    async def get(self, layer_id: UUID) -> typing.Optional[LayerItemSchema]:
         """
         Retrieve a Layer instance by id.
         Args:
@@ -166,4 +166,8 @@ class LayerService(BaseService):
         Returns:
             Layer: Found instance or None
         """
-        return LayerItemSchema.model_validate(await self._get(layer_id))
+        layer = await self._get(layer_id)
+        if layer:
+            return LayerItemSchema.model_validate(layer)
+        else:
+            raise ex.EntityNotFoundException("Layer", layer_id)

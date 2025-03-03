@@ -31,16 +31,21 @@ class DatabaseProviderService(BaseService):
     DatabaseProvider entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseProvider)
+        super().__init__(DatabaseProvider, session)
         self.session = session
 
     async def _get(
-        self, database_provider_id: UUID
+        self, database_provider_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseProvider]:
+        filter_by_key = (
+            DatabaseProvider.id == database_provider_id
+            if isinstance(database_provider_id, UUID)
+            else DatabaseProvider.fully_qualified_name == database_provider_id
+        )
         result = await self.session.execute(
             select(DatabaseProvider)
             .options(selectinload(DatabaseProvider.provider_type))
-            .filter(DatabaseProvider.id == database_provider_id)
+            .filter(filter_by_key)
         )
         return result.scalars().first()
 
@@ -99,7 +104,9 @@ class DatabaseProviderService(BaseService):
         """
         database_provider = await self._get(database_provider_id)
         if not database_provider:
-            raise ex.EntityNotFoundException("{cls_name}", database_provider_id)
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )
         if database_provider_data is not None:
             for key, value in database_provider_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -180,8 +187,8 @@ class DatabaseProviderService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_id: UUID
-    ) -> DatabaseProviderItemSchema:
+        self, database_provider_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Retrieve a DatabaseProvider instance by id.
         Args:
@@ -189,6 +196,10 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Found instance or None
         """
-        return DatabaseProviderItemSchema.model_validate(
-            await self._get(database_provider_id)
-        )
+        database_provider = await self._get(database_provider_id)
+        if database_provider:
+            return DatabaseProviderItemSchema.model_validate(database_provider)
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )

@@ -31,7 +31,7 @@ class DatabaseSchemaService(BaseService):
     DatabaseSchema entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseSchema)
+        super().__init__(DatabaseSchema, session)
         self.session = session
 
     async def _get(
@@ -99,7 +99,9 @@ class DatabaseSchemaService(BaseService):
         """
         database_schema = await self._get(database_schema_id)
         if not database_schema:
-            raise ex.EntityNotFoundException("{cls_name}", database_schema_id)
+            raise ex.EntityNotFoundException(
+                "DatabaseSchema", database_schema_id
+            )
         if database_schema_data is not None:
             for key, value in database_schema_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -176,7 +178,9 @@ class DatabaseSchemaService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_schema_id: UUID) -> DatabaseSchemaItemSchema:
+    async def get(
+        self, database_schema_id: UUID
+    ) -> typing.Optional[DatabaseSchemaItemSchema]:
         """
         Retrieve a DatabaseSchema instance by id.
         Args:
@@ -184,6 +188,10 @@ class DatabaseSchemaService(BaseService):
         Returns:
             DatabaseSchema: Found instance or None
         """
-        return DatabaseSchemaItemSchema.model_validate(
-            await self._get(database_schema_id)
-        )
+        database_schema = await self._get(database_schema_id)
+        if database_schema:
+            return DatabaseSchemaItemSchema.model_validate(database_schema)
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseSchema", database_schema_id
+            )

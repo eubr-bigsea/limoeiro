@@ -27,10 +27,15 @@ GET {{host}}/{{path}}
 
 ###
 @id = {{list.response.body.items.$[0].id}}
+
 DELETE {{host}}/{{path}}/{{id}}
 
 ###
 GET {{host}}/{{path}}/{{id}}
+
+###
+@fqn = {{list.response.body.items.$[0].fully_qualified_name}}
+GET {{host}}/{{path}}/{{fqn}}
 
 ###
 PATCH {{host}}/{{path}}/{{id}}

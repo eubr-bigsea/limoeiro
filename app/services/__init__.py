@@ -1,16 +1,21 @@
-from sqlalchemy import ScalarSelect, or_, select
 import typing
 
-from app.models import EntityTag, Tag
-from app.schemas import BaseQuerySchema
+from sqlalchemy import ScalarSelect, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import Base
+from app.models import Tag
+from app.schemas import BaseQuerySchema
 
 T = typing.TypeVar('T', bound='Base')
 
 class BaseService:
-    def __init__(self, entity_type):
+    def __init__(self, entity_type, session: AsyncSession):
         self.entity_type = entity_type
+        self.session = session
 
+    def get_by(self, field, value):
+        ...
     def get_filters(
         self,
         cls: typing.Type[T],

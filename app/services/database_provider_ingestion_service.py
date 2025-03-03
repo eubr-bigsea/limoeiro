@@ -31,7 +31,7 @@ class DatabaseProviderIngestionService(BaseService):
     DatabaseProviderIngestion entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseProviderIngestion)
+        super().__init__(DatabaseProviderIngestion, session)
         self.session = session
 
     async def _get(
@@ -114,7 +114,7 @@ class DatabaseProviderIngestionService(BaseService):
         )
         if not database_provider_ingestion:
             raise ex.EntityNotFoundException(
-                "{cls_name}", database_provider_ingestion_id
+                "DatabaseProviderIngestion", database_provider_ingestion_id
             )
         if database_provider_ingestion_data is not None:
             for key, value in database_provider_ingestion_data.model_dump(
@@ -194,7 +194,7 @@ class DatabaseProviderIngestionService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_ingestion_id: UUID
-    ) -> DatabaseProviderIngestionItemSchema:
+    ) -> typing.Optional[DatabaseProviderIngestionItemSchema]:
         """
         Retrieve a DatabaseProviderIngestion instance by id.
         Args:
@@ -202,6 +202,14 @@ class DatabaseProviderIngestionService(BaseService):
         Returns:
             DatabaseProviderIngestion: Found instance or None
         """
-        return DatabaseProviderIngestionItemSchema.model_validate(
-            await self._get(database_provider_ingestion_id)
+        database_provider_ingestion = await self._get(
+            database_provider_ingestion_id
         )
+        if database_provider_ingestion:
+            return DatabaseProviderIngestionItemSchema.model_validate(
+                database_provider_ingestion
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProviderIngestion", database_provider_ingestion_id
+            )

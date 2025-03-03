@@ -31,7 +31,7 @@ class DatabaseService(BaseService):
     Database entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(Database)
+        super().__init__(Database, session)
         self.session = session
 
     async def _get(self, database_id: UUID) -> typing.Optional[Database]:
@@ -95,7 +95,7 @@ class DatabaseService(BaseService):
         """
         database = await self._get(database_id)
         if not database:
-            raise ex.EntityNotFoundException("{cls_name}", database_id)
+            raise ex.EntityNotFoundException("Database", database_id)
         if database_data is not None:
             for key, value in database_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -172,7 +172,9 @@ class DatabaseService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_id: UUID) -> DatabaseItemSchema:
+    async def get(
+        self, database_id: UUID
+    ) -> typing.Optional[DatabaseItemSchema]:
         """
         Retrieve a Database instance by id.
         Args:
@@ -180,4 +182,8 @@ class DatabaseService(BaseService):
         Returns:
             Database: Found instance or None
         """
-        return DatabaseItemSchema.model_validate(await self._get(database_id))
+        database = await self._get(database_id)
+        if database:
+            return DatabaseItemSchema.model_validate(database)
+        else:
+            raise ex.EntityNotFoundException("Database", database_id)

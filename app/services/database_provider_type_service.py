@@ -3,6 +3,7 @@ import math
 import typing
 from sqlalchemy import asc, desc, func
 
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -26,7 +27,7 @@ class DatabaseProviderTypeService(BaseService):
     DatabaseProviderType entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseProviderType)
+        super().__init__(DatabaseProviderType, session)
         self.session = session
 
     async def _get(
@@ -42,7 +43,7 @@ class DatabaseProviderTypeService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_type_id: int
-    ) -> DatabaseProviderTypeItemSchema:
+    ) -> typing.Optional[DatabaseProviderTypeItemSchema]:
         """
         Retrieve a DatabaseProviderType instance by id.
         Args:
@@ -50,9 +51,15 @@ class DatabaseProviderTypeService(BaseService):
         Returns:
             DatabaseProviderType: Found instance or None
         """
-        return DatabaseProviderTypeItemSchema.model_validate(
-            await self._get(database_provider_type_id)
-        )
+        database_provider_type = await self._get(database_provider_type_id)
+        if database_provider_type:
+            return DatabaseProviderTypeItemSchema.model_validate(
+                database_provider_type
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProviderType", database_provider_type_id
+            )
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(

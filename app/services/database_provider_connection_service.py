@@ -7,6 +7,7 @@ from sqlalchemy import asc, desc, and_, func
 import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 
 from ..schemas import (
@@ -30,14 +31,16 @@ class DatabaseProviderConnectionService(BaseService):
     DatabaseProviderConnection entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseProviderConnection)
+        super().__init__(DatabaseProviderConnection, session)
         self.session = session
 
     async def _get(
         self, database_provider_connection_id: UUID
     ) -> typing.Optional[DatabaseProviderConnection]:
         result = await self.session.execute(
-            select(DatabaseProviderConnection).filter(
+            select(DatabaseProviderConnection)
+            .options(selectinload(DatabaseProviderConnection.provider))
+            .filter(
                 DatabaseProviderConnection.id == database_provider_connection_id
             )
         )
@@ -110,7 +113,7 @@ class DatabaseProviderConnectionService(BaseService):
         )
         if not database_provider_connection:
             raise ex.EntityNotFoundException(
-                "{cls_name}", database_provider_connection_id
+                "DatabaseProviderConnection", database_provider_connection_id
             )
         if database_provider_connection_data is not None:
             for key, value in database_provider_connection_data.model_dump(
@@ -192,7 +195,7 @@ class DatabaseProviderConnectionService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_provider_connection_id: UUID
-    ) -> DatabaseProviderConnectionItemSchema:
+    ) -> typing.Optional[DatabaseProviderConnectionItemSchema]:
         """
         Retrieve a DatabaseProviderConnection instance by id.
         Args:
@@ -200,6 +203,14 @@ class DatabaseProviderConnectionService(BaseService):
         Returns:
             DatabaseProviderConnection: Found instance or None
         """
-        return DatabaseProviderConnectionItemSchema.model_validate(
-            await self._get(database_provider_connection_id)
+        database_provider_connection = await self._get(
+            database_provider_connection_id
         )
+        if database_provider_connection:
+            return DatabaseProviderConnectionItemSchema.model_validate(
+                database_provider_connection
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProviderConnection", database_provider_connection_id
+            )

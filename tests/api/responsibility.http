@@ -1,0 +1,34 @@
+### Tests for entity Responsibility API ###
+@path = responsibilities
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "since": "2025-01-14T21:31:12.674065" , 
+    "contact_id": "contact" , 
+    "type_id": "type" , 
+    "asset_id": "asset" 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "since": "2025-02-16T10:48:28.368397" , 
+    "contact_id": "contact" , 
+    "type_id": "type" , 
+    "asset_id": "asset" 
+}
