@@ -563,6 +563,7 @@ class DatabaseProviderCreateSchema(AssetCreateSchema, DatabaseProviderBaseModel)
     provider_type_id: str
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionCreateSchema"]] = None
+    cron_expression: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -578,6 +579,7 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
     provider_type_id: Optional[str] = None
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionUpdateSchema"]] = None
+    cron_expression: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -594,6 +596,7 @@ class DatabaseProviderItemSchema(AssetItemSchema, DatabaseProviderBaseModel):
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionItemSchema"]] = None
+    cron_expression: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -605,7 +608,8 @@ class DatabaseProviderListSchema(AssetListSchema, DatabaseProviderBaseModel):
 
     # Associations
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
-
+    connection_id: Optional[UUID] = None
+    cron_expression: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 

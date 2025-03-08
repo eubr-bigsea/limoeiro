@@ -12,6 +12,7 @@ from app.routers import (
     database_table_router,
     layer_router,
     tag_router,
+    collector_router,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import domain_router
@@ -20,7 +21,22 @@ from .utils.middlewares import add_middlewares
 from sqlalchemy.exc import IntegrityError
 from fastapi import Request
 
+from apscheduler.schedulers.background import BackgroundScheduler  # runs tasks in the background
+from apscheduler.triggers.cron import CronTrigger  # allows us to specify a recurring time for execution
+from app.collector.data_collection_engine import DataCollectionEngine
+
 load_dotenv()
+
+# The task to run
+def daily_task():
+    DataCollectionEngine().execute_engine
+
+# Set up the scheduler
+scheduler = BackgroundScheduler()
+trigger = CronTrigger(hour=1, minute=0)
+scheduler.add_job(daily_task, trigger)
+scheduler.start()
+
 
 app = FastAPI(
     title="Limoeiro API",
@@ -64,6 +80,7 @@ routers = [
     database_table_router.router,
     layer_router.router,
     tag_router.router,
+    collector_router.router,
 ]
 for router in routers:
     app.include_router(router)

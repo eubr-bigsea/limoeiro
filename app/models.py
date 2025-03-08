@@ -449,6 +449,7 @@ class DatabaseProvider(Asset):
         default=uuid.uuid4,
     )
     configuration = mapped_column(JSON)
+    cron_expression = mapped_column(String(100))
 
     # Associations
     provider_type_id = mapped_column(

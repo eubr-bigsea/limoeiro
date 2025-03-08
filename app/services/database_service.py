@@ -42,6 +42,14 @@ class DatabaseService(BaseService):
         )
         return result.scalars().first()
 
+    async def _get_by_fully_qualified_name(self, fully_qualified_name: str) -> typing.Optional[Database]:
+        result = await self.session.execute(
+            select(Database)
+            .options(selectinload(Database.provider))
+            .filter(Database.fully_qualified_name == fully_qualified_name)
+        )
+        return result.scalars().first()
+
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, database_data: DatabaseCreateSchema
@@ -181,3 +189,20 @@ class DatabaseService(BaseService):
             Database: Found instance or None
         """
         return DatabaseItemSchema.model_validate(await self._get(database_id))
+
+
+    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
+    async def get_by_fully_qualified_name(self, fully_qualified_name: str) -> DatabaseItemSchema:
+        """
+        Retrieve a Database instance by fully_qualified_name.
+        Args:
+            fully_qualified_name: The fully_qualified_name of the Database instance to retrieve.
+        Returns:
+            Database: Found instance or None
+        """
+
+        result = await self._get_by_fully_qualified_name(fully_qualified_name)
+        if result is not None:
+            result = DatabaseItemSchema.model_validate(result)
+        return result		
+
