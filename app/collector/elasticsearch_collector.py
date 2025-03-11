@@ -46,7 +46,7 @@ class ElasticsearchCollector(Collector):
 
                 column_type = idx_fields[field]['type']
 
-                generic_table.add_column(GenericColumn(field, column_type))
+                generic_table.add_column(GenericColumn(field, column_type, false, false, false))
             
             generic_table_list.append(generic_table)
         

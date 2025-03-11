@@ -44,8 +44,9 @@ class SqlAlchemyCollector(Collector):
         for table in table_list:
             
             generic_table = GenericTable(table)
-            for column_obj in table_list[table].columns:
-                generic_table.add_column(GenericColumn(column_obj.name, column_obj.type))
+            for column in table_list[table].columns:
+                unique = column.unique if column.unique else False
+                generic_table.add_column(GenericColumn(column.name, column.type, column.primary_key, column.nullable, unique))
             
             generic_table_list.append(generic_table)
         

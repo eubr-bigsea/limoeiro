@@ -2,6 +2,8 @@
 from app.collector.druid_collector import DruidCollector
 from app.collector.hive_collector import HiveCollector
 from app.collector.postgre_sql_collector import PostgreSqlCollector
+from app.collector.elasticsearch_collector import ElasticsearchCollector
+
 from app.collector.utils.request_utils import (
     get_request
 )
@@ -28,6 +30,9 @@ class CollectorFactory:
 
         elif p_type_name == "DRUID":
             return DruidCollector(user, password, host, port)
+        
+        elif p_type_name == "ELASTICSEARCH":
+            return ElasticsearchCollector(user, password, host, port)
 
         else:
             raise ValueError(f"The collector for the <{p_type_name}> provider type is not supported.")

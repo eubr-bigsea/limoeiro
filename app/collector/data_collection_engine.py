@@ -101,7 +101,7 @@ class DataCollectionEngine():
 
             primary_key = column_obj.primary_key
             nullable    = column_obj.nullable
-            unique      = column_obj.unique if column_obj.unique else False
+            unique      = column_obj.unique
             is_metadata = 'metadata_' in column_name
             columns.append(
                 {

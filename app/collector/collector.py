@@ -2,9 +2,12 @@
 from abc import ABC, abstractmethod
 
 class GenericColumn:
-    def __init__(self, name: str, type: str):
-        self.name = name
-        self.type = type
+    def __init__(self, name: str, type: str, primary_key: bool, nullable: bool, unique: bool):
+        self.name        = name
+        self.type        = type
+        self.primary_key = primary_key
+        self.nullable    = nullable
+        self.unique      = unique
 
 class GenericTable:
     def __init__(self, name: str):
