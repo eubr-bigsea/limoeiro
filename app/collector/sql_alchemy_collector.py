@@ -30,8 +30,7 @@ class SqlAlchemyCollector(Collector):
         insp = db.inspect(engine)
         schema_list = insp.get_schema_names()
         engine.dispose()
-        #return schema_list
-        return ['trilhas']
+        return schema_list
 
     def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
     # Return all tables in a database provider using SqlAlchemy.
