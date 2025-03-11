@@ -1,13 +1,15 @@
 
 from app.collector.druid_collector import DruidCollector
 from app.collector.hive_collector import HiveCollector
-from app.collector.postgre_sql_collector import PostgreSqlCollector
+from app.collector.postgres_collector import PostgresCollector
 from app.collector.elasticsearch_collector import ElasticsearchCollector
 
 from app.collector.utils.request_utils import (
     get_request
 )
 import app.collector.utils.constants_utils as constants
+from app.models import DatabaseProviderTypeDisplayName
+
 
 class CollectorFactory:
 # Class to create a collector based on database provider.
@@ -22,16 +24,16 @@ class CollectorFactory:
         host = connection["host"]
         port = connection["port"]
 
-        if p_type_name == "HIVE":
+        if p_type_name == DatabaseProviderTypeDisplayName.HIVE.value:
             return HiveCollector(user, password, host, port)
 
-        elif p_type_name == "POSTGRESQL":
-            return PostgreSqlCollector(user, password, host, port)
+        elif p_type_name == DatabaseProviderTypeDisplayName.POSTGRES.value:
+            return PostgresCollector(user, password, host, port)
 
-        elif p_type_name == "DRUID":
+        elif p_type_name == DatabaseProviderTypeDisplayName.DRUID.value:
             return DruidCollector(user, password, host, port)
         
-        elif p_type_name == "ELASTICSEARCH":
+        elif p_type_name == DatabaseProviderTypeDisplayName.ELASTICSEARCH.value:
             return ElasticsearchCollector(user, password, host, port)
 
         else:

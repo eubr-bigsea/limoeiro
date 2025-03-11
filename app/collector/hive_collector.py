@@ -1,4 +1,4 @@
-
+from typing import List
 from sqlalchemy.engine import create_engine
 import sqlalchemy as db
 
@@ -12,13 +12,13 @@ class HiveCollector(SqlAlchemyCollector):
         database_list = ['default']
         return database_list
 
-    def get_connection_engine_for_schemas(self, database_name):
+    def get_connection_engine_for_schemas(self, database_name: str):
     # Return the connection engine to get the schemas.
         connection = f"hive://{self.user}:{self.password}@{self.host}:{self.port}"
         engine = create_engine(connection, connect_args={'auth': 'LDAP'})
         return engine
 
-    def get_connection_engine_for_tables(self, database_name, schema_name):
+    def get_connection_engine_for_tables(self, database_name: str, schema_name: str):
     # Return the connection engine to get the tables.
         connection =  f"hive://{self.user}:{self.password}@{self.host}:{self.port}/{schema_name}"
         engine = create_engine(connection, connect_args={'auth': 'LDAP'})

@@ -20,13 +20,10 @@ from app.collector.data_collection_diff_checker import DataCollectionDiffChecker
 
 import os
 
-
 class DataCollectionEngine():
 # Class to implement the collection data engine.
 
-    def __init__(self, config_file_path: str):
-        self.config_file_path = config_file_path
-
+    def __init__(self):
         self.log = DataCollectionLogging()
         self.diff = DataCollectionDiffChecker(self.log)
 
@@ -65,7 +62,7 @@ class DataCollectionEngine():
           "provider_id": provider['id']
         }
 
-        self.log.log_obj_collecting('database', dabase_name)
+        self.log.log_obj_collecting('database', database_name)
         return self._process_object(constants.DATABASE_ROUTE, f_q_name, new_dict)
 
     def _process_schema (self, schema_name, domain, layer, provider, database):
@@ -129,13 +126,13 @@ class DataCollectionEngine():
           "columns": columns
         }
 
-        self.log.log_obj_collecting('table', table_name)
+        self.log.log_obj_collecting('table', generic_table.name)
         return self._process_object(constants.TABLE_ROUTE, f_q_name, new_dict)
 
     def _get_providers(self, page):
     # Load the database providers.
         dict_param = {"page":page, "page_size":20}
-        _, result = get_request(constants.PROVIDER_ROUTE, dict_param=dict_param)
+        _, result = get_request(constants.PROVIDER_ROUTE, None, dict_param=dict_param)
         return result["items"], result["page"], result["page_count"]
 
     def _execute_collection(self, provider):
@@ -167,30 +164,30 @@ class DataCollectionEngine():
 
                 # Get the tables of the schema.
                 table_list = collector.get_tables(dabase_name, schema_name)
+
                 # Iterate all tables.
                 for generic_table in table_list:
 
                     # Process the object table.
                     table = self._process_table(generic_table, domain, layer, provider, database, schema)
-    
+
     def execute_engine(self):
     # Execute the collection data engine.
-        current_page = 1
+        current_page = 0
         page_count = None
         
         # Iter until last page.
         while (current_page != page_count):
-
             # Get all database providers with pagination.
-            providers, page, page_count = self._get_providers(current_page)
             current_page += 1
-
+            providers, page, page_count = self._get_providers(current_page)
+            
             # Iterate the database providers.
-            for provider in providers:
-
+            for p in providers:
+                cron_expression = p['cron_expression'] if 'cron_expression' in p else None
                 # Check if the cron expression should be executed today.
-                if check_if_cron_is_today(provider['cron_expression']):
-                    self._execute_collection(provider)
+                if check_if_cron_is_today(cron_expression):
+                    self._execute_collection(p)
                 else:
                 # If not, skip to the next iteration.
-                    self.log.log_provider_skipped(provider['name'])
+                    self.log.log_provider_skipped(p['display_name'])

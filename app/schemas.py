@@ -607,6 +607,7 @@ class DatabaseProviderListSchema(AssetListSchema, DatabaseProviderBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
     connection_id: Optional[UUID] = None
     cron_expression: Optional[str] = None

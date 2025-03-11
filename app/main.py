@@ -29,7 +29,7 @@ load_dotenv()
 
 # The task to run
 def daily_task():
-    DataCollectionEngine().execute_engine
+    DataCollectionEngine().execute_engine()
 
 # Set up the scheduler
 scheduler = BackgroundScheduler()

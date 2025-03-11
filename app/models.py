@@ -143,15 +143,15 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
-class DatabaseProviderType(str, enum.Enum):
+class DatabaseProviderTypeDisplayName(str, enum.Enum):
     HIVE = "HIVE"
-    POSTGRESQL = "POSTGRESQL"
+    POSTGRES = "POSTGRES"
     DRUID = "DRUID"       
     ELASTICSEARCH = "ELASTICSEARCH"
 
     @staticmethod
     def values():
-        return [item.value for item in LinkType]
+        return [item.value for item in DatabaseProviderType]
 
 # Model classes
 

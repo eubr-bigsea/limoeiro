@@ -1,4 +1,4 @@
-
+from typing import List
 from abc import ABC, abstractmethod
 
 class GenericColumn:
@@ -28,12 +28,12 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    def get_schemas(self, database_name) -> List[str]:
+    def get_schemas(self, database_name: str) -> List[str]:
     # Return all schemas in a database provider.
         pass
 
     @abstractmethod
-    def get_tables(self, database_name, schema_name) -> List[GenericTable]:
+    def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
     # Return all tables in a database provider.
         pass
 

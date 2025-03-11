@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import List
 import sqlalchemy as db
 
 from app.collector.collector import (Collector, GenericTable, GenericColumn)
@@ -19,13 +20,13 @@ class ElasticsearchCollector(Collector):
         database_list = ['default']
         return database_list
 
-    def get_schemas(self, database_name) -> List[str]:
+    def get_schemas(self, database_name: str) -> List[str]:
     # Return just the Default value.
 
         database_list = ['default']
         return database_list
 
-    def get_tables(self, database_name, schema_name) -> List[GenericTable]:
+    def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
     # Return all tables in a database provider.
 
         es = Elasticsearch(self.host,
