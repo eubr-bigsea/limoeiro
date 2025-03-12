@@ -120,3 +120,24 @@ async def get_database(
     if database is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database
+
+@router.get(
+    "/databases/fully_qualified_name/{fully_qualified_name}",
+    tags=["Database"],
+    response_model=DatabaseItemSchema,
+    response_model_exclude_none=False,
+)
+async def get_database_by_fully_qualified_name(
+    fully_qualified_name: str = Path(..., description="Fully qualified name"),
+    service: DatabaseService = Depends(_get_service),
+) -> DatabaseItemSchema:
+    """
+    Recupera uma instância da classe Database.
+    """
+
+    database = await service.get_by_fully_qualified_name(fully_qualified_name)
+    if database is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return database
+
+

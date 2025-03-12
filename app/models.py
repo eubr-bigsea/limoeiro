@@ -143,6 +143,16 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
+class DatabaseProviderTypeDisplayName(str, enum.Enum):
+    HIVE = "HIVE"
+    POSTGRES = "POSTGRES"
+    DRUID = "DRUID"       
+    ELASTICSEARCH = "ELASTICSEARCH"
+
+    @staticmethod
+    def values():
+        return [item.value for item in DatabaseProviderType]
+
 # Model classes
 
 
@@ -449,6 +459,7 @@ class DatabaseProvider(Asset):
         default=uuid.uuid4,
     )
     configuration = mapped_column(JSON)
+    cron_expression = mapped_column(String(100))
 
     # Associations
     provider_type_id = mapped_column(
