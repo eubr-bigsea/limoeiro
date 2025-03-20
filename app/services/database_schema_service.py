@@ -34,16 +34,6 @@ class DatabaseSchemaService(BaseService):
         super().__init__(DatabaseSchema, session)
         self.session = session
 
-    async def _get(
-        self, database_schema_id: UUID
-    ) -> typing.Optional[DatabaseSchema]:
-        result = await self.session.execute(
-            select(DatabaseSchema)
-            .options(selectinload(DatabaseSchema.database))
-            .filter(DatabaseSchema.id == database_schema_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, database_schema_data: DatabaseSchemaCreateSchema
@@ -66,7 +56,7 @@ class DatabaseSchemaService(BaseService):
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
-        self, database_schema_id: UUID
+        self, database_schema_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseSchemaItemSchema]:
         """
         Delete DatabaseSchema instance.
@@ -85,7 +75,7 @@ class DatabaseSchemaService(BaseService):
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
-        database_schema_id: UUID,
+        database_schema_id: typing.Union[UUID, str],
         database_schema_data: typing.Optional[DatabaseSchemaUpdateSchema],
     ) -> DatabaseSchemaItemSchema:
         """
@@ -153,8 +143,7 @@ class DatabaseSchemaService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseSchema, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -179,7 +168,7 @@ class DatabaseSchemaService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_schema_id: UUID
+        self, database_schema_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseSchemaItemSchema]:
         """
         Retrieve a DatabaseSchema instance by id.
@@ -195,3 +184,18 @@ class DatabaseSchemaService(BaseService):
             raise ex.EntityNotFoundException(
                 "DatabaseSchema", database_schema_id
             )
+
+    async def _get(
+        self, database_schema_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseSchema]:
+        filter_condition = (
+            DatabaseSchema.id == database_schema_id
+            if isinstance(database_schema_id, UUID)
+            else DatabaseSchema.fully_qualified_name == database_schema_id
+        )
+        result = await self.session.execute(
+            select(DatabaseSchema)
+            .options(selectinload(DatabaseSchema.database))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

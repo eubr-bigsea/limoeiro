@@ -49,12 +49,12 @@ async def add_database_table_sample(
 
 
 @router.delete(
-    "/samples/{database_table_sample_id}",
+    "/samples/{entity_id}",
     tags=["DatabaseTableSample"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_samples(
-    database_table_sample_id: UUID,
+    database_table_sample_id: UUID = Path(..., description="Identificador"),
     service: DatabaseTableSampleService = Depends(_get_service),
 ):
     """
@@ -65,7 +65,7 @@ async def delete_samples(
 
 
 @router.patch(
-    "/samples/{database_table_sample_id}",
+    "/samples/{entity_id}",
     tags=["DatabaseTableSample"],
     response_model=DatabaseTableSampleItemSchema,
     response_model_exclude_none=True,
@@ -109,7 +109,7 @@ async def find_samples(
 
 
 @router.get(
-    "/samples/{database_table_sample_id}",
+    "/samples/{entity_id}",
     tags=["DatabaseTableSample"],
     response_model=DatabaseTableSampleItemSchema,
     response_model_exclude_none=False,

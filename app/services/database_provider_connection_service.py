@@ -34,18 +34,6 @@ class DatabaseProviderConnectionService(BaseService):
         super().__init__(DatabaseProviderConnection, session)
         self.session = session
 
-    async def _get(
-        self, database_provider_connection_id: UUID
-    ) -> typing.Optional[DatabaseProviderConnection]:
-        result = await self.session.execute(
-            select(DatabaseProviderConnection)
-            .options(selectinload(DatabaseProviderConnection.provider))
-            .filter(
-                DatabaseProviderConnection.id == database_provider_connection_id
-            )
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self,
@@ -163,8 +151,7 @@ class DatabaseProviderConnectionService(BaseService):
                     getattr(DatabaseProviderConnection, query_options.sort_by)
                 )
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -214,3 +201,16 @@ class DatabaseProviderConnectionService(BaseService):
             raise ex.EntityNotFoundException(
                 "DatabaseProviderConnection", database_provider_connection_id
             )
+
+    async def _get(
+        self, database_provider_connection_id: UUID
+    ) -> typing.Optional[DatabaseProviderConnection]:
+        filter_condition = (
+            DatabaseProviderConnection.id == database_provider_connection_id
+        )
+        result = await self.session.execute(
+            select(DatabaseProviderConnection)
+            .options(selectinload(DatabaseProviderConnection.provider))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

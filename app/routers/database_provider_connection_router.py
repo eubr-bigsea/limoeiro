@@ -48,12 +48,14 @@ async def add_database_provider_connection(
 
 
 @router.delete(
-    "/connections/{database_provider_connection_id}",
+    "/connections/{entity_id}",
     tags=["DatabaseProviderConnection"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_connections(
-    database_provider_connection_id: UUID,
+    database_provider_connection_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseProviderConnectionService = Depends(_get_service),
 ):
     """
@@ -64,7 +66,7 @@ async def delete_connections(
 
 
 @router.patch(
-    "/connections/{database_provider_connection_id}",
+    "/connections/{entity_id}",
     tags=["DatabaseProviderConnection"],
     response_model=DatabaseProviderConnectionItemSchema,
     response_model_exclude_none=True,
@@ -106,7 +108,7 @@ async def find_connections(
 
 
 @router.get(
-    "/connections/{database_provider_connection_id}",
+    "/connections/{entity_id}",
     tags=["DatabaseProviderConnection"],
     response_model=DatabaseProviderConnectionItemSchema,
     response_model_exclude_none=False,

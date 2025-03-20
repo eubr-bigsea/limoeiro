@@ -33,12 +33,6 @@ class ContactService(BaseService):
         super().__init__(Contact, session)
         self.session = session
 
-    async def _get(self, contact_id: UUID) -> typing.Optional[Contact]:
-        result = await self.session.execute(
-            select(Contact).filter(Contact.id == contact_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, contact_data: ContactCreateSchema) -> ContactItemSchema:
         """
@@ -138,8 +132,7 @@ class ContactService(BaseService):
             query = query.order_by(
                 order_func(getattr(Contact, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -176,3 +169,10 @@ class ContactService(BaseService):
             return ContactItemSchema.model_validate(contact)
         else:
             raise ex.EntityNotFoundException("Contact", contact_id)
+
+    async def _get(self, contact_id: UUID) -> typing.Optional[Contact]:
+        filter_condition = Contact.id == contact_id
+        result = await self.session.execute(
+            select(Contact).filter(filter_condition)
+        )
+        return result.scalars().first()

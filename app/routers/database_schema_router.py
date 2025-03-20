@@ -50,12 +50,12 @@ async def add_database_schema(
 
 
 @router.delete(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_schemas(
-    database_schema_id: UUID,
+    database_schema_id: UUID = Path(..., description="Identificador"),
     service: DatabaseSchemaService = Depends(_get_service),
 ):
     """
@@ -66,7 +66,7 @@ async def delete_schemas(
 
 
 @router.patch(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=True,
@@ -106,7 +106,7 @@ async def find_schemas(
 
 
 @router.get(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=False,

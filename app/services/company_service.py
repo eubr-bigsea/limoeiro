@@ -33,12 +33,6 @@ class CompanyService(BaseService):
         super().__init__(Company, session)
         self.session = session
 
-    async def _get(self, company_id: UUID) -> typing.Optional[Company]:
-        result = await self.session.execute(
-            select(Company).filter(Company.id == company_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, company_data: CompanyCreateSchema) -> CompanyItemSchema:
         """
@@ -137,8 +131,7 @@ class CompanyService(BaseService):
             query = query.order_by(
                 order_func(getattr(Company, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -175,3 +168,10 @@ class CompanyService(BaseService):
             return CompanyItemSchema.model_validate(company)
         else:
             raise ex.EntityNotFoundException("Company", company_id)
+
+    async def _get(self, company_id: UUID) -> typing.Optional[Company]:
+        filter_condition = Company.id == company_id
+        result = await self.session.execute(
+            select(Company).filter(filter_condition)
+        )
+        return result.scalars().first()

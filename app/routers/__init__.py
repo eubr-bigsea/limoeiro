@@ -9,7 +9,7 @@ UUID_PATTERN = re.compile(
 )
 
 def get_lookup_filter(
-    database_provider_id: str = Path(
+    entity_id: str = Path(
         ...,
         description="Entity identifier - can be either a UUID or an FQN (Fully Qualified Name)",
         examples={
@@ -32,11 +32,11 @@ def get_lookup_filter(
     ),
 ):
     # Same implementation as before
-    if UUID_PATTERN.match(database_provider_id):
+    if UUID_PATTERN.match(entity_id):
         try:
-            uuid_obj = UUID(database_provider_id)
+            uuid_obj = UUID(entity_id)
             return uuid_obj
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid UUID format")
     else:
-        return database_provider_id
+        return entity_id

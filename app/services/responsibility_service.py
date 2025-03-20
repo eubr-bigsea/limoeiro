@@ -33,18 +33,6 @@ class ResponsibilityService(BaseService):
         super().__init__(Responsibility, session)
         self.session = session
 
-    async def _get(
-        self, responsibility_id: int
-    ) -> typing.Optional[Responsibility]:
-        result = await self.session.execute(
-            select(Responsibility)
-            .options(selectinload(Responsibility.contact))
-            .options(selectinload(Responsibility.type))
-            .options(selectinload(Responsibility.asset))
-            .filter(Responsibility.id == responsibility_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, responsibility_data: ResponsibilityCreateSchema
@@ -149,8 +137,7 @@ class ResponsibilityService(BaseService):
             query = query.order_by(
                 order_func(getattr(Responsibility, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -189,3 +176,16 @@ class ResponsibilityService(BaseService):
             return ResponsibilityItemSchema.model_validate(responsibility)
         else:
             raise ex.EntityNotFoundException("Responsibility", responsibility_id)
+
+    async def _get(
+        self, responsibility_id: int
+    ) -> typing.Optional[Responsibility]:
+        filter_condition = Responsibility.id == responsibility_id
+        result = await self.session.execute(
+            select(Responsibility)
+            .options(selectinload(Responsibility.contact))
+            .options(selectinload(Responsibility.type))
+            .options(selectinload(Responsibility.asset))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

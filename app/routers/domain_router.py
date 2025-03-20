@@ -44,12 +44,13 @@ async def add_domain(
 
 
 @router.delete(
-    "/domains/{domain_id}",
+    "/domains/{entity_id}",
     tags=["Domain"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_domains(
-    domain_id: UUID, service: DomainService = Depends(_get_service)
+    domain_id: UUID = Path(..., description="Identificador"),
+    service: DomainService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Domain.
@@ -59,7 +60,7 @@ async def delete_domains(
 
 
 @router.patch(
-    "/domains/{domain_id}",
+    "/domains/{entity_id}",
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=True,
@@ -95,7 +96,7 @@ async def find_domains(
 
 
 @router.get(
-    "/domains/{domain_id}",
+    "/domains/{entity_id}",
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=False,

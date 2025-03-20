@@ -33,12 +33,6 @@ class UserService(BaseService):
         super().__init__(User, session)
         self.session = session
 
-    async def _get(self, user_id: UUID) -> typing.Optional[User]:
-        result = await self.session.execute(
-            select(User).filter(User.id == user_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, user_data: UserCreateSchema) -> UserItemSchema:
         """
@@ -133,8 +127,7 @@ class UserService(BaseService):
             query = query.order_by(
                 order_func(getattr(User, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -171,3 +164,10 @@ class UserService(BaseService):
             return UserItemSchema.model_validate(user)
         else:
             raise ex.EntityNotFoundException("User", user_id)
+
+    async def _get(self, user_id: UUID) -> typing.Optional[User]:
+        filter_condition = User.id == user_id
+        result = await self.session.execute(
+            select(User).filter(filter_condition)
+        )
+        return result.scalars().first()

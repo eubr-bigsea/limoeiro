@@ -25,7 +25,7 @@ def _get_service(
 
 
 @router.get(
-    "/database-provider-types/{database_provider_type_id}",
+    "/database-provider-types/{entity_id}",
     tags=["DatabaseProviderType"],
     response_model=DatabaseProviderTypeItemSchema,
     response_model_exclude_none=False,

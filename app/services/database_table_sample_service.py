@@ -33,16 +33,6 @@ class DatabaseTableSampleService(BaseService):
         super().__init__(DatabaseTableSample, session)
         self.session = session
 
-    async def _get(
-        self, database_table_sample_id: UUID
-    ) -> typing.Optional[DatabaseTableSample]:
-        result = await self.session.execute(
-            select(DatabaseTableSample)
-            .options(selectinload(DatabaseTableSample.database_table))
-            .filter(DatabaseTableSample.id == database_table_sample_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self, database_table_sample_data: DatabaseTableSampleCreateSchema
@@ -144,8 +134,7 @@ class DatabaseTableSampleService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseTableSample, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -190,3 +179,14 @@ class DatabaseTableSampleService(BaseService):
             raise ex.EntityNotFoundException(
                 "DatabaseTableSample", database_table_sample_id
             )
+
+    async def _get(
+        self, database_table_sample_id: UUID
+    ) -> typing.Optional[DatabaseTableSample]:
+        filter_condition = DatabaseTableSample.id == database_table_sample_id
+        result = await self.session.execute(
+            select(DatabaseTableSample)
+            .options(selectinload(DatabaseTableSample.database_table))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

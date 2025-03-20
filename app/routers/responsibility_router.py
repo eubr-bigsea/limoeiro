@@ -45,12 +45,12 @@ async def add_responsibility(
 
 
 @router.delete(
-    "/responsibilities/{responsibility_id}",
+    "/responsibilities/{entity_id}",
     tags=["Responsibility"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_responsibilities(
-    responsibility_id: None,
+    responsibility_id: None = Path(..., description=""),
     service: ResponsibilityService = Depends(_get_service),
 ):
     """
@@ -61,7 +61,7 @@ async def delete_responsibilities(
 
 
 @router.patch(
-    "/responsibilities/{responsibility_id}",
+    "/responsibilities/{entity_id}",
     tags=["Responsibility"],
     response_model=ResponsibilityItemSchema,
     response_model_exclude_none=True,
@@ -99,7 +99,7 @@ async def find_responsibilities(
 
 
 @router.get(
-    "/responsibilities/{responsibility_id}",
+    "/responsibilities/{entity_id}",
     tags=["Responsibility"],
     response_model=ResponsibilityItemSchema,
     response_model_exclude_none=False,

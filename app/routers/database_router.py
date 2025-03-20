@@ -48,12 +48,13 @@ async def add_database(
 
 
 @router.delete(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: UUID, service: DatabaseService = Depends(_get_service)
+    database_id: UUID = Path(..., description="Identificador"),
+    service: DatabaseService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Database.
@@ -63,7 +64,7 @@ async def delete_databases(
 
 
 @router.patch(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=True,
@@ -103,7 +104,7 @@ async def find_databases(
 
 
 @router.get(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=False,

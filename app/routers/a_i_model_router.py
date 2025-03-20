@@ -48,12 +48,13 @@ async def add_a_i_model(
 
 
 @router.delete(
-    "/ai-models/{a_i_model_id}",
+    "/ai-models/{entity_id}",
     tags=["AIModel"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ai_models(
-    a_i_model_id: UUID, service: AIModelService = Depends(_get_service)
+    a_i_model_id: UUID = Path(..., description="Identificador"),
+    service: AIModelService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe AIModel.
@@ -63,7 +64,7 @@ async def delete_ai_models(
 
 
 @router.patch(
-    "/ai-models/{a_i_model_id}",
+    "/ai-models/{entity_id}",
     tags=["AIModel"],
     response_model=AIModelItemSchema,
     response_model_exclude_none=True,
@@ -103,7 +104,7 @@ async def find_ai_models(
 
 
 @router.get(
-    "/ai-models/{a_i_model_id}",
+    "/ai-models/{entity_id}",
     tags=["AIModel"],
     response_model=AIModelItemSchema,
     response_model_exclude_none=False,

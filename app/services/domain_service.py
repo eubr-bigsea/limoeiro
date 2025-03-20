@@ -33,12 +33,6 @@ class DomainService(BaseService):
         super().__init__(Domain, session)
         self.session = session
 
-    async def _get(self, domain_id: UUID) -> typing.Optional[Domain]:
-        result = await self.session.execute(
-            select(Domain).filter(Domain.id == domain_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, domain_data: DomainCreateSchema) -> DomainItemSchema:
         """
@@ -133,8 +127,7 @@ class DomainService(BaseService):
             query = query.order_by(
                 order_func(getattr(Domain, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -171,3 +164,10 @@ class DomainService(BaseService):
             return DomainItemSchema.model_validate(domain)
         else:
             raise ex.EntityNotFoundException("Domain", domain_id)
+
+    async def _get(self, domain_id: UUID) -> typing.Optional[Domain]:
+        filter_condition = Domain.id == domain_id
+        result = await self.session.execute(
+            select(Domain).filter(filter_condition)
+        )
+        return result.scalars().first()

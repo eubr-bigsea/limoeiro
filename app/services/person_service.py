@@ -34,14 +34,6 @@ class PersonService(BaseService):
         super().__init__(Person, session)
         self.session = session
 
-    async def _get(self, person_id: UUID) -> typing.Optional[Person]:
-        result = await self.session.execute(
-            select(Person)
-            .options(selectinload(Person.user))
-            .filter(Person.id == person_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, person_data: PersonCreateSchema) -> PersonItemSchema:
         """
@@ -136,8 +128,7 @@ class PersonService(BaseService):
             query = query.order_by(
                 order_func(getattr(Person, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -174,3 +165,12 @@ class PersonService(BaseService):
             return PersonItemSchema.model_validate(person)
         else:
             raise ex.EntityNotFoundException("Person", person_id)
+
+    async def _get(self, person_id: UUID) -> typing.Optional[Person]:
+        filter_condition = Person.id == person_id
+        result = await self.session.execute(
+            select(Person)
+            .options(selectinload(Person.user))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

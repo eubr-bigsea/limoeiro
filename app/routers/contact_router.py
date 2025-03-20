@@ -44,12 +44,13 @@ async def add_contact(
 
 
 @router.delete(
-    "/contacts/{contact_id}",
+    "/contacts/{entity_id}",
     tags=["Contact"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_contacts(
-    contact_id: UUID, service: ContactService = Depends(_get_service)
+    contact_id: UUID = Path(..., description="Identificador"),
+    service: ContactService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Contact.
@@ -59,7 +60,7 @@ async def delete_contacts(
 
 
 @router.patch(
-    "/contacts/{contact_id}",
+    "/contacts/{entity_id}",
     tags=["Contact"],
     response_model=ContactItemSchema,
     response_model_exclude_none=True,
@@ -95,7 +96,7 @@ async def find_contacts(
 
 
 @router.get(
-    "/contacts/{contact_id}",
+    "/contacts/{entity_id}",
     tags=["Contact"],
     response_model=ContactItemSchema,
     response_model_exclude_none=False,

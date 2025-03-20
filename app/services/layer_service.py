@@ -33,12 +33,6 @@ class LayerService(BaseService):
         super().__init__(Layer, session)
         self.session = session
 
-    async def _get(self, layer_id: UUID) -> typing.Optional[Layer]:
-        result = await self.session.execute(
-            select(Layer).filter(Layer.id == layer_id)
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, layer_data: LayerCreateSchema) -> LayerItemSchema:
         """
@@ -133,8 +127,7 @@ class LayerService(BaseService):
             query = query.order_by(
                 order_func(getattr(Layer, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -171,3 +164,10 @@ class LayerService(BaseService):
             return LayerItemSchema.model_validate(layer)
         else:
             raise ex.EntityNotFoundException("Layer", layer_id)
+
+    async def _get(self, layer_id: UUID) -> typing.Optional[Layer]:
+        filter_condition = Layer.id == layer_id
+        result = await self.session.execute(
+            select(Layer).filter(filter_condition)
+        )
+        return result.scalars().first()

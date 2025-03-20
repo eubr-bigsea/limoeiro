@@ -43,9 +43,12 @@ async def add_tag(
 
 
 @router.delete(
-    "/tags/{tag_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
+    "/tags/{entity_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_tags(tag_id: UUID, service: TagService = Depends(_get_service)):
+async def delete_tags(
+    tag_id: UUID = Path(..., description="Identificador"),
+    service: TagService = Depends(_get_service),
+):
     """
     Exclui uma instância da classe Tag.
     """
@@ -54,7 +57,7 @@ async def delete_tags(tag_id: UUID, service: TagService = Depends(_get_service))
 
 
 @router.patch(
-    "/tags/{tag_id}",
+    "/tags/{entity_id}",
     tags=["Tag"],
     response_model=TagItemSchema,
     response_model_exclude_none=True,
@@ -90,7 +93,7 @@ async def find_tags(
 
 
 @router.get(
-    "/tags/{tag_id}",
+    "/tags/{entity_id}",
     tags=["Tag"],
     response_model=TagItemSchema,
     response_model_exclude_none=False,

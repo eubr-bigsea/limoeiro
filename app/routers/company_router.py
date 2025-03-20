@@ -44,12 +44,13 @@ async def add_company(
 
 
 @router.delete(
-    "/companies/{company_id}",
+    "/companies/{entity_id}",
     tags=["Company"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_companies(
-    company_id: UUID, service: CompanyService = Depends(_get_service)
+    company_id: UUID = Path(..., description="Identificador"),
+    service: CompanyService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Company.
@@ -59,7 +60,7 @@ async def delete_companies(
 
 
 @router.patch(
-    "/companies/{company_id}",
+    "/companies/{entity_id}",
     tags=["Company"],
     response_model=CompanyItemSchema,
     response_model_exclude_none=True,
@@ -95,7 +96,7 @@ async def find_companies(
 
 
 @router.get(
-    "/companies/{company_id}",
+    "/companies/{entity_id}",
     tags=["Company"],
     response_model=CompanyItemSchema,
     response_model_exclude_none=False,

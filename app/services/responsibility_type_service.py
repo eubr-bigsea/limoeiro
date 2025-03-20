@@ -31,16 +31,6 @@ class ResponsibilityTypeService(BaseService):
         super().__init__(ResponsibilityType, session)
         self.session = session
 
-    async def _get(
-        self, responsibility_type_id: UUID
-    ) -> typing.Optional[ResponsibilityType]:
-        result = await self.session.execute(
-            select(ResponsibilityType).filter(
-                ResponsibilityType.id == responsibility_type_id
-            )
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, responsibility_type_id: UUID
@@ -87,8 +77,7 @@ class ResponsibilityTypeService(BaseService):
             query = query.order_by(
                 order_func(getattr(ResponsibilityType, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -112,3 +101,12 @@ class ResponsibilityTypeService(BaseService):
                 ResponsibilityTypeListSchema.model_validate(row) for row in rows
             ],
         )
+
+    async def _get(
+        self, responsibility_type_id: UUID
+    ) -> typing.Optional[ResponsibilityType]:
+        filter_condition = ResponsibilityType.id == responsibility_type_id
+        result = await self.session.execute(
+            select(ResponsibilityType).filter(filter_condition)
+        )
+        return result.scalars().first()

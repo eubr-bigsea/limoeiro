@@ -34,19 +34,6 @@ class DatabaseProviderIngestionService(BaseService):
         super().__init__(DatabaseProviderIngestion, session)
         self.session = session
 
-    async def _get(
-        self, database_provider_ingestion_id: UUID
-    ) -> typing.Optional[DatabaseProviderIngestion]:
-        result = await self.session.execute(
-            select(DatabaseProviderIngestion)
-            .options(selectinload(DatabaseProviderIngestion.provider))
-            .options(selectinload(DatabaseProviderIngestion.logs))
-            .filter(
-                DatabaseProviderIngestion.id == database_provider_ingestion_id
-            )
-        )
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(
         self,
@@ -164,8 +151,7 @@ class DatabaseProviderIngestionService(BaseService):
                     getattr(DatabaseProviderIngestion, query_options.sort_by)
                 )
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -213,3 +199,17 @@ class DatabaseProviderIngestionService(BaseService):
             raise ex.EntityNotFoundException(
                 "DatabaseProviderIngestion", database_provider_ingestion_id
             )
+
+    async def _get(
+        self, database_provider_ingestion_id: UUID
+    ) -> typing.Optional[DatabaseProviderIngestion]:
+        filter_condition = (
+            DatabaseProviderIngestion.id == database_provider_ingestion_id
+        )
+        result = await self.session.execute(
+            select(DatabaseProviderIngestion)
+            .options(selectinload(DatabaseProviderIngestion.provider))
+            .options(selectinload(DatabaseProviderIngestion.logs))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

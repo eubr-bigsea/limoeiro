@@ -43,10 +43,11 @@ async def add_user(
 
 
 @router.delete(
-    "/users/{user_id}", tags=["User"], status_code=status.HTTP_204_NO_CONTENT
+    "/users/{entity_id}", tags=["User"], status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_users(
-    user_id: UUID, service: UserService = Depends(_get_service)
+    user_id: UUID = Path(..., description="Identificador"),
+    service: UserService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe User.
@@ -56,7 +57,7 @@ async def delete_users(
 
 
 @router.patch(
-    "/users/{user_id}",
+    "/users/{entity_id}",
     tags=["User"],
     response_model=UserItemSchema,
     response_model_exclude_none=True,
@@ -92,7 +93,7 @@ async def find_users(
 
 
 @router.get(
-    "/users/{user_id}",
+    "/users/{entity_id}",
     tags=["User"],
     response_model=UserItemSchema,
     response_model_exclude_none=False,

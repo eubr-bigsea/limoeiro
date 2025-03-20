@@ -50,12 +50,12 @@ async def add_database_table(
 
 
 @router.delete(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_tables(
-    database_table_id: UUID,
+    database_table_id: UUID = Path(..., description="Identificador"),
     service: DatabaseTableService = Depends(_get_service),
 ):
     """
@@ -66,7 +66,7 @@ async def delete_tables(
 
 
 @router.patch(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=True,
@@ -106,7 +106,7 @@ async def find_tables(
 
 
 @router.get(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=False,

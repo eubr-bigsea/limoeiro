@@ -44,12 +44,13 @@ async def add_person(
 
 
 @router.delete(
-    "/people/{person_id}",
+    "/people/{entity_id}",
     tags=["Person"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_people(
-    person_id: UUID, service: PersonService = Depends(_get_service)
+    person_id: UUID = Path(..., description="Identificador"),
+    service: PersonService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Person.
@@ -59,7 +60,7 @@ async def delete_people(
 
 
 @router.patch(
-    "/people/{person_id}",
+    "/people/{entity_id}",
     tags=["Person"],
     response_model=PersonItemSchema,
     response_model_exclude_none=True,
@@ -95,7 +96,7 @@ async def find_people(
 
 
 @router.get(
-    "/people/{person_id}",
+    "/people/{entity_id}",
     tags=["Person"],
     response_model=PersonItemSchema,
     response_model_exclude_none=False,

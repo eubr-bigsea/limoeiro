@@ -33,10 +33,6 @@ class TagService(BaseService):
         super().__init__(Tag, session)
         self.session = session
 
-    async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
-        result = await self.session.execute(select(Tag).filter(Tag.id == tag_id))
-        return result.scalars().first()
-
     @handle_db_exceptions("Failed to create {}")
     async def add(self, tag_data: TagCreateSchema) -> TagItemSchema:
         """
@@ -131,8 +127,7 @@ class TagService(BaseService):
             query = query.order_by(
                 order_func(getattr(Tag, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -169,3 +164,8 @@ class TagService(BaseService):
             return TagItemSchema.model_validate(tag)
         else:
             raise ex.EntityNotFoundException("Tag", tag_id)
+
+    async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
+        filter_condition = Tag.id == tag_id
+        result = await self.session.execute(select(Tag).filter(filter_condition))
+        return result.scalars().first()

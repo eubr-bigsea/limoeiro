@@ -26,7 +26,7 @@ def _get_service(
 
 
 @router.get(
-    "/responsibility-types/{responsibility_type_id}",
+    "/responsibility-types/{entity_id}",
     tags=["ResponsibilityType"],
     response_model=ResponsibilityTypeItemSchema,
     response_model_exclude_none=False,
