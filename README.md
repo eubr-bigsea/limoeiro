@@ -34,6 +34,10 @@ uv sync
 ## Criar uma revision automaticamente:
 ```
 .venv/bin/alembic revision --autogenerate -m '
+```
+
+## Atualizar para a migração mais recente
+```
 .venv/bin/alembic upgrade head
 ```
 
