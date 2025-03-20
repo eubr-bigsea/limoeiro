@@ -44,7 +44,7 @@ async def add_person(
 
 
 @router.delete(
-    "/people/{entity_id}",
+    "/people/{person_id}",
     tags=["Person"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -60,7 +60,7 @@ async def delete_people(
 
 
 @router.patch(
-    "/people/{entity_id}",
+    "/people/{person_id}",
     tags=["Person"],
     response_model=PersonItemSchema,
     response_model_exclude_none=True,
@@ -96,7 +96,7 @@ async def find_people(
 
 
 @router.get(
-    "/people/{entity_id}",
+    "/people/{person_id}",
     tags=["Person"],
     response_model=PersonItemSchema,
     response_model_exclude_none=False,

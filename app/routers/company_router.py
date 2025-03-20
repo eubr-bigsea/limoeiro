@@ -44,7 +44,7 @@ async def add_company(
 
 
 @router.delete(
-    "/companies/{entity_id}",
+    "/companies/{company_id}",
     tags=["Company"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -60,7 +60,7 @@ async def delete_companies(
 
 
 @router.patch(
-    "/companies/{entity_id}",
+    "/companies/{company_id}",
     tags=["Company"],
     response_model=CompanyItemSchema,
     response_model_exclude_none=True,
@@ -96,7 +96,7 @@ async def find_companies(
 
 
 @router.get(
-    "/companies/{entity_id}",
+    "/companies/{company_id}",
     tags=["Company"],
     response_model=CompanyItemSchema,
     response_model_exclude_none=False,

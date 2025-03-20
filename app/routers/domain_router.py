@@ -44,7 +44,7 @@ async def add_domain(
 
 
 @router.delete(
-    "/domains/{entity_id}",
+    "/domains/{domain_id}",
     tags=["Domain"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -60,7 +60,7 @@ async def delete_domains(
 
 
 @router.patch(
-    "/domains/{entity_id}",
+    "/domains/{domain_id}",
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=True,
@@ -96,7 +96,7 @@ async def find_domains(
 
 
 @router.get(
-    "/domains/{entity_id}",
+    "/domains/{domain_id}",
     tags=["Domain"],
     response_model=DomainItemSchema,
     response_model_exclude_none=False,

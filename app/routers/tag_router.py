@@ -43,7 +43,7 @@ async def add_tag(
 
 
 @router.delete(
-    "/tags/{entity_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
+    "/tags/{tag_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_tags(
     tag_id: UUID = Path(..., description="Identificador"),
@@ -57,7 +57,7 @@ async def delete_tags(
 
 
 @router.patch(
-    "/tags/{entity_id}",
+    "/tags/{tag_id}",
     tags=["Tag"],
     response_model=TagItemSchema,
     response_model_exclude_none=True,
@@ -93,7 +93,7 @@ async def find_tags(
 
 
 @router.get(
-    "/tags/{entity_id}",
+    "/tags/{tag_id}",
     tags=["Tag"],
     response_model=TagItemSchema,
     response_model_exclude_none=False,

@@ -2,22 +2,11 @@
 @path = responsibility-types
 
 ###
-POST {{host}}/{{path}} HTTP/1.1
-
-{
-    "name": "Ravi Lucca Guerra" , 
-    "description": "Quia animi hic." , 
-    "deleted": true 
-
-}
-
-###
 # @name list
 GET {{host}}/{{path}}
 
 ###
 @id = {{list.response.body.items.$[0].id}}
-DELETE {{host}}/{{path}}/{{id}}
 
 ###
 GET {{host}}/{{path}}/{{id}}
@@ -26,7 +15,7 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Isaac Sousa" , 
-    "description": "Eos porro optio nam ut dicta." , 
-    "deleted": true 
+    "name": "Isaac Sousa" ,
+    "description": "Eos porro optio nam ut dicta." ,
+    "deleted": true
 }

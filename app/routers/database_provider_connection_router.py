@@ -48,7 +48,7 @@ async def add_database_provider_connection(
 
 
 @router.delete(
-    "/connections/{entity_id}",
+    "/connections/{database_provider_connection_id}",
     tags=["DatabaseProviderConnection"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -66,7 +66,7 @@ async def delete_connections(
 
 
 @router.patch(
-    "/connections/{entity_id}",
+    "/connections/{database_provider_connection_id}",
     tags=["DatabaseProviderConnection"],
     response_model=DatabaseProviderConnectionItemSchema,
     response_model_exclude_none=True,
@@ -108,7 +108,7 @@ async def find_connections(
 
 
 @router.get(
-    "/connections/{entity_id}",
+    "/connections/{database_provider_connection_id}",
     tags=["DatabaseProviderConnection"],
     response_model=DatabaseProviderConnectionItemSchema,
     response_model_exclude_none=False,

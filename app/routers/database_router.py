@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,6 +15,7 @@ from ..schemas import (
 )
 from ..services.database_service import DatabaseService
 from ..database import get_session
+from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ async def add_database(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: UUID = Path(..., description="Identificador"),
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
 ):
     """
@@ -70,7 +71,7 @@ async def delete_databases(
     response_model_exclude_none=True,
 )
 async def update_databases(
-    database_id: UUID = Path(..., description="Identificador"),
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_data: typing.Optional[DatabaseUpdateSchema] = None,
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
@@ -110,7 +111,7 @@ async def find_databases(
     response_model_exclude_none=False,
 )
 async def get_database(
-    database_id: UUID = Path(..., description="Identificador"),
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """

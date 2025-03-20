@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,6 +15,7 @@ from ..schemas import (
 )
 from ..services.a_i_model_service import AIModelService
 from ..database import get_session
+from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ async def add_a_i_model(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ai_models(
-    a_i_model_id: UUID = Path(..., description="Identificador"),
+    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: AIModelService = Depends(_get_service),
 ):
     """
@@ -70,7 +71,7 @@ async def delete_ai_models(
     response_model_exclude_none=True,
 )
 async def update_ai_models(
-    a_i_model_id: UUID = Path(..., description="Identificador"),
+    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     a_i_model_data: typing.Optional[AIModelUpdateSchema] = None,
     service: AIModelService = Depends(_get_service),
 ) -> AIModelItemSchema:
@@ -110,7 +111,7 @@ async def find_ai_models(
     response_model_exclude_none=False,
 )
 async def get_a_i_model(
-    a_i_model_id: UUID = Path(..., description="Identificador"),
+    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: AIModelService = Depends(_get_service),
 ) -> AIModelItemSchema:
     """

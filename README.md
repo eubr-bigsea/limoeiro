@@ -4,7 +4,7 @@ Serviço de catálogo de dados.
 Requer Python >= 3.9.0
 
 # Para executar o código em desenvolvimento:
-uvicorn app.main:app --reload
+.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 9000 --reload-dir=app
 
 # Comandos úteis para o desenvolvimento:
 

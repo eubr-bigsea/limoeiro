@@ -44,7 +44,7 @@ async def add_contact(
 
 
 @router.delete(
-    "/contacts/{entity_id}",
+    "/contacts/{contact_id}",
     tags=["Contact"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -60,7 +60,7 @@ async def delete_contacts(
 
 
 @router.patch(
-    "/contacts/{entity_id}",
+    "/contacts/{contact_id}",
     tags=["Contact"],
     response_model=ContactItemSchema,
     response_model_exclude_none=True,
@@ -96,7 +96,7 @@ async def find_contacts(
 
 
 @router.get(
-    "/contacts/{entity_id}",
+    "/contacts/{contact_id}",
     tags=["Contact"],
     response_model=ContactItemSchema,
     response_model_exclude_none=False,

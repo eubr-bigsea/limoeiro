@@ -43,7 +43,7 @@ async def add_layer(
 
 
 @router.delete(
-    "/layers/{entity_id}", tags=["Layer"], status_code=status.HTTP_204_NO_CONTENT
+    "/layers/{layer_id}", tags=["Layer"], status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_layers(
     layer_id: UUID = Path(..., description="Identificador"),
@@ -57,7 +57,7 @@ async def delete_layers(
 
 
 @router.patch(
-    "/layers/{entity_id}",
+    "/layers/{layer_id}",
     tags=["Layer"],
     response_model=LayerItemSchema,
     response_model_exclude_none=True,
@@ -93,7 +93,7 @@ async def find_layers(
 
 
 @router.get(
-    "/layers/{entity_id}",
+    "/layers/{layer_id}",
     tags=["Layer"],
     response_model=LayerItemSchema,
     response_model_exclude_none=False,

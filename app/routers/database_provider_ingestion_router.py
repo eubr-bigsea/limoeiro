@@ -48,7 +48,7 @@ async def add_database_provider_ingestion(
 
 
 @router.delete(
-    "/ingestions/{entity_id}",
+    "/ingestions/{database_provider_ingestion_id}",
     tags=["DatabaseProviderIngestion"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -66,7 +66,7 @@ async def delete_ingestions(
 
 
 @router.patch(
-    "/ingestions/{entity_id}",
+    "/ingestions/{database_provider_ingestion_id}",
     tags=["DatabaseProviderIngestion"],
     response_model=DatabaseProviderIngestionItemSchema,
     response_model_exclude_none=True,
@@ -108,7 +108,7 @@ async def find_ingestions(
 
 
 @router.get(
-    "/ingestions/{entity_id}",
+    "/ingestions/{database_provider_ingestion_id}",
     tags=["DatabaseProviderIngestion"],
     response_model=DatabaseProviderIngestionItemSchema,
     response_model_exclude_none=False,
