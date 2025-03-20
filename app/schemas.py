@@ -1656,9 +1656,6 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
         default=None, description="Amostra pode ser visualizada"
     )
 
-    # Associations
-    database_table: Optional["DatabaseTableListSchema"] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -1669,17 +1666,20 @@ class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     date: Optional[datetime.datetime] = Field(
         default=None, description="Data e hora da amosrta"
     )
-    content: Optional[str] = Field(
-        default=None, description="Conteúdo da amostra (JSON)."
-    )
     is_visible: Optional[bool] = Field(
         default=None, description="Amostra pode ser visualizada"
     )
 
-    # Associations
-    database_table: Optional["DatabaseTableListSchema"] = None
-
     model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseTableSampleQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    database_table_id: Optional[UUID] = Field(
+        default=None, description="Identificador da tabela"
+    )
+    ...
 
 
 class TableColumnBaseModel(BaseModel): ...

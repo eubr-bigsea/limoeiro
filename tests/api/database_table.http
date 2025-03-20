@@ -60,3 +60,44 @@ PATCH {{host}}/{{path}}/{{id}}
     "database_id": "database" ,
     "database_schema_id": "database_schema" ,
 }
+
+###
+PATCH {{host}}/{{path}}/f63c9a28-9c53-4ba3-a2be-642a666631b4
+
+{
+    "columns": [
+        {
+            "name": "_id","data_type":"INT", "display_name": "_id",
+            "description": "Identificador", "primary_key": true, "nullable": false,
+            "unique": true
+        },
+        {
+            "name": "N  da licitacao","data_type":"VARCHAR", "display_name": "N  da licitacao",
+            "description": "Número da licitacao", "nullable": false
+        },
+        {
+            "name": "N  do processo","data_type":"VARCHAR", "display_name": "N  do processo",
+            "description": "Número do processo", "nullable": false
+        },
+        {
+            "name": "Modalidade da licitacao","data_type":"VARCHAR", "display_name": "Modalidade da licitacao",
+            "description": "Modalidade da licitação", "nullable": false
+        },
+        {
+            "name": "Objeto","data_type":"VARCHAR", "display_name": "Objeto",
+            "description": "Objeto", "nullable": false
+        },
+        {
+            "name": "Data da autorizacao","data_type":"VARCHAR", "display_name": "Data da autorizacao",
+            "description": "Data da autorização"
+        },
+        {
+            "name": "Valor","data_type":"VARCHAR", "display_name": "Valor",
+            "description": "Valor", "nullable": false
+        },
+        {
+            "name": "Periodo","data_type":"VARCHAR", "display_name": "Periodo",
+            "description": "Período"
+        }
+    ]
+}

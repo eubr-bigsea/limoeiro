@@ -2,7 +2,7 @@ import logging
 import math
 import typing
 from uuid import UUID
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, and_, func
 
 import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
@@ -16,6 +16,7 @@ from ..schemas import (
     DatabaseTableSampleUpdateSchema,
     DatabaseTableSampleItemSchema,
     DatabaseTableSampleListSchema,
+    DatabaseTableSampleQuerySchema,
 )
 from ..models import DatabaseTableSample
 from . import BaseService
@@ -126,6 +127,18 @@ class DatabaseTableSampleService(BaseService):
         offset = (page - 1) * limit
 
         query = select(DatabaseTableSample)
+        filter_opts = {
+            "database_table_id": (
+                DatabaseTableSample.database_table_id,
+                "__eq__",
+            ),
+        }
+        filters = self.get_filters(
+            DatabaseTableSample, filter_opts, query_options
+        )
+
+        if filters:
+            query = query.where(and_(*filters))
 
         if query_options.sort_by and hasattr(
             DatabaseTableSample, query_options.sort_by
