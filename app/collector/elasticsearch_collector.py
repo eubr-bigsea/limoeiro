@@ -6,7 +6,7 @@ from app.collector.collector import (Collector, GenericTable, GenericColumn)
 from elasticsearch import Elasticsearch
 
 class ElasticsearchCollector(Collector):
-# Class to implement methods, using SqlAlchemy, to collect data in collection engine.
+    """ Class to implement methods, using SqlAlchemy, to collect data in collection engine. """
     
     def __init__(self, user: str, password: str, host: str, port: str):
         self.user = user
@@ -15,19 +15,19 @@ class ElasticsearchCollector(Collector):
         self.port = port
    
     def get_databases(self) -> List[str]:
-    # Return just the Default value.
+        """ Return just the Default value. """
 
         database_list = ['default']
         return database_list
 
     def get_schemas(self, database_name: str) -> List[str]:
-    # Return just the Default value.
+        """ Return just the Default value. """
 
         database_list = ['default']
         return database_list
 
     def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
-    # Return all tables in a database provider.
+        """ Return all tables in a database provider. """
 
         es = Elasticsearch(self.host,
            port=self.port,
@@ -54,3 +54,17 @@ class ElasticsearchCollector(Collector):
         es.close()
         
         return generic_table_list
+
+    def _get_database_fqn_elements(self, provider_name, database_name) -> List[str]:
+        """ Return the elements of the database fqn. """
+        return [provider_name, database_name]
+
+
+    def _get_schema_fqn_elements(self, provider_name, database_name, schema_name) -> List[str]:
+        """ Return the elements of the schema fqn. """
+        return [provider_name, database_name, schema_name]
+
+
+    def _get_table_fqn_elements(self, provider_name, database_name, schema_name, table_name) -> List[str]:
+        """ Return the elements of the table fqn. """
+        return [provider_name, database_name, schema_name, table_name]

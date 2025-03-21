@@ -19,22 +19,35 @@ class GenericTable:
 
 
 class Collector(ABC):
-# Abstract Class to define methods to collect data in collection engine.
+    """ Abstract Class to define methods to collect data in collection engine. """
 
-
+   
     @abstractmethod
     def get_databases(self) -> List[str]:
-    # Return all databases in a database provider.
+        """ Return all databases in a database provider. """
+        pass
+
+    @abstractmethod
+    def _get_database_fqn_elements(self, provider_name, database_name) -> List[str]:
+        """ Return the elements of the database fqn. """
         pass
 
     @abstractmethod
     def get_schemas(self, database_name: str) -> List[str]:
-    # Return all schemas in a database provider.
+        """ Return all schemas in a database provider. """
+        pass
+
+    @abstractmethod
+    def _get_schema_fqn_elements(self, provider_name, database_name, schema_name) -> List[str]:
+        """ Return the elements of the schema fqn. """
         pass
 
     @abstractmethod
     def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
-    # Return all tables in a database provider.
+        """ Return all tables in a database provider. """
         pass
 
-    
+    @abstractmethod
+    def _get_table_fqn_elements(self, provider_name, database_name, schema_name, table_name) -> List[str]:
+        """ Return the elements of the table fqn. """
+        pass

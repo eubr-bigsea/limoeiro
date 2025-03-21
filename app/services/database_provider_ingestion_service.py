@@ -185,10 +185,7 @@ class DatabaseProviderIngestionService(BaseService):
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=[
-                DatabaseProviderIngestionListSchema.model_validate(row)
-                for row in rows
-            ],
+            items=[DatabaseProviderIngestionListSchema.model_validate(row) for row in rows],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)

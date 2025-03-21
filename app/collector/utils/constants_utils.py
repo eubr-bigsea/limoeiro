@@ -5,8 +5,9 @@ PROVIDER_ROUTE = 'database-providers'
 DATABASE_ROUTE = 'databases'
 SCHEMA_ROUTE = 'schemas'
 TABLE_ROUTE = 'tables'
-F_Q_NAME_ROUTE = "fully_qualified_name"
+F_Q_NAME_ROUTE = "fqn"
 CONNECTION_ROUTE = "connections"
+INGESTION_ROUTE = "ingestions"
 
 SQLTYPES_DICT = {
     'VARBINARY' : 'BINARY',

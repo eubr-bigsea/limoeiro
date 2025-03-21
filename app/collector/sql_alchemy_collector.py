@@ -6,7 +6,7 @@ from app.collector.collector import (Collector, GenericTable, GenericColumn)
 
 
 class SqlAlchemyCollector(Collector):
-# Class to implement methods, using SqlAlchemy, to collect data in collection engine.
+    """ Class to implement methods, using SqlAlchemy, to collect data in collection engine. """
     
     def __init__(self, user: str, password: str, host: str, port: str):
         self.user = user
@@ -16,16 +16,16 @@ class SqlAlchemyCollector(Collector):
    
     @abstractmethod
     def get_connection_engine_for_schemas(self, database_name: str):
-    # Return the connection engine to get the schemas.
+        """ Return the connection engine to get the schemas. """
         pass
 
     @abstractmethod
     def get_connection_engine_for_tables(self, database_name: str, schema_name: str):
-    # Return the connection engine to get the tables.
+        """ Return the connection engine to get the tables. """
         pass
 
     def get_schemas(self, database_name: str) -> List[str]:
-    # Return all databases in a database provider using SqlAlchemy.
+        """ Return all databases in a database provider using SqlAlchemy. """
         engine = self.get_connection_engine_for_schemas(database_name)
         insp = db.inspect(engine)
         schema_list = insp.get_schema_names()
@@ -33,7 +33,7 @@ class SqlAlchemyCollector(Collector):
         return schema_list
 
     def get_tables(self, database_name: str, schema_name: str) -> List[GenericTable]:
-    # Return all tables in a database provider using SqlAlchemy.
+        """ Return all tables in a database provider using SqlAlchemy. """
         engine = self.get_connection_engine_for_tables(database_name, schema_name)
         meta_data = db.MetaData()
         meta_data.reflect(bind=engine)       

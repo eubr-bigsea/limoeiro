@@ -42,7 +42,7 @@ class DatabaseService(BaseService):
         )
         return result.scalars().first()
 
-    async def _get_by_fully_qualified_name(self, fully_qualified_name: str) -> typing.Optional[Database]:
+    async def _get_by_fqn(self, fully_qualified_name: str) -> typing.Optional[Database]:
         result = await self.session.execute(
             select(Database)
             .options(selectinload(Database.provider))
@@ -192,7 +192,7 @@ class DatabaseService(BaseService):
 
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get_by_fully_qualified_name(self, fully_qualified_name: str) -> DatabaseItemSchema:
+    async def get_by_fqn(self, fully_qualified_name: str) -> DatabaseItemSchema:
         """
         Retrieve a Database instance by fully_qualified_name.
         Args:
@@ -201,8 +201,8 @@ class DatabaseService(BaseService):
             Database: Found instance or None
         """
 
-        result = await self._get_by_fully_qualified_name(fully_qualified_name)
+        result = await self._get_by_fqn(fully_qualified_name)
         if result is not None:
             result = DatabaseItemSchema.model_validate(result)
-        return result		
+        return result
 

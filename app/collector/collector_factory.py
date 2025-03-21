@@ -12,11 +12,11 @@ from app.models import DatabaseProviderTypeDisplayName
 
 
 class CollectorFactory:
-# Class to create a collector based on database provider.
+    """ Class to create a collector based on database provider. """
 
     @staticmethod
     def create_collector(provider):
-    # Create a collector based on database provider.
+        """ Create a collector based on database provider. """
         p_type_name = provider['provider_type']["display_name"]
         _, connection = get_request (constants.CONNECTION_ROUTE, provider["connection_id"])
         user = connection["user_name"]

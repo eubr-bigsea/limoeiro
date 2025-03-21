@@ -47,7 +47,7 @@ class DatabaseTableService(BaseService):
         )
         return result.scalars().first()
 
-    async def _get_by_fully_qualified_name(self, fully_qualified_name: str) -> typing.Optional[DatabaseTable]:
+    async def _get_by_fqn(self, fully_qualified_name: str) -> typing.Optional[DatabaseTable]:
         result = await self.session.execute(
             select(DatabaseTable)
             .options(selectinload(DatabaseTable.database))
@@ -230,7 +230,7 @@ class DatabaseTableService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get_by_fully_qualified_name(self, fully_qualified_name: str) -> DatabaseTableItemSchema:
+    async def get_by_fqn(self, fully_qualified_name: str) -> DatabaseTableItemSchema:
         """
         Retrieve a DatabaseTable instance by id.
         Args:
@@ -238,7 +238,7 @@ class DatabaseTableService(BaseService):
         Returns:
             DatabaseTable: Found instance or None
         """
-        result = await self._get_by_fully_qualified_name(fully_qualified_name)
+        result = await self._get_by_fqn(fully_qualified_name)
         if result is not None:
             result = DatabaseTableItemSchema.model_validate(result)
         return result

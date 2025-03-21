@@ -125,12 +125,12 @@ async def get_database_schema(
     return database_schema
 
 @router.get(
-    "/schemas/fully_qualified_name/{fully_qualified_name}",
+    "/schemas/fqn/{fully_qualified_name}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=False,
 )
-async def get_database_schema_by_fully_qualified_name(
+async def get_database_schema_by_fqn(
     fully_qualified_name: str = Path(..., description="Fully qualified name"),
     service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
@@ -138,7 +138,7 @@ async def get_database_schema_by_fully_qualified_name(
     Recupera uma instância da classe DatabaseSchema.
     """
 
-    database_schema = await service.get_by_fully_qualified_name(fully_qualified_name)
+    database_schema = await service.get_by_fqn(fully_qualified_name)
     if database_schema is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_schema

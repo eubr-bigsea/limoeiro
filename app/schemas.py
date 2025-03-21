@@ -563,7 +563,6 @@ class DatabaseProviderCreateSchema(AssetCreateSchema, DatabaseProviderBaseModel)
     provider_type_id: str
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionCreateSchema"]] = None
-    cron_expression: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -579,7 +578,6 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
     provider_type_id: Optional[str] = None
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionUpdateSchema"]] = None
-    cron_expression: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -596,7 +594,6 @@ class DatabaseProviderItemSchema(AssetItemSchema, DatabaseProviderBaseModel):
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
     connection_id: Optional[UUID] = None
     ingestions: Optional[List["DatabaseProviderIngestionItemSchema"]] = None
-    cron_expression: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -610,7 +607,6 @@ class DatabaseProviderListSchema(AssetListSchema, DatabaseProviderBaseModel):
     name: Optional[str] = Field(default=None, description="Nome da instância.")
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
     connection_id: Optional[UUID] = None
-    cron_expression: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -707,6 +703,8 @@ class DatabaseProviderConnectionQuerySchema(BaseQuerySchema):
     provider_id: Optional[str] = Field(default=None, description="Provider")
     ...
 
+class Scheduling(BaseModel):
+    expression: str
 
 class DatabaseProviderIngestionBaseModel(BaseModel): ...
 
@@ -750,7 +748,7 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -802,7 +800,7 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -855,13 +853,14 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
+    provider_id: Optional[UUID] = None
     logs: Optional[List["DatabaseProviderIngestionLogItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -907,13 +906,14 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
+    provider_id: Optional[UUID] = None
     logs: Optional[List["DatabaseProviderIngestionLogListSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)

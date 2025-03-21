@@ -3,11 +3,11 @@ import logging
 import os
 
 class DataCollectionLogging():
-# Class to implement the logging for the collection data engine.
+    """ Class to implement the logging for the collection data engine. """
 
     def __init__(self):
 
-        # Config log file
+        """ Config log file """ 
         today = datetime.today().strftime('%Y-%m-%d')
         file_path = 'collector_logs'
         if not os.path.exists(file_path):
@@ -22,27 +22,27 @@ class DataCollectionLogging():
 
 
     def log_diff_list_element (self, obj_type, obj_id, f_q_name, field, element, old_value, new_value):
-    # Method to log a diff between two list objects.
+        """ Method to log a diff between two list objects. """
         message = f"Changed object: {obj_type}, Id: {obj_id} {f_q_name}, Field: {field}, Element: {element}, Old value: {old_value}, New value: {new_value}"
         self.log.warning(message)
             
     def log_element_added (self, obj_type, obj_id, f_q_name, field, element):
-    # Method to log an element added.
+        """ Method to log an element added. """
         message = f"Changed object: {obj_type}, Id: {obj_id} {f_q_name}, Field: {field}, Element added: {element}"
         self.log.warning(message)
 
     def log_element_removed (self, obj_type, obj_id, f_q_name, field, element):
-    # Method to log an element removed.
+        """ Method to log an element removed. """
         message = f"Changed object: {obj_type}, Id: {obj_id} {f_q_name}, Field: {field}, Element removed: {element}"
         self.log.warning(message)
 
     def log_diff_field (self, obj_type, obj_id, f_q_name, field, old_value, new_value):
-    # Method to log a diff between two fields.
+        """ Method to log a diff between two fields. """
         message = f"Changed object: {obj_type}, Id: {obj_id} {f_q_name}, Field: {field}, Old value: {old_value}, New value: {new_value}"
         self.log.warning(message)
 
     def log_obj_collecting(self, obj_type, obj_name):
-    # Method to log the collecting of an object.
+        """ Method to log the collecting of an object. """
         message = f"Collecting {obj_type} {obj_name}"
         self.log.info(message)
 
