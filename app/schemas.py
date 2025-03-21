@@ -1,13 +1,15 @@
 import datetime
 from uuid import UUID
-from typing import Optional, TypeVar, Generic, List
-from pydantic import BaseModel, Field, ConfigDict, AnyUrl
+from typing import Annotated, Optional, TypeVar, Generic, List
+from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
 from .models import TableType
 from .models import DataType
 
 M = TypeVar("M")
+
+AnyUrlString = Annotated[AnyUrl, AfterValidator(str)]
 
 
 def utc_now() -> datetime.datetime:
@@ -459,7 +461,7 @@ class AssetLinkBaseModel(BaseModel): ...
 class AssetLinkCreateSchema(AssetLinkBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    url: Optional[AnyUrl] = Field(
+    url: Optional[AnyUrlString] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
@@ -471,7 +473,7 @@ class AssetLinkCreateSchema(AssetLinkBaseModel):
 class AssetLinkUpdateSchema(AssetLinkBaseModel):
     """Optional model for serialization of updating objects"""
 
-    url: Optional[AnyUrl] = Field(
+    url: Optional[AnyUrlString] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
@@ -484,7 +486,7 @@ class AssetLinkItemSchema(AssetLinkBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    url: Optional[AnyUrl] = Field(
+    url: Optional[AnyUrlString] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
@@ -497,7 +499,7 @@ class AssetLinkListSchema(AssetLinkBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    url: Optional[AnyUrl] = Field(
+    url: Optional[AnyUrlString] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
@@ -981,9 +983,8 @@ class DatabaseProviderListSchema(AssetListSchema, DatabaseProviderBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
-    connection_id: Optional[UUID] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -1086,8 +1087,6 @@ class DatabaseProviderConnectionQuerySchema(BaseQuerySchema):
     provider_id: Optional[str] = Field(default=None, description="Provider")
     ...
 
-class Scheduling(BaseModel):
-    expression: str
 
 class DatabaseProviderIngestionBaseModel(BaseModel): ...
 
@@ -1131,7 +1130,7 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -1183,7 +1182,7 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -1236,14 +1235,13 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
-    provider_id: Optional[UUID] = None
     logs: Optional[List["DatabaseProviderIngestionLogItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1289,14 +1287,13 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
     )
-    scheduling: Optional[Scheduling] = Field(default=None, description="Agendamento")
+    scheduling: Optional[str] = Field(default=None, description="Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
-    provider_id: Optional[UUID] = None
     logs: Optional[List["DatabaseProviderIngestionLogListSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1729,6 +1726,9 @@ class TableColumnCreateSchema(TableColumnBaseModel):
     )
     unique: bool = Field(default=False, description="Coluna é um índice UNIQUE.")
     is_metadata: bool = Field(default=False, description="Coluna é um metadado.")
+    semantic_type: Optional[str] = Field(
+        default=None, description="Tipo semântico da coluna."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1775,6 +1775,9 @@ class TableColumnUpdateSchema(TableColumnBaseModel):
     )
     is_metadata: Optional[bool] = Field(
         default=None, description="Coluna é um metadado."
+    )
+    semantic_type: Optional[str] = Field(
+        default=None, description="Tipo semântico da coluna."
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1824,6 +1827,9 @@ class TableColumnItemSchema(TableColumnBaseModel):
     is_metadata: Optional[bool] = Field(
         default=None, description="Coluna é um metadado."
     )
+    semantic_type: Optional[str] = Field(
+        default=None, description="Tipo semântico da coluna."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1841,11 +1847,11 @@ class AIModelCreateSchema(AssetCreateSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[AnyUrl] = Field(
+    server: Optional[AnyUrlString] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[AnyUrl] = Field(
+    source: Optional[AnyUrlString] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 
@@ -1867,11 +1873,11 @@ class AIModelUpdateSchema(AssetUpdateSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[AnyUrl] = Field(
+    server: Optional[AnyUrlString] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[AnyUrl] = Field(
+    source: Optional[AnyUrlString] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 
@@ -1894,11 +1900,11 @@ class AIModelItemSchema(AssetItemSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[AnyUrl] = Field(
+    server: Optional[AnyUrlString] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[AnyUrl] = Field(
+    source: Optional[AnyUrlString] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 

@@ -1,8 +1,10 @@
 import pytest
 import uuid
 
+from app.exceptions import EntityNotFoundException
 from app.schemas import TagCreateSchema, TagQuerySchema, TagUpdateSchema
 from app.services.tag_service import TagService
+
 
 @pytest.mark.asyncio
 async def test_add_tag(tag_service, sample_tag_data):
@@ -33,8 +35,9 @@ async def test_delete_tag(tag_service, sample_tag_data):
     deleted_tag = await tag_service.delete(created_tag.id)
     assert deleted_tag.id == created_tag.id
 
-    retrieved_tag = await tag_service.get(created_tag.id)
-    assert retrieved_tag is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await tag_service.get(created_tag.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -79,20 +82,24 @@ async def test_find_tags(tag_service: TagService, sample_tag_data):
 
     assert len(found_tags.items) == 2
     (tag1, tag2) = found_tags.items
-    assert tag1.name < tag2.name
+    assert (
+        tag1.name is not None and tag2.name is not None and tag1.name < tag2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_tag(tag_service):
     """Test retrieving a non-existent tag"""
     non_existent_id = uuid.uuid4()
-    tag = await tag_service.get(non_existent_id)
-    assert tag is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await tag_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
 async def test_update_nonexistent_tag(tag_service, sample_tag_data):
     """Test updating a non-existent tag"""
     non_existent_id = uuid.uuid4()
-    updated_tag = await tag_service.update(non_existent_id, sample_tag_data)
-    assert updated_tag is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await tag_service.update(non_existent_id, sample_tag_data)
+    assert "not found" in str(nfe.value)

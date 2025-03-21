@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from app.exceptions import EntityNotFoundException
 from app.schemas import LayerCreateSchema, LayerQuerySchema, LayerUpdateSchema
 from app.services.layer_service import LayerService
 
@@ -32,9 +33,9 @@ async def test_delete_layer(layer_service, sample_layer_data):
 
     deleted_layer = await layer_service.delete(created_layer.id)
     assert deleted_layer.id == created_layer.id
-
-    retrieved_layer = await layer_service.get(created_layer.id)
-    assert retrieved_layer is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await layer_service.get(created_layer.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -79,22 +80,26 @@ async def test_find_layers(layer_service: LayerService, sample_layer_data):
 
     assert len(found_layers.items) == 2
     (layer1, layer2) = found_layers.items
-    assert layer1.name < layer2.name
+    assert (
+        layer1.name is not None
+        and layer2.name is not None
+        and layer1.name < layer2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_layer(layer_service):
     """Test retrieving a non-existent layer"""
     non_existent_id = uuid.uuid4()
-    layer = await layer_service.get(non_existent_id)
-    assert layer is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await layer_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
 async def test_update_nonexistent_layer(layer_service, sample_layer_data):
     """Test updating a non-existent layer"""
     non_existent_id = uuid.uuid4()
-    updated_layer = await layer_service.update(
-        non_existent_id, sample_layer_data
-    )
-    assert updated_layer is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await layer_service.update(non_existent_id, sample_layer_data)
+    assert "not found" in str(nfe.value)

@@ -1,7 +1,13 @@
 import pytest
 import uuid
-from app.schemas import AIModelCreateSchema, AIModelQuerySchema, AIModelUpdateSchema
+from app.schemas import (
+    AIModelCreateSchema,
+    AIModelQuerySchema,
+    AIModelUpdateSchema,
+)
 from app.services.a_i_model_service import AIModelService
+from app.exceptions import EntityNotFoundException
+
 
 @pytest.mark.asyncio
 async def test_add_a_i_model(a_i_model_service, sample_a_i_model_data):
@@ -32,8 +38,9 @@ async def test_delete_a_i_model(a_i_model_service, sample_a_i_model_data):
     deleted_a_i_model = await a_i_model_service.delete(created_a_i_model.id)
     assert deleted_a_i_model.id == created_a_i_model.id
 
-    retrieved_a_i_model = await a_i_model_service.get(created_a_i_model.id)
-    assert retrieved_a_i_model is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await a_i_model_service.get(created_a_i_model.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -69,6 +76,7 @@ async def test_find_a_i_models(
             display_name=f"model {i}",
             fully_qualified_name=f"model {i}",
             updated_by="tester",
+            type="MachineLearning"
         )
         for i in range(3)
     ]
@@ -85,15 +93,20 @@ async def test_find_a_i_models(
 
     assert len(found_a_i_models.items) == 2
     (a_i_model1, a_i_model2) = found_a_i_models.items
-    assert a_i_model1.name < a_i_model2.name
+    assert (
+        a_i_model1.name is not None
+        and a_i_model2.name is not None
+        and a_i_model1.name < a_i_model2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_a_i_model(a_i_model_service):
     """Test retrieving a non-existent a_i_model"""
     non_existent_id = uuid.uuid4()
-    a_i_model = await a_i_model_service.get(non_existent_id)
-    assert a_i_model is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await a_i_model_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -102,7 +115,6 @@ async def test_update_nonexistent_a_i_model(
 ):
     """Test updating a non-existent a_i_model"""
     non_existent_id = uuid.uuid4()
-    updated_a_i_model = await a_i_model_service.update(
-        non_existent_id, sample_a_i_model_data
-    )
-    assert updated_a_i_model is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await a_i_model_service.update(non_existent_id, sample_a_i_model_data)
+    assert "not found" in str(nfe.value)

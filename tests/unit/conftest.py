@@ -1,6 +1,7 @@
 import datetime
 import uuid
 
+from pydantic_core import Url
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -51,7 +52,6 @@ def anyio_backend():
     return "asyncio"
 
 
-
 @pytest_asyncio.fixture(scope="session", autouse=True, loop_scope="session")
 async def setup_test_db():
     """Recreate the database before tests and apply migrations."""
@@ -62,6 +62,7 @@ async def setup_test_db():
     command.upgrade(alembic_config, "head")
     yield  # Run tests
 
+
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def async_engine(setup_test_db):
     """Create a test async engine"""
@@ -71,7 +72,7 @@ async def async_engine(setup_test_db):
         poolclass=StaticPool,
     )
     # Do not execute! Let it to Alembic
-    #async with engine.begin() as conn:
+    # async with engine.begin() as conn:
     #    await conn.run_sync(Base.metadata.create_all)
     try:
         yield engine
@@ -91,7 +92,7 @@ async def async_session(async_engine):
     async with async_session() as session:  # type: ignore
         try:
             yield session
-            await session.rollback() #rollback after each test.
+            await session.rollback()  # rollback after each test.
         finally:
             await session.close()
 
@@ -191,8 +192,8 @@ def sample_a_i_model_data():
         version="1.0.1",
         updated_at=datetime.datetime.utcnow(),
         updated_by="tester",
-        server="http://ia01.uucp",
-        source="http://su.uucp",
+        server=Url("http://ia01.uucp"),
+        source=Url("http://sudoers.uucp"),
         description="Layer used in tests",
         deleted=True,
         type="classification",
@@ -200,15 +201,18 @@ def sample_a_i_model_data():
 
 
 @pytest_asyncio.fixture
-def sample_database_provider_connection_data():
-    return DatabaseProviderConnectionCreateSchema(
-        user_name="joe",
-        password="fool",
-        host="server0",
-        port=1455,
-        database="northwind",
-        extra_parameters="{}",
-        provider_id="FIXME",
+def sample_database_provider_connection_data(sample_database_provider_data):
+    return (
+        DatabaseProviderConnectionCreateSchema(
+            user_name="joe",
+            password="fool",
+            host="server0",
+            port=1455,
+            database="northwind",
+            extra_parameters="{}",
+            provider_id=uuid.uuid4(),
+        ),
+        sample_database_provider_data,
     )
 
 
@@ -275,10 +279,17 @@ def sample_database_provider_type_data():
 
 
 @pytest_asyncio.fixture
-def sample_database_provider_ingestion_data():
-    return DatabaseProviderIngestionCreateSchema(
-        name="raw layer",
-        provider_id=uuid.uuid4(),
-        deleted=True,
-        type="ingestion",
+def sample_database_provider_ingestion_data(
+    sample_database_provider_data,
+):
+    return (
+        DatabaseProviderIngestionCreateSchema(
+            name="raw layer",
+            provider_id=uuid.uuid4(),
+            deleted=True,
+            type="ingestion",
+            exclude_schema=".+",
+            include_schema="public|Public",
+        ),
+        sample_database_provider_data,
     )
