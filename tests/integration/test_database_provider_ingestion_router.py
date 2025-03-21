@@ -53,7 +53,7 @@ async def test_add_database_provider_ingestion(
 
     # Make the request
     response = await async_client.post(
-        "/database-provider-ingestions/", json=test_data
+        "/ingestions/", json=test_data
     )
 
     # Assertions
@@ -71,7 +71,7 @@ async def test_delete_database_provider_ingestion(
     mock_database_provider_ingestion_service.delete.return_value = None
 
     response = await async_client.delete(
-        f"/database-provider-ingestions/{test_uuid}"
+        f"/ingestions/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -99,7 +99,7 @@ async def test_update_database_provider_ingestion(
     )
 
     response = await async_client.patch(
-        f"/database-provider-ingestions/{test_uuid}", json=test_data
+        f"/ingestions/{test_uuid}", json=test_data
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -134,7 +134,7 @@ async def test_find_database_provider_ingestions(
     )
 
     response = await async_client.get(
-        "/database-provider-ingestions/?page=1&size=10"
+        "/ingestions/?page=1&size=10"
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -176,7 +176,7 @@ async def test_get_database_provider_ingestion(
     )
 
     response = await async_client.get(
-        f"/database-provider-ingestions/{test_uuid}"
+        f"/ingestions/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -196,7 +196,7 @@ async def test_get_database_provider_ingestion_not_found(
     mock_database_provider_ingestion_service.get.return_value = None
 
     response = await async_client.get(
-        f"/database-provider-ingestions/{test_uuid}"
+        f"/ingestions/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND

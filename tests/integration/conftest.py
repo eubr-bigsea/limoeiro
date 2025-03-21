@@ -9,13 +9,21 @@ from app.main import app
 from app.routers import (
     database_provider_router,
     database_provider_type_router,
+    database_provider_ingestion_router,
+    database_provider_connection_router,
     database_router,
     database_table_router,
     domain_router,
     database_schema_router,
-    i_a_model_router,
+    a_i_model_router,
     layer_router,
     tag_router,
+)
+from app.services.database_provider_connection_service import (
+    DatabaseProviderConnectionService,
+)
+from app.services.database_provider_ingestion_service import (
+    DatabaseProviderIngestionService,
 )
 from app.services.database_provider_service import DatabaseProviderService
 from app.services.database_provider_type_service import (
@@ -23,7 +31,7 @@ from app.services.database_provider_type_service import (
 )
 from app.services.database_service import DatabaseService
 from app.services.domain_service import DomainService
-from app.services.i_a_model_service import IAModelService
+from app.services.a_i_model_service import AIModelService
 from app.services.layer_service import LayerService
 from app.services.tag_service import TagService
 
@@ -47,9 +55,9 @@ def mock_layer_service():
 
 
 @pytest.fixture
-def mock_i_a_model_service():
+def mock_a_i_model_service():
     (mocked, original_dependency, get_service_ref) = mock_service(
-        IAModelService, i_a_model_router
+        AIModelService, a_i_model_router
     )
     yield mocked
     restore_mock(original_dependency, get_service_ref)
@@ -68,6 +76,24 @@ def mock_database_provider_type_service():
 def mock_database_provider_service():
     (mocked, original_dependency, get_service_ref) = mock_service(
         DatabaseProviderService, database_provider_router
+    )
+    yield mocked
+    restore_mock(original_dependency, get_service_ref)
+
+
+@pytest.fixture
+def mock_database_provider_connection_service():
+    (mocked, original_dependency, get_service_ref) = mock_service(
+        DatabaseProviderConnectionService, database_provider_connection_router
+    )
+    yield mocked
+    restore_mock(original_dependency, get_service_ref)
+
+
+@pytest.fixture
+def mock_database_provider_ingestion_service():
+    (mocked, original_dependency, get_service_ref) = mock_service(
+        DatabaseProviderIngestionService, database_provider_ingestion_router
     )
     yield mocked
     restore_mock(original_dependency, get_service_ref)

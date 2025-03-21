@@ -27,23 +27,16 @@ async def test_add_database_provider_connection(
     obj_id = uuid.uuid4()
     test_data = {
         "id": str(obj_id),
-        "name": "Test DatabaseProviderConnection",
-        "description": "DatabaseProviderConnection to be added",
-        "fully_qualified_name": "sample.DatabaseProviderConnection",
-        "display_name": "Displayed name",
+        "user_name": "admin",
+        "password": "fool",
         "provider_id": provider_id,
-        "updated_by": "FIXME!!!",
     }
 
     # Expected response
     expected_response = DatabaseProviderConnectionItemSchema(
         id=obj_id,
-        name="Test Database",
-        description="Database to be added",
-        fully_qualified_name="sample.Database",
-        display_name="Displayed name",
-        updated_at=datetime.strptime(_ref_date, "%Y-%m-%dT%H:%M:%S"),
-        updated_by="FIXME!!!",
+        user_name="admin",
+        password="fool",
     )
 
     # Configure the mock
@@ -53,7 +46,7 @@ async def test_add_database_provider_connection(
 
     # Make the request
     response = await async_client.post(
-        "/database-provider-connections/", json=test_data
+        "/connections/", json=test_data
     )
 
     # Assertions
@@ -71,7 +64,7 @@ async def test_delete_database_provider_connection(
     mock_database_provider_connection_service.delete.return_value = None
 
     response = await async_client.delete(
-        f"/database-provider-connections/{test_uuid}"
+        f"/connections/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -99,7 +92,7 @@ async def test_update_database_provider_connection(
     )
 
     response = await async_client.patch(
-        f"/database-provider-connections/{test_uuid}", json=test_data
+        f"/connections/{test_uuid}", json=test_data
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -134,7 +127,7 @@ async def test_find_database_provider_connections(
     )
 
     response = await async_client.get(
-        "/database-provider-connections/?page=1&size=10"
+        "/connections/?page=1&size=10"
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -176,7 +169,7 @@ async def test_get_database_provider_connection(
     )
 
     response = await async_client.get(
-        f"/database-provider-connections/{test_uuid}"
+        f"/connections/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -196,7 +189,7 @@ async def test_get_database_provider_connection_not_found(
     mock_database_provider_connection_service.get.return_value = None
 
     response = await async_client.get(
-        f"/database-provider-connections/{test_uuid}"
+        f"/connections/{test_uuid}"
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
