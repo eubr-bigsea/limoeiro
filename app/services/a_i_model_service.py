@@ -87,7 +87,7 @@ class AIModelService(BaseService):
                 a_i_model.results.append(new_results)
 
         self.session.add(a_i_model)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(a_i_model)
         return AIModelItemSchema.model_validate(a_i_model)
 
@@ -105,7 +105,7 @@ class AIModelService(BaseService):
         a_i_model = await self._get(a_i_model_id)
         if a_i_model:
             await self.session.delete(a_i_model)
-            await self.session.commit()
+            await self.session.flush()
             return AIModelItemSchema.model_validate(a_i_model)
         return None
 
@@ -171,7 +171,7 @@ class AIModelService(BaseService):
                 for to_delete in deletion_list:
                     await self.session.delete(to_delete)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(a_i_model)
         return AIModelItemSchema.model_validate(a_i_model)
 

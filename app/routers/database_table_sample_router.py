@@ -38,11 +38,14 @@ def _get_service(
 async def add_database_table_sample(
     database_table_sample_data: DatabaseTableSampleCreateSchema,
     service: DatabaseTableSampleService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseTableSampleItemSchema:
     """
     Adiciona uma instância da classe DatabaseTableSample.
     """
-    return await service.add(database_table_sample_data)
+    result = await service.add(database_table_sample_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -53,11 +56,13 @@ async def add_database_table_sample(
 async def delete_samples(
     database_table_sample_id: UUID = Path(..., description="Identificador"),
     service: DatabaseTableSampleService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseTableSample.
     """
     await service.delete(database_table_sample_id)
+    await session.commit()
     return
 
 
@@ -73,13 +78,16 @@ async def update_samples(
         DatabaseTableSampleUpdateSchema
     ] = None,
     service: DatabaseTableSampleService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseTableSampleItemSchema:
     """
     Atualiza uma instância da classe DatabaseTableSample.
     """
-    return await service.update(
+    result = await service.update(
         database_table_sample_id, database_table_sample_data
     )
+    await session.commit()
+    return result
 
 
 @router.get(

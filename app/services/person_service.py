@@ -46,7 +46,7 @@ class PersonService(BaseService):
         """
         person = Person(**person_data.model_dump(exclude_unset=True))
         self.session.add(person)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(person)
         return PersonItemSchema.model_validate(person)
 
@@ -62,7 +62,7 @@ class PersonService(BaseService):
         person = await self._get(person_id)
         if person:
             await self.session.delete(person)
-            await self.session.commit()
+            await self.session.flush()
             return PersonItemSchema.model_validate(person)
         return None
 
@@ -88,7 +88,7 @@ class PersonService(BaseService):
             ).items():
                 setattr(person, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(person)
         return PersonItemSchema.model_validate(person)
 

@@ -48,7 +48,7 @@ class DatabaseService(BaseService):
         """
         database = Database(**database_data.model_dump(exclude_unset=True))
         self.session.add(database)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database)
         return DatabaseItemSchema.model_validate(database)
 
@@ -66,7 +66,7 @@ class DatabaseService(BaseService):
         database = await self._get(database_id)
         if database:
             await self.session.delete(database)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseItemSchema.model_validate(database)
         return None
 
@@ -94,7 +94,7 @@ class DatabaseService(BaseService):
             ).items():
                 setattr(database, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database)
         return DatabaseItemSchema.model_validate(database)
 

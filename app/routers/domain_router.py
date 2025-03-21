@@ -36,11 +36,14 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> DomainService:
 async def add_domain(
     domain_data: DomainCreateSchema,
     service: DomainService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DomainItemSchema:
     """
     Adiciona uma instância da classe Domain.
     """
-    return await service.add(domain_data)
+    result = await service.add(domain_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -51,11 +54,13 @@ async def add_domain(
 async def delete_domains(
     domain_id: UUID = Path(..., description="Identificador"),
     service: DomainService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Domain.
     """
     await service.delete(domain_id)
+    await session.commit()
     return
 
 
@@ -69,11 +74,14 @@ async def update_domains(
     domain_id: UUID = Path(..., description="Identificador"),
     domain_data: typing.Optional[DomainUpdateSchema] = None,
     service: DomainService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DomainItemSchema:
     """
     Atualiza uma instância da classe Domain.
     """
-    return await service.update(domain_id, domain_data)
+    result = await service.update(domain_id, domain_data)
+    await session.commit()
+    return result
 
 
 @router.get(

@@ -45,7 +45,7 @@ class TagService(BaseService):
         """
         tag = Tag(**tag_data.model_dump(exclude_unset=True))
         self.session.add(tag)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(tag)
         return TagItemSchema.model_validate(tag)
 
@@ -61,7 +61,7 @@ class TagService(BaseService):
         tag = await self._get(tag_id)
         if tag:
             await self.session.delete(tag)
-            await self.session.commit()
+            await self.session.flush()
             return TagItemSchema.model_validate(tag)
         return None
 
@@ -87,7 +87,7 @@ class TagService(BaseService):
             ).items():
                 setattr(tag, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(tag)
         return TagItemSchema.model_validate(tag)
 

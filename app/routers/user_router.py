@@ -34,12 +34,16 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> UserService:
     response_model_exclude_none=True,
 )
 async def add_user(
-    user_data: UserCreateSchema, service: UserService = Depends(_get_service)
+    user_data: UserCreateSchema,
+    service: UserService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> UserItemSchema:
     """
     Adiciona uma instância da classe User.
     """
-    return await service.add(user_data)
+    result = await service.add(user_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -48,11 +52,13 @@ async def add_user(
 async def delete_users(
     user_id: UUID = Path(..., description="Identificador"),
     service: UserService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe User.
     """
     await service.delete(user_id)
+    await session.commit()
     return
 
 
@@ -66,11 +72,14 @@ async def update_users(
     user_id: UUID = Path(..., description="Identificador"),
     user_data: typing.Optional[UserUpdateSchema] = None,
     service: UserService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> UserItemSchema:
     """
     Atualiza uma instância da classe User.
     """
-    return await service.update(user_id, user_data)
+    result = await service.update(user_id, user_data)
+    await session.commit()
+    return result
 
 
 @router.get(

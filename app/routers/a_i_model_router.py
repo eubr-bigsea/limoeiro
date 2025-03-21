@@ -37,6 +37,7 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> AIModelService:
 async def add_a_i_model(
     a_i_model_data: AIModelCreateSchema,
     service: AIModelService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> AIModelItemSchema:
     """
     Adiciona uma instância da classe AIModel.
@@ -45,7 +46,9 @@ async def add_a_i_model(
     if a_i_model_data is not None:
         a_i_model_data.updated_by = "FIXME!!!"
 
-    return await service.add(a_i_model_data)
+    result = await service.add(a_i_model_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -56,11 +59,13 @@ async def add_a_i_model(
 async def delete_ai_models(
     a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: AIModelService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe AIModel.
     """
     await service.delete(a_i_model_id)
+    await session.commit()
     return
 
 
@@ -74,6 +79,7 @@ async def update_ai_models(
     a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     a_i_model_data: typing.Optional[AIModelUpdateSchema] = None,
     service: AIModelService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> AIModelItemSchema:
     """
     Atualiza uma instância da classe AIModel.
@@ -82,7 +88,9 @@ async def update_ai_models(
     if a_i_model_data is not None:
         a_i_model_data.updated_by = "FIXME!!!"
 
-    return await service.update(a_i_model_id, a_i_model_data)
+    result = await service.update(a_i_model_id, a_i_model_data)
+    await session.commit()
+    return result
 
 
 @router.get(

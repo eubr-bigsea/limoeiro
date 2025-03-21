@@ -36,11 +36,14 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> PersonService:
 async def add_person(
     person_data: PersonCreateSchema,
     service: PersonService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> PersonItemSchema:
     """
     Adiciona uma instância da classe Person.
     """
-    return await service.add(person_data)
+    result = await service.add(person_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -51,11 +54,13 @@ async def add_person(
 async def delete_people(
     person_id: UUID = Path(..., description="Identificador"),
     service: PersonService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Person.
     """
     await service.delete(person_id)
+    await session.commit()
     return
 
 
@@ -69,11 +74,14 @@ async def update_people(
     person_id: UUID = Path(..., description="Identificador"),
     person_data: typing.Optional[PersonUpdateSchema] = None,
     service: PersonService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> PersonItemSchema:
     """
     Atualiza uma instância da classe Person.
     """
-    return await service.update(person_id, person_data)
+    result = await service.update(person_id, person_data)
+    await session.commit()
+    return result
 
 
 @router.get(

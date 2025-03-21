@@ -36,11 +36,14 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> CompanyService:
 async def add_company(
     company_data: CompanyCreateSchema,
     service: CompanyService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> CompanyItemSchema:
     """
     Adiciona uma instância da classe Company.
     """
-    return await service.add(company_data)
+    result = await service.add(company_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -51,11 +54,13 @@ async def add_company(
 async def delete_companies(
     company_id: UUID = Path(..., description="Identificador"),
     service: CompanyService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Company.
     """
     await service.delete(company_id)
+    await session.commit()
     return
 
 
@@ -69,11 +74,14 @@ async def update_companies(
     company_id: UUID = Path(..., description="Identificador"),
     company_data: typing.Optional[CompanyUpdateSchema] = None,
     service: CompanyService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> CompanyItemSchema:
     """
     Atualiza uma instância da classe Company.
     """
-    return await service.update(company_id, company_data)
+    result = await service.update(company_id, company_data)
+    await session.commit()
+    return result
 
 
 @router.get(

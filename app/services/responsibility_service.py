@@ -49,7 +49,7 @@ class ResponsibilityService(BaseService):
             **responsibility_data.model_dump(exclude_unset=True)
         )
         self.session.add(responsibility)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(responsibility)
         return ResponsibilityItemSchema.model_validate(responsibility)
 
@@ -67,7 +67,7 @@ class ResponsibilityService(BaseService):
         responsibility = await self._get(responsibility_id)
         if responsibility:
             await self.session.delete(responsibility)
-            await self.session.commit()
+            await self.session.flush()
             return ResponsibilityItemSchema.model_validate(responsibility)
         return None
 
@@ -95,7 +95,7 @@ class ResponsibilityService(BaseService):
             ).items():
                 setattr(responsibility, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(responsibility)
         return ResponsibilityItemSchema.model_validate(responsibility)
 

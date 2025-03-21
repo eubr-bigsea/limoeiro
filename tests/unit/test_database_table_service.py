@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from app.exceptions import EntityNotFoundException
 from app.models import DataType
 from app.schemas import (
     DatabaseTableCreateSchema,
@@ -53,10 +54,9 @@ async def test_delete_database_table(
     )
     assert deleted_database_table.id == created_database_table.id
 
-    retrieved_database_table = await database_table_service.get(
-        created_database_table.id
-    )
-    assert retrieved_database_table is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_table_service.get(created_database_table.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -107,7 +107,7 @@ async def test_find_database_tables(
                     description="column",
                     data_type=DataType.INT,
                 ),
-            ]
+            ],
         )
         for i in range(3)
     ]
@@ -124,15 +124,20 @@ async def test_find_database_tables(
 
     assert len(found_database_tables.items) == 2
     (database_table1, database_table2) = found_database_tables.items
-    assert database_table1.name < database_table2.name
+    assert (
+        database_table1.name is not None
+        and database_table2.name is not None
+        and database_table1.name < database_table2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_database_table(database_table_service):
     """Test retrieving a non-existent database_table"""
     non_existent_id = uuid.uuid4()
-    database_table = await database_table_service.get(non_existent_id)
-    assert database_table is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_table_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -141,7 +146,8 @@ async def test_update_nonexistent_database_table(
 ):
     """Test updating a non-existent database_table"""
     non_existent_id = uuid.uuid4()
-    updated_database_table = await database_table_service.update(
-        non_existent_id, sample_database_table_data
-    )
-    assert updated_database_table is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_table_service.update(
+            non_existent_id, sample_database_table_data
+        )
+    assert "not found" in str(nfe.value)

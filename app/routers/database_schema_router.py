@@ -39,6 +39,7 @@ def _get_service(
 async def add_database_schema(
     database_schema_data: DatabaseSchemaCreateSchema,
     service: DatabaseSchemaService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseSchemaItemSchema:
     """
     Adiciona uma instância da classe DatabaseSchema.
@@ -47,7 +48,9 @@ async def add_database_schema(
     if database_schema_data is not None:
         database_schema_data.updated_by = "FIXME!!!"
 
-    return await service.add(database_schema_data)
+    result = await service.add(database_schema_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -58,11 +61,13 @@ async def add_database_schema(
 async def delete_schemas(
     database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseSchemaService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseSchema.
     """
     await service.delete(database_schema_id)
+    await session.commit()
     return
 
 
@@ -76,6 +81,7 @@ async def update_schemas(
     database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_schema_data: typing.Optional[DatabaseSchemaUpdateSchema] = None,
     service: DatabaseSchemaService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseSchemaItemSchema:
     """
     Atualiza uma instância da classe DatabaseSchema.
@@ -84,7 +90,9 @@ async def update_schemas(
     if database_schema_data is not None:
         database_schema_data.updated_by = "FIXME!!!"
 
-    return await service.update(database_schema_id, database_schema_data)
+    result = await service.update(database_schema_id, database_schema_data)
+    await session.commit()
+    return result
 
 
 @router.get(
@@ -121,25 +129,6 @@ async def get_database_schema(
     """
 
     database_schema = await service.get(database_schema_id)
-    if database_schema is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return database_schema
-
-@router.get(
-    "/schemas/fqn/{fully_qualified_name}",
-    tags=["DatabaseSchema"],
-    response_model=DatabaseSchemaItemSchema,
-    response_model_exclude_none=False,
-)
-async def get_database_schema_by_fqn(
-    fully_qualified_name: str = Path(..., description="Fully qualified name"),
-    service: DatabaseSchemaService = Depends(_get_service),
-) -> DatabaseSchemaItemSchema:
-    """
-    Recupera uma instância da classe DatabaseSchema.
-    """
-
-    database_schema = await service.get_by_fqn(fully_qualified_name)
     if database_schema is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_schema

@@ -6,7 +6,7 @@ POST {{host}}/{{path}} HTTP/1.1
 
 {
     "content": "{\"fields\": [{\"id\": \"_id\", \"type\": \"int\"}, {\"id\": \"N  da licitacao\", \"type\": \"text\"}, {\"id\": \"N  do processo\", \"type\": \"text\"}, {\"id\": \"Modalidade da licitacao\", \"type\": \"text\"}, {\"id\": \"Objeto\", \"type\": \"text\"}, {\"id\": \"Data da autorizacao\", \"type\": \"text\"}, {\"id\": \"Valor\", \"type\": \"text\"}, {\"id\": \"Periodo\", \"type\": \"text\"}], \"records\": [[1, \"12/2023\", \"02.23.833\", \"Inexigibilidade\", \"Rgistro do Estatuto da PBH ATIVOS na junta comercial de MG\", \"22/12/2023\", \"R$ 287,08\", \"Imediato\"], [2, \"01/2024\", \"02.24.838\", \"Inexigibilidade\", \"Registro de ata de reuni\\u00e3o do CA de 26/02/24 e arquivamento da publica\\u00e7\\u00e3o\", \"28/02/2024\", \"R$ 588,25\", \"Imediato\"], [3, \"001/2024\", \"01.24.834\", \"Dispensa de valor\", \"Contrata\\u00e7\\u00e3o da empresa Milenium Embalagens para fornecimento de material de higiene\", \"27/03/2024\", \"R$ 20.650,60\", \"12 meses\"], [4, \"002/2024\", \"01.24.839\", \"Dispensa de valor\", \"Contrata\\u00e7\\u00e3o empresa RFD Cursos para o treinamento sobre Ass\\u00e9dio e demais formas de viol\\u00eancia no ambiente de trabalho\", \"06/03/2024\", \"R$ 3.000,00\", \"Imediato\"], [5, \"002/2024\", \"02.24.840\", \"Inexigibilidade\", \"Contrata\\u00e7\\u00e3o de empresa Zenite para curso Solu\\u00e7\\u00f5es Inovadoras pela Administra\\u00e7\\u00e3o P\\u00fablica e Estatais\", \"06/03/2024\", \"R$ 6.960,00\", \"Imediato\"]]}",
-    "date": "2025-03-15T00:00:00",
+    "date": "2025-03-15T02:00:00",
     "is_visible": true,
     "database_table_id": "f63c9a28-9c53-4ba3-a2be-642a666631b4"
 }

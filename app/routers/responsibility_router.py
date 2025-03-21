@@ -37,11 +37,14 @@ def _get_service(
 async def add_responsibility(
     responsibility_data: ResponsibilityCreateSchema,
     service: ResponsibilityService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> ResponsibilityItemSchema:
     """
     Adiciona uma instância da classe Responsibility.
     """
-    return await service.add(responsibility_data)
+    result = await service.add(responsibility_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -52,11 +55,13 @@ async def add_responsibility(
 async def delete_responsibilities(
     responsibility_id: None = Path(..., description=""),
     service: ResponsibilityService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Responsibility.
     """
     await service.delete(responsibility_id)
+    await session.commit()
     return
 
 
@@ -70,11 +75,14 @@ async def update_responsibilities(
     responsibility_id: None = Path(..., description=""),
     responsibility_data: typing.Optional[ResponsibilityUpdateSchema] = None,
     service: ResponsibilityService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> ResponsibilityItemSchema:
     """
     Atualiza uma instância da classe Responsibility.
     """
-    return await service.update(responsibility_id, responsibility_data)
+    result = await service.update(responsibility_id, responsibility_data)
+    await session.commit()
+    return result
 
 
 @router.get(

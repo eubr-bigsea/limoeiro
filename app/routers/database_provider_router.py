@@ -39,6 +39,7 @@ def _get_service(
 async def add_database_provider(
     database_provider_data: DatabaseProviderCreateSchema,
     service: DatabaseProviderService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderItemSchema:
     """
     Adiciona uma instância da classe DatabaseProvider.
@@ -47,7 +48,9 @@ async def add_database_provider(
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
 
-    return await service.add(database_provider_data)
+    result = await service.add(database_provider_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -58,11 +61,13 @@ async def add_database_provider(
 async def delete_database_providers(
     database_provider_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseProviderService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseProvider.
     """
     await service.delete(database_provider_id)
+    await session.commit()
     return
 
 
@@ -76,6 +81,7 @@ async def update_database_providers(
     database_provider_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_provider_data: typing.Optional[DatabaseProviderUpdateSchema] = None,
     service: DatabaseProviderService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderItemSchema:
     """
     Atualiza uma instância da classe DatabaseProvider.
@@ -84,7 +90,9 @@ async def update_database_providers(
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
 
-    return await service.update(database_provider_id, database_provider_data)
+    result = await service.update(database_provider_id, database_provider_data)
+    await session.commit()
+    return result
 
 
 @router.get(

@@ -45,7 +45,7 @@ class UserService(BaseService):
         """
         user = User(**user_data.model_dump(exclude_unset=True))
         self.session.add(user)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(user)
         return UserItemSchema.model_validate(user)
 
@@ -61,7 +61,7 @@ class UserService(BaseService):
         user = await self._get(user_id)
         if user:
             await self.session.delete(user)
-            await self.session.commit()
+            await self.session.flush()
             return UserItemSchema.model_validate(user)
         return None
 
@@ -87,7 +87,7 @@ class UserService(BaseService):
             ).items():
                 setattr(user, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(user)
         return UserItemSchema.model_validate(user)
 

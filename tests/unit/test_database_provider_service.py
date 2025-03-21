@@ -1,13 +1,24 @@
-import pytest
 import uuid
-from app.schemas import DatabaseProviderCreateSchema, DatabaseProviderQuerySchema, DatabaseProviderUpdateSchema
+
+import pytest
+from sqlalchemy import delete
+
+from app.exceptions import EntityNotFoundException
+from app.models import DatabaseProvider
+from app.schemas import (
+    DatabaseProviderCreateSchema,
+    DatabaseProviderQuerySchema,
+    DatabaseProviderUpdateSchema,
+)
 from app.services.database_provider_service import DatabaseProviderService
+
 
 @pytest.mark.asyncio
 async def test_add_database_provider(
     database_provider_service, sample_database_provider_data
 ):
     """Test adding a new database_provider"""
+
     database_provider = await database_provider_service.add(
         sample_database_provider_data
     )
@@ -51,10 +62,10 @@ async def test_delete_database_provider(
     )
     assert deleted_database_provider.id == created_database_provider.id
 
-    retrieved_database_provider = await database_provider_service.get(
-        created_database_provider.id
-    )
-    assert retrieved_database_provider is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_provider_service.get(created_database_provider.id)
+
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -114,15 +125,21 @@ async def test_find_database_providers(
 
     assert len(found_database_providers.items) == 2
     (database_provider1, database_provider2) = found_database_providers.items
-    assert database_provider1.name < database_provider2.name
+    assert (
+        database_provider1.name is not None
+        and database_provider2.name is not None
+        and database_provider1.name < database_provider2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_database_provider(database_provider_service):
     """Test retrieving a non-existent database_provider"""
     non_existent_id = uuid.uuid4()
-    database_provider = await database_provider_service.get(non_existent_id)
-    assert database_provider is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_provider_service.get(non_existent_id)
+
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -131,7 +148,8 @@ async def test_update_nonexistent_database_provider(
 ):
     """Test updating a non-existent database_provider"""
     non_existent_id = uuid.uuid4()
-    updated_database_provider = await database_provider_service.update(
-        non_existent_id, sample_database_provider_data
-    )
-    assert updated_database_provider is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_provider_service.update(
+            non_existent_id, sample_database_provider_data
+        )
+    assert "not found" in str(nfe.value)

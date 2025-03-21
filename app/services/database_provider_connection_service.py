@@ -51,7 +51,7 @@ class DatabaseProviderConnectionService(BaseService):
             **database_provider_connection_data.model_dump(exclude_unset=True)
         )
         self.session.add(database_provider_connection)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_provider_connection)
         return DatabaseProviderConnectionItemSchema.model_validate(
             database_provider_connection
@@ -73,7 +73,7 @@ class DatabaseProviderConnectionService(BaseService):
         )
         if database_provider_connection:
             await self.session.delete(database_provider_connection)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseProviderConnectionItemSchema.model_validate(
                 database_provider_connection
             )
@@ -109,7 +109,7 @@ class DatabaseProviderConnectionService(BaseService):
             ).items():
                 setattr(database_provider_connection, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_provider_connection)
         return DatabaseProviderConnectionItemSchema.model_validate(
             database_provider_connection

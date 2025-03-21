@@ -1,8 +1,10 @@
 import pytest
 import uuid
 
+from app.exceptions import EntityNotFoundException
 from app.schemas import DomainCreateSchema, DomainQuerySchema, DomainUpdateSchema
 from app.services.domain_service import DomainService
+
 
 @pytest.mark.asyncio
 async def test_add_domain(domain_service, sample_domain_data):
@@ -32,9 +34,9 @@ async def test_delete_domain(domain_service, sample_domain_data):
 
     deleted_domain = await domain_service.delete(created_domain.id)
     assert deleted_domain.id == created_domain.id
-
-    retrieved_domain = await domain_service.get(created_domain.id)
-    assert retrieved_domain is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await domain_service.get(created_domain.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -86,15 +88,15 @@ async def test_find_domains(domain_service: DomainService, sample_domain_data):
 async def test_get_nonexistent_domain(domain_service):
     """Test retrieving a non-existent domain"""
     non_existent_id = uuid.uuid4()
-    domain = await domain_service.get(non_existent_id)
-    assert domain is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await domain_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
 async def test_update_nonexistent_domain(domain_service, sample_domain_data):
     """Test updating a non-existent domain"""
     non_existent_id = uuid.uuid4()
-    updated_domain = await domain_service.update(
-        non_existent_id, sample_domain_data
-    )
-    assert updated_domain is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await domain_service.update(non_existent_id, sample_domain_data)
+    assert "not found" in str(nfe.value)

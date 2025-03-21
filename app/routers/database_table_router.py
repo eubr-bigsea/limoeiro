@@ -39,6 +39,7 @@ def _get_service(
 async def add_database_table(
     database_table_data: DatabaseTableCreateSchema,
     service: DatabaseTableService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseTableItemSchema:
     """
     Adiciona uma instância da classe DatabaseTable.
@@ -47,7 +48,9 @@ async def add_database_table(
     if database_table_data is not None:
         database_table_data.updated_by = "FIXME!!!"
 
-    return await service.add(database_table_data)
+    result = await service.add(database_table_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -58,11 +61,13 @@ async def add_database_table(
 async def delete_tables(
     database_table_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseTableService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseTable.
     """
     await service.delete(database_table_id)
+    await session.commit()
     return
 
 
@@ -76,6 +81,7 @@ async def update_tables(
     database_table_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_table_data: typing.Optional[DatabaseTableUpdateSchema] = None,
     service: DatabaseTableService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseTableItemSchema:
     """
     Atualiza uma instância da classe DatabaseTable.
@@ -84,7 +90,9 @@ async def update_tables(
     if database_table_data is not None:
         database_table_data.updated_by = "FIXME!!!"
 
-    return await service.update(database_table_id, database_table_data)
+    result = await service.update(database_table_id, database_table_data)
+    await session.commit()
+    return result
 
 
 @router.get(
@@ -121,25 +129,6 @@ async def get_database_table(
     """
 
     database_table = await service.get(database_table_id)
-    if database_table is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return database_table
-
-@router.get(
-    "/tables/fqn/{fully_qualified_name}",
-    tags=["DatabaseTable"],
-    response_model=DatabaseTableItemSchema,
-    response_model_exclude_none=False,
-)
-async def get_database_table_by_fqn(
-    fully_qualified_name: str = Path(..., description="Fully qualified name"),
-    service: DatabaseTableService = Depends(_get_service),
-) -> DatabaseTableItemSchema:
-    """
-    Recupera uma instância da classe DatabaseTable.
-    """
-
-    database_table = await service.get_by_fqn(fully_qualified_name)
     if database_table is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_table

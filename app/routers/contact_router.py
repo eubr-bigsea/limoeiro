@@ -36,11 +36,14 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> ContactService:
 async def add_contact(
     contact_data: ContactCreateSchema,
     service: ContactService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> ContactItemSchema:
     """
     Adiciona uma instância da classe Contact.
     """
-    return await service.add(contact_data)
+    result = await service.add(contact_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -51,11 +54,13 @@ async def add_contact(
 async def delete_contacts(
     contact_id: UUID = Path(..., description="Identificador"),
     service: ContactService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Contact.
     """
     await service.delete(contact_id)
+    await session.commit()
     return
 
 
@@ -69,11 +74,14 @@ async def update_contacts(
     contact_id: UUID = Path(..., description="Identificador"),
     contact_data: typing.Optional[ContactUpdateSchema] = None,
     service: ContactService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> ContactItemSchema:
     """
     Atualiza uma instância da classe Contact.
     """
-    return await service.update(contact_id, contact_data)
+    result = await service.update(contact_id, contact_data)
+    await session.commit()
+    return result
 
 
 @router.get(

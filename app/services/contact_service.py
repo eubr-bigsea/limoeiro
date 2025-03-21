@@ -45,7 +45,7 @@ class ContactService(BaseService):
         """
         contact = Contact(**contact_data.model_dump(exclude_unset=True))
         self.session.add(contact)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(contact)
         return ContactItemSchema.model_validate(contact)
 
@@ -63,7 +63,7 @@ class ContactService(BaseService):
         contact = await self._get(contact_id)
         if contact:
             await self.session.delete(contact)
-            await self.session.commit()
+            await self.session.flush()
             return ContactItemSchema.model_validate(contact)
         return None
 
@@ -91,7 +91,7 @@ class ContactService(BaseService):
             ).items():
                 setattr(contact, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(contact)
         return ContactItemSchema.model_validate(contact)
 

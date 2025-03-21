@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from app.exceptions import EntityNotFoundException
 from app.schemas import (
     DatabaseSchemaCreateSchema,
     DatabaseSchemaQuerySchema,
@@ -53,10 +54,9 @@ async def test_delete_database_schema(
     )
     assert deleted_database_schema.id == created_database_schema.id
 
-    retrieved_database_schema = await database_schema_service.get(
-        created_database_schema.id
-    )
-    assert retrieved_database_schema is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_schema_service.get(created_database_schema.id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -115,15 +115,20 @@ async def test_find_database_schemas(
 
     assert len(found_database_schemas.items) == 2
     (database_schema1, database_schema2) = found_database_schemas.items
-    assert database_schema1.name < database_schema2.name
+    assert (
+        database_schema1.name is not None
+        and database_schema2.name is not None
+        and database_schema1.name < database_schema2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_database_schema(database_schema_service):
     """Test retrieving a non-existent database_schema"""
     non_existent_id = uuid.uuid4()
-    database_schema = await database_schema_service.get(non_existent_id)
-    assert database_schema is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_schema_service.get(non_existent_id)
+    assert "not found" in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -132,7 +137,8 @@ async def test_update_nonexistent_database_schema(
 ):
     """Test updating a non-existent database_schema"""
     non_existent_id = uuid.uuid4()
-    updated_database_schema = await database_schema_service.update(
-        non_existent_id, sample_database_schema_data
-    )
-    assert updated_database_schema is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_schema_service.update(
+            non_existent_id, sample_database_schema_data
+        )
+    assert "not found" in str(nfe.value)

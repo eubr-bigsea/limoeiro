@@ -64,7 +64,7 @@ class DatabaseTableService(BaseService):
                 database_table.columns.append(new_columns)
 
         self.session.add(database_table)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_table)
         return DatabaseTableItemSchema.model_validate(database_table)
 
@@ -82,7 +82,7 @@ class DatabaseTableService(BaseService):
         database_table = await self._get(database_table_id)
         if database_table:
             await self.session.delete(database_table)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseTableItemSchema.model_validate(database_table)
         return None
 
@@ -124,7 +124,7 @@ class DatabaseTableService(BaseService):
                 for to_delete in deletion_list:
                     await self.session.delete(to_delete)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_table)
         return DatabaseTableItemSchema.model_validate(database_table)
 

@@ -50,7 +50,7 @@ class DatabaseSchemaService(BaseService):
             **database_schema_data.model_dump(exclude_unset=True)
         )
         self.session.add(database_schema)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_schema)
         return DatabaseSchemaItemSchema.model_validate(database_schema)
 
@@ -68,7 +68,7 @@ class DatabaseSchemaService(BaseService):
         database_schema = await self._get(database_schema_id)
         if database_schema:
             await self.session.delete(database_schema)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseSchemaItemSchema.model_validate(database_schema)
         return None
 
@@ -98,7 +98,7 @@ class DatabaseSchemaService(BaseService):
             ).items():
                 setattr(database_schema, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_schema)
         return DatabaseSchemaItemSchema.model_validate(database_schema)
 

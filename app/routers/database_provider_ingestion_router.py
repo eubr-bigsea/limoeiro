@@ -40,11 +40,14 @@ def _get_service(
 async def add_database_provider_ingestion(
     database_provider_ingestion_data: DatabaseProviderIngestionCreateSchema,
     service: DatabaseProviderIngestionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderIngestionItemSchema:
     """
     Adiciona uma instância da classe DatabaseProviderIngestion.
     """
-    return await service.add(database_provider_ingestion_data)
+    result = await service.add(database_provider_ingestion_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -57,11 +60,13 @@ async def delete_ingestions(
         ..., description="Identificador"
     ),
     service: DatabaseProviderIngestionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseProviderIngestion.
     """
     await service.delete(database_provider_ingestion_id)
+    await session.commit()
     return
 
 
@@ -79,13 +84,16 @@ async def update_ingestions(
         DatabaseProviderIngestionUpdateSchema
     ] = None,
     service: DatabaseProviderIngestionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderIngestionItemSchema:
     """
     Atualiza uma instância da classe DatabaseProviderIngestion.
     """
-    return await service.update(
+    result = await service.update(
         database_provider_ingestion_id, database_provider_ingestion_data
     )
+    await session.commit()
+    return result
 
 
 @router.get(

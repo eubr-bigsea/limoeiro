@@ -34,12 +34,16 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> LayerService:
     response_model_exclude_none=True,
 )
 async def add_layer(
-    layer_data: LayerCreateSchema, service: LayerService = Depends(_get_service)
+    layer_data: LayerCreateSchema,
+    service: LayerService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> LayerItemSchema:
     """
     Adiciona uma instância da classe Layer.
     """
-    return await service.add(layer_data)
+    result = await service.add(layer_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -48,11 +52,13 @@ async def add_layer(
 async def delete_layers(
     layer_id: UUID = Path(..., description="Identificador"),
     service: LayerService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Layer.
     """
     await service.delete(layer_id)
+    await session.commit()
     return
 
 
@@ -66,11 +72,14 @@ async def update_layers(
     layer_id: UUID = Path(..., description="Identificador"),
     layer_data: typing.Optional[LayerUpdateSchema] = None,
     service: LayerService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> LayerItemSchema:
     """
     Atualiza uma instância da classe Layer.
     """
-    return await service.update(layer_id, layer_data)
+    result = await service.update(layer_id, layer_data)
+    await session.commit()
+    return result
 
 
 @router.get(

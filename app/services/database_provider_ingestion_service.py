@@ -51,7 +51,7 @@ class DatabaseProviderIngestionService(BaseService):
             **database_provider_ingestion_data.model_dump(exclude_unset=True)
         )
         self.session.add(database_provider_ingestion)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_provider_ingestion)
         return DatabaseProviderIngestionItemSchema.model_validate(
             database_provider_ingestion
@@ -73,7 +73,7 @@ class DatabaseProviderIngestionService(BaseService):
         )
         if database_provider_ingestion:
             await self.session.delete(database_provider_ingestion)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseProviderIngestionItemSchema.model_validate(
                 database_provider_ingestion
             )
@@ -109,7 +109,7 @@ class DatabaseProviderIngestionService(BaseService):
             ).items():
                 setattr(database_provider_ingestion, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_provider_ingestion)
         return DatabaseProviderIngestionItemSchema.model_validate(
             database_provider_ingestion
@@ -171,7 +171,10 @@ class DatabaseProviderIngestionService(BaseService):
             page_count=math.ceil(total_rows / limit),
             page=page,
             count=total_rows,
-            items=[DatabaseProviderIngestionListSchema.model_validate(row) for row in rows],
+            items=[
+                DatabaseProviderIngestionListSchema.model_validate(row)
+                for row in rows
+            ],
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)

@@ -45,7 +45,7 @@ class CompanyService(BaseService):
         """
         company = Company(**company_data.model_dump(exclude_unset=True))
         self.session.add(company)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(company)
         return CompanyItemSchema.model_validate(company)
 
@@ -63,7 +63,7 @@ class CompanyService(BaseService):
         company = await self._get(company_id)
         if company:
             await self.session.delete(company)
-            await self.session.commit()
+            await self.session.flush()
             return CompanyItemSchema.model_validate(company)
         return None
 
@@ -91,7 +91,7 @@ class CompanyService(BaseService):
             ).items():
                 setattr(company, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(company)
         return CompanyItemSchema.model_validate(company)
 

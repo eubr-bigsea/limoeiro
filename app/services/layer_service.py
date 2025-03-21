@@ -45,7 +45,7 @@ class LayerService(BaseService):
         """
         layer = Layer(**layer_data.model_dump(exclude_unset=True))
         self.session.add(layer)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(layer)
         return LayerItemSchema.model_validate(layer)
 
@@ -61,7 +61,7 @@ class LayerService(BaseService):
         layer = await self._get(layer_id)
         if layer:
             await self.session.delete(layer)
-            await self.session.commit()
+            await self.session.flush()
             return LayerItemSchema.model_validate(layer)
         return None
 
@@ -87,7 +87,7 @@ class LayerService(BaseService):
             ).items():
                 setattr(layer, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(layer)
         return LayerItemSchema.model_validate(layer)
 

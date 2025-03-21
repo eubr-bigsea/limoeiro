@@ -34,12 +34,16 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> TagService:
     response_model_exclude_none=True,
 )
 async def add_tag(
-    tag_data: TagCreateSchema, service: TagService = Depends(_get_service)
+    tag_data: TagCreateSchema,
+    service: TagService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> TagItemSchema:
     """
     Adiciona uma instância da classe Tag.
     """
-    return await service.add(tag_data)
+    result = await service.add(tag_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -48,11 +52,13 @@ async def add_tag(
 async def delete_tags(
     tag_id: UUID = Path(..., description="Identificador"),
     service: TagService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Tag.
     """
     await service.delete(tag_id)
+    await session.commit()
     return
 
 
@@ -66,11 +72,14 @@ async def update_tags(
     tag_id: UUID = Path(..., description="Identificador"),
     tag_data: typing.Optional[TagUpdateSchema] = None,
     service: TagService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> TagItemSchema:
     """
     Atualiza uma instância da classe Tag.
     """
-    return await service.update(tag_id, tag_data)
+    result = await service.update(tag_id, tag_data)
+    await session.commit()
+    return result
 
 
 @router.get(

@@ -50,7 +50,7 @@ class DatabaseTableSampleService(BaseService):
             **database_table_sample_data.model_dump(exclude_unset=True)
         )
         self.session.add(database_table_sample)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_table_sample)
         return DatabaseTableSampleItemSchema.model_validate(
             database_table_sample
@@ -70,7 +70,7 @@ class DatabaseTableSampleService(BaseService):
         database_table_sample = await self._get(database_table_sample_id)
         if database_table_sample:
             await self.session.delete(database_table_sample)
-            await self.session.commit()
+            await self.session.flush()
             return DatabaseTableSampleItemSchema.model_validate(
                 database_table_sample
             )
@@ -104,7 +104,7 @@ class DatabaseTableSampleService(BaseService):
             ).items():
                 setattr(database_table_sample, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(database_table_sample)
         return DatabaseTableSampleItemSchema.model_validate(
             database_table_sample

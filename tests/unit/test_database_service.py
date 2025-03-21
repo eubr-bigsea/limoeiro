@@ -1,7 +1,13 @@
 import pytest
 import uuid
-from app.schemas import DatabaseCreateSchema, DatabaseQuerySchema, DatabaseUpdateSchema
+from app.exceptions import EntityNotFoundException
+from app.schemas import (
+    DatabaseCreateSchema,
+    DatabaseQuerySchema,
+    DatabaseUpdateSchema,
+)
 from app.services.database_service import DatabaseService
+
 
 @pytest.mark.asyncio
 async def test_add_database(database_service, sample_database_data):
@@ -32,8 +38,9 @@ async def test_delete_database(database_service, sample_database_data):
     deleted_database = await database_service.delete(created_database.id)
     assert deleted_database.id == created_database.id
 
-    retrieved_database = await database_service.get(created_database.id)
-    assert retrieved_database is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_service.get(created_database.id)
+    assert 'not found' in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -86,15 +93,20 @@ async def test_find_databases(
 
     assert len(found_databases.items) == 2
     (database1, database2) = found_databases.items
-    assert database1.name < database2.name
+    assert (
+        database1.name is not None
+        and database2.name is not None
+        and database1.name < database2.name
+    )
 
 
 @pytest.mark.asyncio
 async def test_get_nonexistent_database(database_service):
     """Test retrieving a non-existent database"""
     non_existent_id = uuid.uuid4()
-    database = await database_service.get(non_existent_id)
-    assert database is None
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_service.get(non_existent_id)
+    assert 'not found' in str(nfe.value)
 
 
 @pytest.mark.asyncio
@@ -103,7 +115,9 @@ async def test_update_nonexistent_database(
 ):
     """Test updating a non-existent database"""
     non_existent_id = uuid.uuid4()
-    updated_database = await database_service.update(
-        non_existent_id, sample_database_data
-    )
-    assert updated_database is None
+
+    with pytest.raises(EntityNotFoundException) as nfe:
+        await database_service.update(
+            non_existent_id, sample_database_data
+        )
+    assert 'not found' in str(nfe.value)

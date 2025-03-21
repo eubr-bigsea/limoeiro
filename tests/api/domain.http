@@ -25,7 +25,7 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Brittany Lowe" ,
-    "description": "System week collection three." ,
+    "name": "Gabinete de Segurança Institucional" ,
+    "description": "GSI." ,
     "deleted": false
 }

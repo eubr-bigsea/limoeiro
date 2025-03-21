@@ -37,6 +37,7 @@ def _get_service(db: AsyncSession = Depends(get_session)) -> DatabaseService:
 async def add_database(
     database_data: DatabaseCreateSchema,
     service: DatabaseService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseItemSchema:
     """
     Adiciona uma instância da classe Database.
@@ -45,7 +46,9 @@ async def add_database(
     if database_data is not None:
         database_data.updated_by = "FIXME!!!"
 
-    return await service.add(database_data)
+    result = await service.add(database_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -56,11 +59,13 @@ async def add_database(
 async def delete_databases(
     database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Database.
     """
     await service.delete(database_id)
+    await session.commit()
     return
 
 
@@ -74,6 +79,7 @@ async def update_databases(
     database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_data: typing.Optional[DatabaseUpdateSchema] = None,
     service: DatabaseService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseItemSchema:
     """
     Atualiza uma instância da classe Database.
@@ -82,7 +88,9 @@ async def update_databases(
     if database_data is not None:
         database_data.updated_by = "FIXME!!!"
 
-    return await service.update(database_id, database_data)
+    result = await service.update(database_id, database_data)
+    await session.commit()
+    return result
 
 
 @router.get(
@@ -122,24 +130,3 @@ async def get_database(
     if database is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database
-
-@router.get(
-    "/databases/fqn/{fully_qualified_name}",
-    tags=["Database"],
-    response_model=DatabaseItemSchema,
-    response_model_exclude_none=False,
-)
-async def get_database_by_fqn(
-    fully_qualified_name: str = Path(..., description="Fully qualified name"),
-    service: DatabaseService = Depends(_get_service),
-) -> DatabaseItemSchema:
-    """
-    Recupera uma instância da classe Database.
-    """
-
-    database = await service.get_by_fqn(fully_qualified_name)
-    if database is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return database
-
-

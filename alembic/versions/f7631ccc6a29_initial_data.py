@@ -4,7 +4,7 @@ Revision ID: f7631ccc6a29
 Revises: e28787a3c49f
 
 """
-
+import uuid
 from typing import Sequence, Union
 
 from alembic import op
@@ -85,13 +85,13 @@ def upgrade() -> None:
                 supports_schema=True,
             ),
             ResponsibilityType(
-                id="f319d911-fd20-4606-a7c1-3e06e864057f",
+                id=uuid.UUID("f319d911-fd20-4606-a7c1-3e06e864057f"),
                 name="Técnica",
                 description="Responsável técnico",
                 deleted=False,
             ),
             ResponsibilityType(
-                id="727d761b-824f-4582-9919-4513fa87584e",
+                id=uuid.UUID("727d761b-824f-4582-9919-4513fa87584e"),
                 name="Jurídica",
                 description="Responsável jurídico",
                 deleted=False,
@@ -130,8 +130,8 @@ def downgrade() -> None:
         .filter(
             ResponsibilityType.id.in_(
                 [
-                    "f319d911-fd20-4606-a7c1-3e06e864057f",
-                    "727d761b-824f-4582-9919-4513fa87584e",
+                    uuid.UUID("f319d911-fd20-4606-a7c1-3e06e864057f"),
+                    uuid.UUID("727d761b-824f-4582-9919-4513fa87584e"),
                 ]
             )
         )

@@ -45,7 +45,7 @@ class DomainService(BaseService):
         """
         domain = Domain(**domain_data.model_dump(exclude_unset=True))
         self.session.add(domain)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(domain)
         return DomainItemSchema.model_validate(domain)
 
@@ -61,7 +61,7 @@ class DomainService(BaseService):
         domain = await self._get(domain_id)
         if domain:
             await self.session.delete(domain)
-            await self.session.commit()
+            await self.session.flush()
             return DomainItemSchema.model_validate(domain)
         return None
 
@@ -87,7 +87,7 @@ class DomainService(BaseService):
             ).items():
                 setattr(domain, key, value)
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(domain)
         return DomainItemSchema.model_validate(domain)
 

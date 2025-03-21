@@ -40,11 +40,14 @@ def _get_service(
 async def add_database_provider_connection(
     database_provider_connection_data: DatabaseProviderConnectionCreateSchema,
     service: DatabaseProviderConnectionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderConnectionItemSchema:
     """
     Adiciona uma instância da classe DatabaseProviderConnection.
     """
-    return await service.add(database_provider_connection_data)
+    result = await service.add(database_provider_connection_data)
+    await session.commit()
+    return result
 
 
 @router.delete(
@@ -57,11 +60,13 @@ async def delete_connections(
         ..., description="Identificador"
     ),
     service: DatabaseProviderConnectionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseProviderConnection.
     """
     await service.delete(database_provider_connection_id)
+    await session.commit()
     return
 
 
@@ -79,13 +84,16 @@ async def update_connections(
         DatabaseProviderConnectionUpdateSchema
     ] = None,
     service: DatabaseProviderConnectionService = Depends(_get_service),
+    session: AsyncSession = Depends(get_session),
 ) -> DatabaseProviderConnectionItemSchema:
     """
     Atualiza uma instância da classe DatabaseProviderConnection.
     """
-    return await service.update(
+    result = await service.update(
         database_provider_connection_id, database_provider_connection_data
     )
+    await session.commit()
+    return result
 
 
 @router.get(
