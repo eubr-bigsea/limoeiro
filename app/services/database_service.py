@@ -31,24 +31,8 @@ class DatabaseService(BaseService):
     Database entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(Database)
+        super().__init__(Database, session)
         self.session = session
-
-    async def _get(self, database_id: UUID) -> typing.Optional[Database]:
-        result = await self.session.execute(
-            select(Database)
-            .options(selectinload(Database.provider))
-            .filter(Database.id == database_id)
-        )
-        return result.scalars().first()
-
-    async def _get_by_fqn(self, fully_qualified_name: str) -> typing.Optional[Database]:
-        result = await self.session.execute(
-            select(Database)
-            .options(selectinload(Database.provider))
-            .filter(Database.fully_qualified_name == fully_qualified_name)
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
@@ -70,7 +54,7 @@ class DatabaseService(BaseService):
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
-        self, database_id: UUID
+        self, database_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseItemSchema]:
         """
         Delete Database instance.
@@ -89,7 +73,7 @@ class DatabaseService(BaseService):
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
-        database_id: UUID,
+        database_id: typing.Union[UUID, str],
         database_data: typing.Optional[DatabaseUpdateSchema],
     ) -> DatabaseItemSchema:
         """
@@ -103,7 +87,7 @@ class DatabaseService(BaseService):
         """
         database = await self._get(database_id)
         if not database:
-            raise ex.EntityNotFoundException("{cls_name}", database_id)
+            raise ex.EntityNotFoundException("Database", database_id)
         if database_data is not None:
             for key, value in database_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -155,8 +139,7 @@ class DatabaseService(BaseService):
             query = query.order_by(
                 order_func(getattr(Database, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -180,7 +163,9 @@ class DatabaseService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_id: UUID) -> DatabaseItemSchema:
+    async def get(
+        self, database_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseItemSchema]:
         """
         Retrieve a Database instance by id.
         Args:
@@ -188,21 +173,23 @@ class DatabaseService(BaseService):
         Returns:
             Database: Found instance or None
         """
-        return DatabaseItemSchema.model_validate(await self._get(database_id))
+        database = await self._get(database_id)
+        if database:
+            return DatabaseItemSchema.model_validate(database)
+        else:
+            raise ex.EntityNotFoundException("Database", database_id)
 
-
-    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get_by_fqn(self, fully_qualified_name: str) -> DatabaseItemSchema:
-        """
-        Retrieve a Database instance by fully_qualified_name.
-        Args:
-            fully_qualified_name: The fully_qualified_name of the Database instance to retrieve.
-        Returns:
-            Database: Found instance or None
-        """
-
-        result = await self._get_by_fqn(fully_qualified_name)
-        if result is not None:
-            result = DatabaseItemSchema.model_validate(result)
-        return result
-
+    async def _get(
+        self, database_id: typing.Union[UUID, str]
+    ) -> typing.Optional[Database]:
+        filter_condition = (
+            Database.id == database_id
+            if isinstance(database_id, UUID)
+            else Database.fully_qualified_name == database_id
+        )
+        result = await self.session.execute(
+            select(Database)
+            .options(selectinload(Database.provider))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

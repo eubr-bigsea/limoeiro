@@ -30,12 +30,8 @@ class TagService(BaseService):
     Tag entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(Tag)
+        super().__init__(Tag, session)
         self.session = session
-
-    async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
-        result = await self.session.execute(select(Tag).filter(Tag.id == tag_id))
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(self, tag_data: TagCreateSchema) -> TagItemSchema:
@@ -84,7 +80,7 @@ class TagService(BaseService):
         """
         tag = await self._get(tag_id)
         if not tag:
-            raise ex.EntityNotFoundException("{cls_name}", tag_id)
+            raise ex.EntityNotFoundException("Tag", tag_id)
         if tag_data is not None:
             for key, value in tag_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -131,8 +127,7 @@ class TagService(BaseService):
             query = query.order_by(
                 order_func(getattr(Tag, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -156,7 +151,7 @@ class TagService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, tag_id: UUID) -> TagItemSchema:
+    async def get(self, tag_id: UUID) -> typing.Optional[TagItemSchema]:
         """
         Retrieve a Tag instance by id.
         Args:
@@ -164,4 +159,13 @@ class TagService(BaseService):
         Returns:
             Tag: Found instance or None
         """
-        return TagItemSchema.model_validate(await self._get(tag_id))
+        tag = await self._get(tag_id)
+        if tag:
+            return TagItemSchema.model_validate(tag)
+        else:
+            raise ex.EntityNotFoundException("Tag", tag_id)
+
+    async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
+        filter_condition = Tag.id == tag_id
+        result = await self.session.execute(select(Tag).filter(filter_condition))
+        return result.scalars().first()

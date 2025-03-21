@@ -4,6 +4,7 @@ import typing
 from uuid import UUID
 from sqlalchemy import asc, desc, func
 
+import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -27,23 +28,13 @@ class ResponsibilityTypeService(BaseService):
     ResponsibilityType entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(ResponsibilityType)
+        super().__init__(ResponsibilityType, session)
         self.session = session
-
-    async def _get(
-        self, responsibility_type_id: UUID
-    ) -> typing.Optional[ResponsibilityType]:
-        result = await self.session.execute(
-            select(ResponsibilityType).filter(
-                ResponsibilityType.id == responsibility_type_id
-            )
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, responsibility_type_id: UUID
-    ) -> ResponsibilityTypeItemSchema:
+    ) -> typing.Optional[ResponsibilityTypeItemSchema]:
         """
         Retrieve a ResponsibilityType instance by id.
         Args:
@@ -51,9 +42,15 @@ class ResponsibilityTypeService(BaseService):
         Returns:
             ResponsibilityType: Found instance or None
         """
-        return ResponsibilityTypeItemSchema.model_validate(
-            await self._get(responsibility_type_id)
-        )
+        responsibility_type = await self._get(responsibility_type_id)
+        if responsibility_type:
+            return ResponsibilityTypeItemSchema.model_validate(
+                responsibility_type
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "ResponsibilityType", responsibility_type_id
+            )
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
@@ -80,8 +77,7 @@ class ResponsibilityTypeService(BaseService):
             query = query.order_by(
                 order_func(getattr(ResponsibilityType, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -105,3 +101,12 @@ class ResponsibilityTypeService(BaseService):
                 ResponsibilityTypeListSchema.model_validate(row) for row in rows
             ],
         )
+
+    async def _get(
+        self, responsibility_type_id: UUID
+    ) -> typing.Optional[ResponsibilityType]:
+        filter_condition = ResponsibilityType.id == responsibility_type_id
+        result = await self.session.execute(
+            select(ResponsibilityType).filter(filter_condition)
+        )
+        return result.scalars().first()

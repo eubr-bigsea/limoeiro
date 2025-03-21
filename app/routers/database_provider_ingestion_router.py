@@ -53,7 +53,9 @@ async def add_database_provider_ingestion(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ingestions(
-    database_provider_ingestion_id: UUID,
+    database_provider_ingestion_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseProviderIngestionService = Depends(_get_service),
 ):
     """

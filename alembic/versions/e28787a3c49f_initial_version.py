@@ -1,8 +1,8 @@
 """Initial version
 
-Revision ID: d78983e7e563
+Revision ID: e28787a3c49f
 Revises: 
-Create Date: 2025-02-28 19:35:11.165662
+Create Date: 2025-03-19 22:43:45.606987
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'd78983e7e563'
+revision: str = 'e28787a3c49f'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,20 +27,22 @@ def upgrade() -> None:
     sa.Column('applies_to', sa.String(length=200), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('tb_database_provider_connection',
+    op.create_table('tb_contact',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('user_name', sa.String(length=100), nullable=False),
-    sa.Column('password', sa.String(length=100), nullable=True),
-    sa.Column('host', sa.String(length=400), nullable=False),
-    sa.Column('port', sa.Integer(), nullable=False),
-    sa.Column('database', sa.String(length=200), nullable=True),
-    sa.Column('extra_parameters', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+    sa.Column('name', sa.String(length=200), nullable=False),
+    sa.Column('description', sa.String(length=8000), nullable=True),
+    sa.Column('deleted', sa.Boolean(), server_default='False', nullable=False),
+    sa.Column('phone_number', sa.String(length=40), nullable=True),
+    sa.Column('cell_phone_number', sa.String(length=40), nullable=True),
+    sa.Column('email', sa.String(length=250), nullable=True),
+    sa.Column('type', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tb_database_provider_type',
     sa.Column('id', sa.String(length=200), autoincrement=False, nullable=False),
     sa.Column('display_name', sa.String(length=200), nullable=False),
     sa.Column('image', sa.String(length=8000), nullable=True),
+    sa.Column('supports_schema', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tb_domain',
@@ -107,21 +109,32 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['domain_id'], ['tb_domain.id'], name='fk_asset_domain_id', ondelete='set null'),
     sa.ForeignKeyConstraint(['layer_id'], ['tb_layer.id'], name='fk_asset_layer_id', ondelete='set null'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('fully_qualified_name', name='inx_uq_asset')
+    sa.UniqueConstraint('fully_qualified_name', 'asset_type', name='inx_uq_asset')
     )
     op.create_index(op.f('ix_tb_asset_domain_id'), 'tb_asset', ['domain_id'], unique=False)
     op.create_index(op.f('ix_tb_asset_fully_qualified_name'), 'tb_asset', ['fully_qualified_name'], unique=True)
     op.create_index(op.f('ix_tb_asset_layer_id'), 'tb_asset', ['layer_id'], unique=False)
-    op.create_table('tb_entity_tag',
+    op.create_table('tb_company',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
-    sa.Column('entity_type', sa.String(length=200), nullable=False),
-    sa.Column('entity_id', sa.UUID(), nullable=False),
-    sa.Column('tag_id', sa.UUID(), nullable=False),
-    sa.ForeignKeyConstraint(['tag_id'], ['tb_tag.id'], name='fk_entity_tag_tag_id'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('entity_type', 'entity_id', name='inx_uq_entity_tag')
+    sa.Column('organization', sa.String(length=100), nullable=True),
+    sa.Column('document', sa.String(length=100), nullable=True),
+    sa.Column('document_type', sa.String(length=20), nullable=True),
+    sa.Column('contact_name', sa.String(length=100), nullable=True),
+    sa.ForeignKeyConstraint(['id'], ['tb_contact.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_tb_entity_tag_tag_id'), 'tb_entity_tag', ['tag_id'], unique=False)
+    op.create_table('tb_person',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('organization', sa.String(length=100), nullable=True),
+    sa.Column('document', sa.String(length=100), nullable=True),
+    sa.Column('document_type', sa.String(length=20), nullable=True),
+    sa.Column('company', sa.String(length=200), nullable=True),
+    sa.Column('user_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['id'], ['tb_contact.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['tb_user.id'], name='fk_person_user_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_person_user_id'), 'tb_person', ['user_id'], unique=False)
     op.create_table('tb_a_i_model',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('type', sa.String(length=200), nullable=False),
@@ -141,18 +154,37 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tb_asset_link_asset_id'), 'tb_asset_link', ['asset_id'], unique=False)
+    op.create_table('tb_asset_tag',
+    sa.Column('asset_id', sa.UUID(), nullable=False),
+    sa.Column('tag_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['asset_id'], ['tb_asset.id'], name='fk_asset_tag_asset_id'),
+    sa.ForeignKeyConstraint(['tag_id'], ['tb_tag.id'], name='fk_asset_tag_tag_id'),
+    sa.PrimaryKeyConstraint('asset_id', 'tag_id')
+    )
+    op.create_index(op.f('ix_tb_asset_tag_asset_id'), 'tb_asset_tag', ['asset_id'], unique=False)
+    op.create_index(op.f('ix_tb_asset_tag_tag_id'), 'tb_asset_tag', ['tag_id'], unique=False)
     op.create_table('tb_database_provider',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('configuration', postgresql.JSON(astext_type=sa.Text()), nullable=True),
     sa.Column('provider_type_id', sa.String(length=200), nullable=False),
-    sa.Column('connection_id', sa.UUID(), nullable=True),
-    sa.ForeignKeyConstraint(['connection_id'], ['tb_database_provider_connection.id'], name='fk_database_provider_connection_id'),
     sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
     sa.ForeignKeyConstraint(['provider_type_id'], ['tb_database_provider_type.id'], name='fk_database_provider_provider_type_id'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_tb_database_provider_connection_id'), 'tb_database_provider', ['connection_id'], unique=False)
     op.create_index(op.f('ix_tb_database_provider_provider_type_id'), 'tb_database_provider', ['provider_type_id'], unique=False)
+    op.create_table('tb_responsibility',
+    sa.Column('contact_id', sa.UUID(), nullable=False),
+    sa.Column('type_id', sa.UUID(), nullable=False),
+    sa.Column('asset_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['asset_id'], ['tb_asset.id'], name='fk_responsibility_asset_id'),
+    sa.ForeignKeyConstraint(['contact_id'], ['tb_contact.id'], name='fk_responsibility_contact_id'),
+    sa.ForeignKeyConstraint(['type_id'], ['tb_responsibility_type.id'], name='fk_responsibility_type_id'),
+    sa.PrimaryKeyConstraint('asset_id', 'contact_id', 'type_id'),
+    sa.UniqueConstraint('asset_id', 'contact_id', 'type_id', name='inx_uq_responsibility')
+    )
+    op.create_index(op.f('ix_tb_responsibility_asset_id'), 'tb_responsibility', ['asset_id'], unique=False)
+    op.create_index(op.f('ix_tb_responsibility_contact_id'), 'tb_responsibility', ['contact_id'], unique=False)
+    op.create_index(op.f('ix_tb_responsibility_type_id'), 'tb_responsibility', ['type_id'], unique=False)
     op.create_table('tb_a_i_model_attribute',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
@@ -193,6 +225,19 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tb_database_provider_id'), 'tb_database', ['provider_id'], unique=False)
+    op.create_table('tb_database_provider_connection',
+    sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
+    sa.Column('user_name', sa.String(length=100), nullable=False),
+    sa.Column('password', sa.String(length=100), nullable=True),
+    sa.Column('host', sa.String(length=400), nullable=False),
+    sa.Column('port', sa.Integer(), nullable=False),
+    sa.Column('database', sa.String(length=200), nullable=True),
+    sa.Column('extra_parameters', postgresql.JSON(astext_type=sa.Text()), nullable=True),
+    sa.Column('provider_id', sa.UUID(), nullable=False),
+    sa.ForeignKeyConstraint(['provider_id'], ['tb_database_provider.id'], name='fk_database_provider_connection_provider_id'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tb_database_provider_connection_provider_id'), 'tb_database_provider_connection', ['provider_id'], unique=False)
     op.create_table('tb_database_provider_ingestion',
     sa.Column('id', sa.UUID(), autoincrement=False, nullable=False),
     sa.Column('name', sa.String(length=200), nullable=False),
@@ -241,7 +286,7 @@ def upgrade() -> None:
     sa.Column('cache_ttl_in_seconds', sa.Integer(), nullable=True),
     sa.Column('cache_validation', sa.String(length=8000), nullable=True),
     sa.Column('database_id', sa.UUID(), nullable=False),
-    sa.Column('database_schema_id', sa.UUID(), nullable=False),
+    sa.Column('database_schema_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['database_id'], ['tb_database.id'], name='fk_database_table_database_id'),
     sa.ForeignKeyConstraint(['database_schema_id'], ['tb_database_schema.id'], name='fk_database_table_database_schema_id'),
     sa.ForeignKeyConstraint(['id'], ['tb_asset.id'], ),
@@ -379,6 +424,8 @@ def downgrade() -> None:
     op.drop_table('tb_database_provider_ingestion_log')
     op.drop_index(op.f('ix_tb_database_provider_ingestion_provider_id'), table_name='tb_database_provider_ingestion')
     op.drop_table('tb_database_provider_ingestion')
+    op.drop_index(op.f('ix_tb_database_provider_connection_provider_id'), table_name='tb_database_provider_connection')
+    op.drop_table('tb_database_provider_connection')
     op.drop_index(op.f('ix_tb_database_provider_id'), table_name='tb_database')
     op.drop_table('tb_database')
     op.drop_index(op.f('ix_tb_a_i_model_result_model_id'), table_name='tb_a_i_model_result')
@@ -387,14 +434,21 @@ def downgrade() -> None:
     op.drop_table('tb_a_i_model_hyper_parameter')
     op.drop_index(op.f('ix_tb_a_i_model_attribute_model_id'), table_name='tb_a_i_model_attribute')
     op.drop_table('tb_a_i_model_attribute')
+    op.drop_index(op.f('ix_tb_responsibility_type_id'), table_name='tb_responsibility')
+    op.drop_index(op.f('ix_tb_responsibility_contact_id'), table_name='tb_responsibility')
+    op.drop_index(op.f('ix_tb_responsibility_asset_id'), table_name='tb_responsibility')
+    op.drop_table('tb_responsibility')
     op.drop_index(op.f('ix_tb_database_provider_provider_type_id'), table_name='tb_database_provider')
-    op.drop_index(op.f('ix_tb_database_provider_connection_id'), table_name='tb_database_provider')
     op.drop_table('tb_database_provider')
+    op.drop_index(op.f('ix_tb_asset_tag_tag_id'), table_name='tb_asset_tag')
+    op.drop_index(op.f('ix_tb_asset_tag_asset_id'), table_name='tb_asset_tag')
+    op.drop_table('tb_asset_tag')
     op.drop_index(op.f('ix_tb_asset_link_asset_id'), table_name='tb_asset_link')
     op.drop_table('tb_asset_link')
     op.drop_table('tb_a_i_model')
-    op.drop_index(op.f('ix_tb_entity_tag_tag_id'), table_name='tb_entity_tag')
-    op.drop_table('tb_entity_tag')
+    op.drop_index(op.f('ix_tb_person_user_id'), table_name='tb_person')
+    op.drop_table('tb_person')
+    op.drop_table('tb_company')
     op.drop_index(op.f('ix_tb_asset_layer_id'), table_name='tb_asset')
     op.drop_index(op.f('ix_tb_asset_fully_qualified_name'), table_name='tb_asset')
     op.drop_index(op.f('ix_tb_asset_domain_id'), table_name='tb_asset')
@@ -406,6 +460,6 @@ def downgrade() -> None:
     op.drop_table('tb_layer')
     op.drop_table('tb_domain')
     op.drop_table('tb_database_provider_type')
-    op.drop_table('tb_database_provider_connection')
+    op.drop_table('tb_contact')
     op.drop_table('tb_action')
     # ### end Alembic commands ###

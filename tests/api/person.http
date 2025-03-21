@@ -1,0 +1,48 @@
+### Tests for entity Person API ###
+@path = people
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Heitor Câmara" , 
+    "description": "Voluptas eius quisquam aut." , 
+    "deleted": false , 
+    "phone_number": "+55 (081) 9362-0925" , 
+    "cell_phone_number": "+55 65 92480 1275" , 
+    "email": "pviana@example.com" , 
+    "organization": "organization" , 
+    "document": "536.274.908-00" , 
+    "document_type": "document_type" , 
+    "company": "Pastor Ltda." , 
+    "user_id": "user" 
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Isadora da Costa" , 
+    "description": "Velit non incidunt hic." , 
+    "deleted": false , 
+    "phone_number": "+55 71 0897-0731" , 
+    "cell_phone_number": "+55 (064) 94705-6188" , 
+    "email": "lviana@example.org" , 
+    "organization": "organization" , 
+    "document": "964.871.205-02" , 
+    "document_type": "document_type" , 
+    "company": "Sá Ltda." , 
+    "user_id": "user" 
+}

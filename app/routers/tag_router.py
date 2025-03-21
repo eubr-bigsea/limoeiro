@@ -45,7 +45,10 @@ async def add_tag(
 @router.delete(
     "/tags/{tag_id}", tags=["Tag"], status_code=status.HTTP_204_NO_CONTENT
 )
-async def delete_tags(tag_id: UUID, service: TagService = Depends(_get_service)):
+async def delete_tags(
+    tag_id: UUID = Path(..., description="Identificador"),
+    service: TagService = Depends(_get_service),
+):
     """
     Exclui uma instância da classe Tag.
     """

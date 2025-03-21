@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,6 +15,7 @@ from ..schemas import (
 )
 from ..services.database_service import DatabaseService
 from ..database import get_session
+from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -48,12 +49,13 @@ async def add_database(
 
 
 @router.delete(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: UUID, service: DatabaseService = Depends(_get_service)
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    service: DatabaseService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Database.
@@ -63,13 +65,13 @@ async def delete_databases(
 
 
 @router.patch(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=True,
 )
 async def update_databases(
-    database_id: UUID = Path(..., description="Identificador"),
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_data: typing.Optional[DatabaseUpdateSchema] = None,
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
@@ -103,13 +105,13 @@ async def find_databases(
 
 
 @router.get(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database(
-    database_id: UUID = Path(..., description="Identificador"),
+    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """

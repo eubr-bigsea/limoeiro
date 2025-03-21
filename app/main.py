@@ -3,6 +3,10 @@ from fastapi.responses import JSONResponse
 
 from app.exceptions import DatabaseException
 from app.routers import (
+    asset_router,
+    collector_router,
+    company_router,
+    contact_router,
     database_provider_router,
     database_provider_type_router,
     database_provider_connection_router,
@@ -10,9 +14,12 @@ from app.routers import (
     database_router,
     database_schema_router,
     database_table_router,
+    database_table_sample_router,
     layer_router,
+    person_router,
+    responsibility_type_router,
     tag_router,
-    collector_router,
+    user_router,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import domain_router
@@ -48,7 +55,6 @@ app = FastAPI(
         }
 )
 
-print("Adding CORS")
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
@@ -70,6 +76,10 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
 
 
 routers = [
+    asset_router.router,
+    collector_router.router,
+    company_router.router,
+    contact_router.router,
     domain_router.router,
     database_provider_type_router.router,
     database_provider_router.router,
@@ -78,9 +88,12 @@ routers = [
     database_router.router,
     database_schema_router.router,
     database_table_router.router,
+    database_table_sample_router.router,
     layer_router.router,
+    person_router.router,
     tag_router.router,
-    collector_router.router,
+    responsibility_type_router.router,
+    user_router.router,
 ]
 for router in routers:
     app.include_router(router)

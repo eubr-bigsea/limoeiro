@@ -49,7 +49,8 @@ async def add_domain(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_domains(
-    domain_id: UUID, service: DomainService = Depends(_get_service)
+    domain_id: UUID = Path(..., description="Identificador"),
+    service: DomainService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Domain.

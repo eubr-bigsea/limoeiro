@@ -31,18 +31,8 @@ class DatabaseProviderService(BaseService):
     DatabaseProvider entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseProvider)
+        super().__init__(DatabaseProvider, session)
         self.session = session
-
-    async def _get(
-        self, database_provider_id: UUID
-    ) -> typing.Optional[DatabaseProvider]:
-        result = await self.session.execute(
-            select(DatabaseProvider)
-            .options(selectinload(DatabaseProvider.provider_type))
-            .filter(DatabaseProvider.id == database_provider_id)
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
@@ -66,7 +56,7 @@ class DatabaseProviderService(BaseService):
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
-        self, database_provider_id: UUID
+        self, database_provider_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Delete DatabaseProvider instance.
@@ -85,7 +75,7 @@ class DatabaseProviderService(BaseService):
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
-        database_provider_id: UUID,
+        database_provider_id: typing.Union[UUID, str],
         database_provider_data: typing.Optional[DatabaseProviderUpdateSchema],
     ) -> DatabaseProviderItemSchema:
         """
@@ -99,7 +89,9 @@ class DatabaseProviderService(BaseService):
         """
         database_provider = await self._get(database_provider_id)
         if not database_provider:
-            raise ex.EntityNotFoundException("{cls_name}", database_provider_id)
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )
         if database_provider_data is not None:
             for key, value in database_provider_data.model_dump(
                 exclude_unset=True, exclude={}
@@ -152,8 +144,7 @@ class DatabaseProviderService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseProvider, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -180,8 +171,8 @@ class DatabaseProviderService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_id: UUID
-    ) -> DatabaseProviderItemSchema:
+        self, database_provider_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Retrieve a DatabaseProvider instance by id.
         Args:
@@ -189,6 +180,25 @@ class DatabaseProviderService(BaseService):
         Returns:
             DatabaseProvider: Found instance or None
         """
-        return DatabaseProviderItemSchema.model_validate(
-            await self._get(database_provider_id)
+        database_provider = await self._get(database_provider_id)
+        if database_provider:
+            return DatabaseProviderItemSchema.model_validate(database_provider)
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseProvider", database_provider_id
+            )
+
+    async def _get(
+        self, database_provider_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseProvider]:
+        filter_condition = (
+            DatabaseProvider.id == database_provider_id
+            if isinstance(database_provider_id, UUID)
+            else DatabaseProvider.fully_qualified_name == database_provider_id
         )
+        result = await self.session.execute(
+            select(DatabaseProvider)
+            .options(selectinload(DatabaseProvider.provider_type))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

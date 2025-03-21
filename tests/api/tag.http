@@ -5,9 +5,9 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "Timothy Fernandez" , 
+    "name": "Bruna Guerra" , 
     "deleted": false , 
-    "description": "Music reflect wonder leader." , 
+    "description": "At beatae delectus provident." , 
     "applicable_to": "applicable_to" 
 
 }
@@ -27,8 +27,8 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Holly Smith MD" , 
+    "name": "Sr. Thales Pereira" , 
     "deleted": true , 
-    "description": "Move group leader far meet." , 
+    "description": "Sapiente culpa rerum ipsum." , 
     "applicable_to": "applicable_to" 
 }

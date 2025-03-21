@@ -53,7 +53,9 @@ async def add_database_provider_connection(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_connections(
-    database_provider_connection_id: UUID,
+    database_provider_connection_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseProviderConnectionService = Depends(_get_service),
 ):
     """

@@ -32,30 +32,8 @@ class DatabaseTableService(BaseService):
     DatabaseTable entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseTable)
+        super().__init__(DatabaseTable, session)
         self.session = session
-
-    async def _get(
-        self, database_table_id: UUID
-    ) -> typing.Optional[DatabaseTable]:
-        result = await self.session.execute(
-            select(DatabaseTable)
-            .options(selectinload(DatabaseTable.database))
-            .options(selectinload(DatabaseTable.database_schema))
-            .options(selectinload(DatabaseTable.columns))
-            .filter(DatabaseTable.id == database_table_id)
-        )
-        return result.scalars().first()
-
-    async def _get_by_fqn(self, fully_qualified_name: str) -> typing.Optional[DatabaseTable]:
-        result = await self.session.execute(
-            select(DatabaseTable)
-            .options(selectinload(DatabaseTable.database))
-            .options(selectinload(DatabaseTable.database_schema))
-            .options(selectinload(DatabaseTable.columns))
-            .filter(DatabaseTable.fully_qualified_name == fully_qualified_name)
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
@@ -92,7 +70,7 @@ class DatabaseTableService(BaseService):
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
-        self, database_table_id: UUID
+        self, database_table_id: typing.Union[UUID, str]
     ) -> typing.Optional[DatabaseTableItemSchema]:
         """
         Delete DatabaseTable instance.
@@ -111,7 +89,7 @@ class DatabaseTableService(BaseService):
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
-        database_table_id: UUID,
+        database_table_id: typing.Union[UUID, str],
         database_table_data: typing.Optional[DatabaseTableUpdateSchema],
     ) -> DatabaseTableItemSchema:
         """
@@ -125,7 +103,7 @@ class DatabaseTableService(BaseService):
         """
         database_table = await self._get(database_table_id)
         if not database_table:
-            raise ex.EntityNotFoundException("{cls_name}", database_table_id)
+            raise ex.EntityNotFoundException("DatabaseTable", database_table_id)
         if database_table_data is not None:
             for key, value in database_table_data.model_dump(
                 exclude_unset=True,
@@ -192,8 +170,7 @@ class DatabaseTableService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseTable, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -217,7 +194,9 @@ class DatabaseTableService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, database_table_id: UUID) -> DatabaseTableItemSchema:
+    async def get(
+        self, database_table_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseTableItemSchema]:
         """
         Retrieve a DatabaseTable instance by id.
         Args:
@@ -225,20 +204,25 @@ class DatabaseTableService(BaseService):
         Returns:
             DatabaseTable: Found instance or None
         """
-        return DatabaseTableItemSchema.model_validate(
-            await self._get(database_table_id)
-        )
+        database_table = await self._get(database_table_id)
+        if database_table:
+            return DatabaseTableItemSchema.model_validate(database_table)
+        else:
+            raise ex.EntityNotFoundException("DatabaseTable", database_table_id)
 
-    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get_by_fqn(self, fully_qualified_name: str) -> DatabaseTableItemSchema:
-        """
-        Retrieve a DatabaseTable instance by id.
-        Args:
-            database_table_id: The ID of the DatabaseTable instance to retrieve.
-        Returns:
-            DatabaseTable: Found instance or None
-        """
-        result = await self._get_by_fqn(fully_qualified_name)
-        if result is not None:
-            result = DatabaseTableItemSchema.model_validate(result)
-        return result
+    async def _get(
+        self, database_table_id: typing.Union[UUID, str]
+    ) -> typing.Optional[DatabaseTable]:
+        filter_condition = (
+            DatabaseTable.id == database_table_id
+            if isinstance(database_table_id, UUID)
+            else DatabaseTable.fully_qualified_name == database_table_id
+        )
+        result = await self.session.execute(
+            select(DatabaseTable)
+            .options(selectinload(DatabaseTable.database))
+            .options(selectinload(DatabaseTable.database_schema))
+            .options(selectinload(DatabaseTable.columns))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()

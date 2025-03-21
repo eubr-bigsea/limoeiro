@@ -1,13 +1,18 @@
 import datetime
 from uuid import UUID
 from typing import Optional, TypeVar, Generic, List
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
 from .models import TableType
 from .models import DataType
 
 M = TypeVar("M")
+
+
+def utc_now() -> datetime.datetime:
+    """Utility function to get current date as UTC"""
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
 
 
 class PaginatedSchema(BaseModel, Generic[M]):
@@ -47,6 +52,70 @@ class BaseQuerySchema(BaseModel):
     )
 
 
+class UserBaseModel(BaseModel): ...
+
+
+class UserItemSchema(UserBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    login: Optional[str] = Field(default=None, description="Informação de login")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserListSchema(UserBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    login: Optional[str] = Field(default=None, description="Informação de login")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreateSchema(UserBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    login: str = Field(description="Informação de login")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdateSchema(UserBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    login: Optional[str] = Field(default=None, description="Informação de login")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
 class ResponsibilityTypeBaseModel(BaseModel): ...
 
 
@@ -82,20 +151,319 @@ class ResponsibilityTypeListSchema(ResponsibilityTypeBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ContactBaseModel(BaseModel): ...
+
+
+class ContactCreateSchema(ContactBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: bool = Field(
+        default=False,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    phone_number: Optional[str] = Field(
+        default=None, description="Número de telefone."
+    )
+    cell_phone_number: Optional[str] = Field(
+        default=None, description="Número de celular."
+    )
+    email: Optional[str] = Field(default=None, description="E-mail.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContactUpdateSchema(ContactBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    phone_number: Optional[str] = Field(
+        default=None, description="Número de telefone."
+    )
+    cell_phone_number: Optional[str] = Field(
+        default=None, description="Número de celular."
+    )
+    email: Optional[str] = Field(default=None, description="E-mail.")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContactItemSchema(ContactBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    phone_number: Optional[str] = Field(
+        default=None, description="Número de telefone."
+    )
+    cell_phone_number: Optional[str] = Field(
+        default=None, description="Número de celular."
+    )
+    email: Optional[str] = Field(default=None, description="E-mail.")
+    type: Optional[str] = Field(default=None, description="Tipo de contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContactListSchema(ContactBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
+    type: Optional[str] = Field(default=None, description="Tipo de contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContactQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
+class CompanyBaseModel(BaseModel): ...
+
+
+class CompanyCreateSchema(ContactCreateSchema, CompanyBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    contact_name: Optional[str] = Field(default=None, description="Contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyUpdateSchema(ContactUpdateSchema, CompanyBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    contact_name: Optional[str] = Field(default=None, description="Contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyItemSchema(ContactItemSchema, CompanyBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    contact_name: Optional[str] = Field(default=None, description="Contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyListSchema(ContactListSchema, CompanyBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    contact_name: Optional[str] = Field(default=None, description="Contato")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CompanyQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
+class PersonBaseModel(BaseModel): ...
+
+
+class PersonCreateSchema(ContactCreateSchema, PersonBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    company: Optional[str] = Field(default=None, description="Empresa")
+
+    # Associations
+    user_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PersonUpdateSchema(ContactUpdateSchema, PersonBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    company: Optional[str] = Field(default=None, description="Empresa")
+
+    # Associations
+    user_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PersonItemSchema(ContactItemSchema, PersonBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    company: Optional[str] = Field(default=None, description="Empresa")
+
+    # Associations
+    user: Optional["UserListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PersonListSchema(ContactListSchema, PersonBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    organization: Optional[str] = Field(
+        default=None, description="Empresa/organização"
+    )
+    document: Optional[str] = Field(default=None, description="Documento")
+    document_type: Optional[str] = Field(
+        default=None, description="Tipo de documento"
+    )
+    company: Optional[str] = Field(default=None, description="Empresa")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PersonQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
+class ResponsibilityBaseModel(BaseModel): ...
+
+
+class ResponsibilityCreateSchema(ResponsibilityBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    # Associations
+    contact_id: UUID
+    type_id: UUID
+    asset_id: UUID
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponsibilityUpdateSchema(ResponsibilityBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    # Associations
+    contact_id: Optional[UUID] = None
+    type_id: Optional[UUID] = None
+    asset_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponsibilityItemSchema(ResponsibilityBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    # Associations
+    contact: Optional["ContactListSchema"] = None
+    type: Optional["ResponsibilityTypeListSchema"] = None
+    asset: Optional["AssetListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponsibilityListSchema(ResponsibilityBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    # Associations
+    contact: Optional["ContactListSchema"] = None
+    type: Optional["ResponsibilityTypeListSchema"] = None
+    asset: Optional["AssetListSchema"] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponsibilityQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
 class AssetLinkBaseModel(BaseModel): ...
 
 
 class AssetLinkCreateSchema(AssetLinkBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    url: Optional[str] = Field(
+    url: Optional[AnyUrl] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
     type: LinkType = Field(description="Tipo do link")
-
-    # Associations
-    asset: "AssetCreateSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -103,14 +471,11 @@ class AssetLinkCreateSchema(AssetLinkBaseModel):
 class AssetLinkUpdateSchema(AssetLinkBaseModel):
     """Optional model for serialization of updating objects"""
 
-    url: Optional[str] = Field(
+    url: Optional[AnyUrl] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
     type: Optional[LinkType] = Field(default=None, description="Tipo do link")
-
-    # Associations
-    asset: Optional["AssetListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -119,14 +484,11 @@ class AssetLinkItemSchema(AssetLinkBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    url: Optional[str] = Field(
+    url: Optional[AnyUrl] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
     type: Optional[LinkType] = Field(default=None, description="Tipo do link")
-
-    # Associations
-    asset: Optional["AssetListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -135,7 +497,7 @@ class AssetLinkListSchema(AssetLinkBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    url: Optional[str] = Field(
+    url: Optional[AnyUrl] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
@@ -304,6 +666,9 @@ class DatabaseProviderTypeItemSchema(DatabaseProviderTypeBaseModel):
     image: Optional[str] = Field(
         default=None, description="Imagem do tipo de provedor"
     )
+    supports_schema: Optional[bool] = Field(
+        default=None, description="Suporta esquema de banco de dados"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -317,6 +682,9 @@ class DatabaseProviderTypeListSchema(DatabaseProviderTypeBaseModel):
     )
     image: Optional[str] = Field(
         default=None, description="Imagem do tipo de provedor"
+    )
+    supports_schema: Optional[bool] = Field(
+        default=None, description="Suporta esquema de banco de dados"
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -444,7 +812,6 @@ class AssetCreateSchema(AssetBaseModel):
     # Associations
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
-    links: Optional[List["AssetLinkCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -481,7 +848,6 @@ class AssetUpdateSchema(AssetBaseModel):
     # Associations
     domain_id: Optional[UUID] = None
     layer_id: Optional[UUID] = None
-    links: Optional[List["AssetLinkUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -519,7 +885,6 @@ class AssetItemSchema(AssetBaseModel):
     # Associations
     domain: Optional["DomainListSchema"] = None
     layer: Optional["LayerListSchema"] = None
-    links: Optional[List["AssetLinkItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -528,6 +893,7 @@ class AssetListSchema(AssetBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Nome da instância.")
     fully_qualified_name: Optional[str] = Field(
         default=None,
         description="Nome que identifica exclusivamente a instância.",
@@ -535,18 +901,35 @@ class AssetListSchema(AssetBaseModel):
     display_name: Optional[str] = Field(
         default=None, description="Nome de exibição que identifica a instância."
     )
+    description: Optional[str] = Field(
+        default=None, description="Descrição da instância."
+    )
     version: Optional[str] = Field(
         default=None, description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
         default=None, description="Última hora de atualização."
     )
+    asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
 
     # Associations
     domain: Optional["DomainListSchema"] = None
     layer: Optional["LayerListSchema"] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssetQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    provider_type_id: Optional[str] = Field(
+        default=None, description="Provider type"
+    )
+    layer_id: Optional[List[UUID]] = Field(default=None, description="Camada")
+    domain_id: Optional[List[UUID]] = Field(default=None, description="Domínio")
+    asset_type: Optional[List[str]] = Field(default=None, description="Tipo")
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
 
 
 class DatabaseProviderBaseModel(BaseModel): ...
@@ -561,8 +944,6 @@ class DatabaseProviderCreateSchema(AssetCreateSchema, DatabaseProviderBaseModel)
 
     # Associations
     provider_type_id: str
-    connection_id: Optional[UUID] = None
-    ingestions: Optional[List["DatabaseProviderIngestionCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -576,8 +957,6 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
 
     # Associations
     provider_type_id: Optional[str] = None
-    connection_id: Optional[UUID] = None
-    ingestions: Optional[List["DatabaseProviderIngestionUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -592,8 +971,6 @@ class DatabaseProviderItemSchema(AssetItemSchema, DatabaseProviderBaseModel):
 
     # Associations
     provider_type: Optional["DatabaseProviderTypeListSchema"] = None
-    connection_id: Optional[UUID] = None
-    ingestions: Optional[List["DatabaseProviderIngestionItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -639,6 +1016,9 @@ class DatabaseProviderConnectionCreateSchema(
         default=None, description="Parâmetros extras"
     )
 
+    # Associations
+    provider_id: UUID
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -657,6 +1037,9 @@ class DatabaseProviderConnectionUpdateSchema(
     extra_parameters: Optional[str] = Field(
         default=None, description="Parâmetros extras"
     )
+
+    # Associations
+    provider_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1139,7 +1522,7 @@ class DatabaseTableCreateSchema(AssetCreateSchema, DatabaseTableBaseModel):
 
     # Associations
     database_id: UUID
-    database_schema_id: UUID
+    database_schema_id: Optional[UUID] = None
     columns: Optional[List["TableColumnCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1197,6 +1580,7 @@ class DatabaseTableItemSchema(AssetItemSchema, DatabaseTableBaseModel):
     )
 
     # Associations
+    database: Optional["DatabaseListSchema"] = None
     database_schema: Optional["DatabaseSchemaListSchema"] = None
     columns: Optional[List["TableColumnItemSchema"]] = None
 
@@ -1277,9 +1661,6 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
         default=None, description="Amostra pode ser visualizada"
     )
 
-    # Associations
-    database_table: Optional["DatabaseTableListSchema"] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -1290,17 +1671,20 @@ class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     date: Optional[datetime.datetime] = Field(
         default=None, description="Data e hora da amosrta"
     )
-    content: Optional[str] = Field(
-        default=None, description="Conteúdo da amostra (JSON)."
-    )
     is_visible: Optional[bool] = Field(
         default=None, description="Amostra pode ser visualizada"
     )
 
-    # Associations
-    database_table: Optional["DatabaseTableListSchema"] = None
-
     model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseTableSampleQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    database_table_id: Optional[UUID] = Field(
+        default=None, description="Identificador da tabela"
+    )
+    ...
 
 
 class TableColumnBaseModel(BaseModel): ...
@@ -1457,11 +1841,11 @@ class AIModelCreateSchema(AssetCreateSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[str] = Field(
+    server: Optional[AnyUrl] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[str] = Field(
+    source: Optional[AnyUrl] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 
@@ -1483,11 +1867,11 @@ class AIModelUpdateSchema(AssetUpdateSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[str] = Field(
+    server: Optional[AnyUrl] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[str] = Field(
+    source: Optional[AnyUrl] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 
@@ -1510,11 +1894,11 @@ class AIModelItemSchema(AssetItemSchema, AIModelBaseModel):
     technologies: Optional[str] = Field(
         default=None, description="Tecnologias usada para o modelo"
     )
-    server: Optional[str] = Field(
+    server: Optional[AnyUrl] = Field(
         default=None,
         description="URL do servidor usado para computar predições (inferência)",
     )
-    source: Optional[str] = Field(
+    source: Optional[AnyUrl] = Field(
         default=None, description="URL de onde está armazenado o modelo"
     )
 

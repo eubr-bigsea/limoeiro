@@ -11,6 +11,7 @@ from ..schemas import (
     DatabaseTableSampleUpdateSchema,
     DatabaseTableSampleItemSchema,
     DatabaseTableSampleListSchema,
+    DatabaseTableSampleQuerySchema,
 )
 from ..services.database_table_sample_service import DatabaseTableSampleService
 from ..database import get_session
@@ -41,10 +42,6 @@ async def add_database_table_sample(
     """
     Adiciona uma instância da classe DatabaseTableSample.
     """
-
-    if database_table_sample_data is not None:
-        database_table_sample_data.updated_by = "FIXME!!!"
-
     return await service.add(database_table_sample_data)
 
 
@@ -54,7 +51,7 @@ async def add_database_table_sample(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_samples(
-    database_table_sample_id: UUID,
+    database_table_sample_id: UUID = Path(..., description="Identificador"),
     service: DatabaseTableSampleService = Depends(_get_service),
 ):
     """
@@ -80,10 +77,6 @@ async def update_samples(
     """
     Atualiza uma instância da classe DatabaseTableSample.
     """
-
-    if database_table_sample_data is not None:
-        database_table_sample_data.updated_by = "FIXME!!!"
-
     return await service.update(
         database_table_sample_id, database_table_sample_data
     )

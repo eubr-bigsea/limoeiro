@@ -2,7 +2,7 @@ import logging
 import math
 import typing
 from uuid import UUID
-from sqlalchemy import asc, desc, func
+from sqlalchemy import asc, desc, and_, func
 
 import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
@@ -16,6 +16,7 @@ from ..schemas import (
     DatabaseTableSampleUpdateSchema,
     DatabaseTableSampleItemSchema,
     DatabaseTableSampleListSchema,
+    DatabaseTableSampleQuerySchema,
 )
 from ..models import DatabaseTableSample
 from . import BaseService
@@ -30,18 +31,8 @@ class DatabaseTableSampleService(BaseService):
     DatabaseTableSample entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(DatabaseTableSample)
+        super().__init__(DatabaseTableSample, session)
         self.session = session
-
-    async def _get(
-        self, database_table_sample_id: UUID
-    ) -> typing.Optional[DatabaseTableSample]:
-        result = await self.session.execute(
-            select(DatabaseTableSample)
-            .options(selectinload(DatabaseTableSample.database_table))
-            .filter(DatabaseTableSample.id == database_table_sample_id)
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
@@ -105,7 +96,7 @@ class DatabaseTableSampleService(BaseService):
         database_table_sample = await self._get(database_table_sample_id)
         if not database_table_sample:
             raise ex.EntityNotFoundException(
-                "{cls_name}", database_table_sample_id
+                "DatabaseTableSample", database_table_sample_id
             )
         if database_table_sample_data is not None:
             for key, value in database_table_sample_data.model_dump(
@@ -136,6 +127,18 @@ class DatabaseTableSampleService(BaseService):
         offset = (page - 1) * limit
 
         query = select(DatabaseTableSample)
+        filter_opts = {
+            "database_table_id": (
+                DatabaseTableSample.database_table_id,
+                "__eq__",
+            ),
+        }
+        filters = self.get_filters(
+            DatabaseTableSample, filter_opts, query_options
+        )
+
+        if filters:
+            query = query.where(and_(*filters))
 
         if query_options.sort_by and hasattr(
             DatabaseTableSample, query_options.sort_by
@@ -144,8 +147,7 @@ class DatabaseTableSampleService(BaseService):
             query = query.order_by(
                 order_func(getattr(DatabaseTableSample, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -173,7 +175,7 @@ class DatabaseTableSampleService(BaseService):
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
         self, database_table_sample_id: UUID
-    ) -> DatabaseTableSampleItemSchema:
+    ) -> typing.Optional[DatabaseTableSampleItemSchema]:
         """
         Retrieve a DatabaseTableSample instance by id.
         Args:
@@ -181,6 +183,23 @@ class DatabaseTableSampleService(BaseService):
         Returns:
             DatabaseTableSample: Found instance or None
         """
-        return DatabaseTableSampleItemSchema.model_validate(
-            await self._get(database_table_sample_id)
+        database_table_sample = await self._get(database_table_sample_id)
+        if database_table_sample:
+            return DatabaseTableSampleItemSchema.model_validate(
+                database_table_sample
+            )
+        else:
+            raise ex.EntityNotFoundException(
+                "DatabaseTableSample", database_table_sample_id
+            )
+
+    async def _get(
+        self, database_table_sample_id: UUID
+    ) -> typing.Optional[DatabaseTableSample]:
+        filter_condition = DatabaseTableSample.id == database_table_sample_id
+        result = await self.session.execute(
+            select(DatabaseTableSample)
+            .options(selectinload(DatabaseTableSample.database_table))
+            .filter(filter_condition)
         )
+        return result.scalars().first()

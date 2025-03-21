@@ -46,7 +46,8 @@ async def add_layer(
     "/layers/{layer_id}", tags=["Layer"], status_code=status.HTTP_204_NO_CONTENT
 )
 async def delete_layers(
-    layer_id: UUID, service: LayerService = Depends(_get_service)
+    layer_id: UUID = Path(..., description="Identificador"),
+    service: LayerService = Depends(_get_service),
 ):
     """
     Exclui uma instância da classe Layer.

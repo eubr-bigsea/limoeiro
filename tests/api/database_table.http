@@ -5,56 +5,24 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "customers" ,
-    "fully_qualified_name": "customers.mcpherson-schroeder.biz" ,
-    "display_name": "customers" ,
-    "description": "Sample table." ,
-    "notes": "Friend to evening." ,
+    "name": "orders" ,
+    "fully_qualified_name": "customers.orders" ,
+    "display_name": "orders" ,
+    "description": "Tabela de vendas." ,
+    "notes": "Esta tabela contém os dados recentes." ,
     "deleted": false ,
-    "version": "2.60.65" ,
-    "updated_at": "2025-01-19T00:39:09.235650" ,
+    "version": "3.56.14" ,
+    "updated_at": "2025-02-22T14:01:23.338951" ,
     "updated_by": "tester" ,
     "type": "REGULAR" ,
     "proxy_enabled": false,
     "query": "query" ,
-    "cache_type": "memory",
-    "cache_ttl_in_seconds": 10,
+    "cache_type": "cache_type" ,
+    "cache_ttl_in_seconds": 32,
     "cache_validation": "cache_validation" ,
-    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50" ,
-    "database_schema_id": "732c6f06-6cf8-47a3-8095-98bc62eee6f8"
+    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50"
 
-}
 
-###
-POST {{host}}/{{path}} HTTP/1.1
-
-{
-    "name": "products" ,
-    "fully_qualified_name": "products.mcpherson-schroeder.biz" ,
-    "display_name": "products" ,
-    "description": "Sample table." ,
-    "notes": "Sold products." ,
-    "deleted": false ,
-    "version": "2.60.65" ,
-    "updated_at": "2025-01-19T00:39:09.235650" ,
-    "updated_by": "tester" ,
-    "type": "REGULAR" ,
-    "proxy_enabled": false,
-    "query": "query" ,
-    "cache_type": "memory",
-    "cache_ttl_in_seconds": 10,
-    "cache_validation": "cache_validation" ,
-    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50" ,
-    "database_schema_id": "732c6f06-6cf8-47a3-8095-98bc62eee6f8",
-    "columns": [
-        {
-            "name": "id",
-            "data_type": "INT",
-            "display_name": "id",
-            "nullable": true,
-            "primary_key": true
-        }
-    ]
 }
 
 ###
@@ -72,73 +40,64 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "notes": "Test table"
+    "name": "Isadora Rocha" ,
+    "fully_qualified_name": "web-08.nascimento.br" ,
+    "display_name": "Dra. Maria Flor Ramos" ,
+    "description": "Id necessitatibus nihil unde." ,
+    "notes": "Aliquid ipsa expedita molestias facere." ,
+    "deleted": false ,
+    "version": "60.75.50" ,
+    "updated_at": "2025-01-11T08:28:15.506011" ,
+    "updated_by": "tester" ,
+    "type": "type" ,
+    "proxy_enabled": "proxy_enabled" ,
+    "query": "query" ,
+    "cache_type": "cache_type" ,
+    "cache_ttl_in_seconds": "cache_ttl_in_seconds" ,
+    "cache_validation": "cache_validation" ,
+    "domain_id": "domain" ,
+    "layer_id": "layer" ,
+    "database_id": "database" ,
+    "database_schema_id": "database_schema" ,
 }
+
 ###
-PATCH {{host}}/{{path}}/{{id}}
+PATCH {{host}}/{{path}}/f63c9a28-9c53-4ba3-a2be-642a666631b4
 
 {
-    "notes": "Test table",
     "columns": [
-        {}
-    ]
-}
-###
-PATCH {{host}}/{{path}}/{{id}}
-
-{
-    "notes": "Test table",
-    "columns": [
-         {
-            "name": "id",
-            "data_type": "INT",
-            "display_name": "id",
-            "nullable": true,
-            "primary_key": true
-        }
-    ]
-}
-###
-PATCH {{host}}/{{path}}/{{id}}
-
-{
-    "notes": "Test table",
-    "columns": [
-         {
-            "name": "id",
-            "data_type": "INT",
-            "display_name": "id",
-            "nullable": false,
-            "primary_key": true
+        {
+            "name": "_id","data_type":"INT", "display_name": "_id",
+            "description": "Identificador", "primary_key": true, "nullable": false,
+            "unique": true
         },
-         {
-            "name": "name",
-            "data_type": "VARCHAR",
-            "display_name": "name",
-            "nullable": false,
-            "primary_key": false
-        }
-    ]
-}
-###
-PATCH {{host}}/{{path}}/{{id}}
-
-{
-    "notes": "Test table",
-    "columns": [
-         {
-            "name": "id",
-            "data_type": "INT",
-            "display_name": "id",
-            "nullable": false,
-            "primary_key": true
+        {
+            "name": "N  da licitacao","data_type":"VARCHAR", "display_name": "N  da licitacao",
+            "description": "Número da licitacao", "nullable": false
         },
-         {
-            "name": "qty",
-            "data_type": "INT",
-            "display_name": "qty",
-            "nullable": true,
-            "primary_key": false
+        {
+            "name": "N  do processo","data_type":"VARCHAR", "display_name": "N  do processo",
+            "description": "Número do processo", "nullable": false
+        },
+        {
+            "name": "Modalidade da licitacao","data_type":"VARCHAR", "display_name": "Modalidade da licitacao",
+            "description": "Modalidade da licitação", "nullable": false
+        },
+        {
+            "name": "Objeto","data_type":"VARCHAR", "display_name": "Objeto",
+            "description": "Objeto", "nullable": false
+        },
+        {
+            "name": "Data da autorizacao","data_type":"VARCHAR", "display_name": "Data da autorizacao",
+            "description": "Data da autorização"
+        },
+        {
+            "name": "Valor","data_type":"VARCHAR", "display_name": "Valor",
+            "description": "Valor", "nullable": false
+        },
+        {
+            "name": "Periodo","data_type":"VARCHAR", "display_name": "Periodo",
+            "description": "Período"
         }
     ]
 }

@@ -37,18 +37,8 @@ class AIModelService(BaseService):
     AIModel entities"""
 
     def __init__(self, session: AsyncSession):
-        super().__init__(AIModel)
+        super().__init__(AIModel, session)
         self.session = session
-
-    async def _get(self, a_i_model_id: UUID) -> typing.Optional[AIModel]:
-        result = await self.session.execute(
-            select(AIModel)
-            .options(selectinload(AIModel.attributes))
-            .options(selectinload(AIModel.hyper_parameters))
-            .options(selectinload(AIModel.results))
-            .filter(AIModel.id == a_i_model_id)
-        )
-        return result.scalars().first()
 
     @handle_db_exceptions("Failed to create {}")
     async def add(
@@ -103,7 +93,7 @@ class AIModelService(BaseService):
 
     @handle_db_exceptions("Failed to delete {}")
     async def delete(
-        self, a_i_model_id: UUID
+        self, a_i_model_id: typing.Union[UUID, str]
     ) -> typing.Optional[AIModelItemSchema]:
         """
         Delete AIModel instance.
@@ -122,7 +112,7 @@ class AIModelService(BaseService):
     @handle_db_exceptions("Failed to update {}.")
     async def update(
         self,
-        a_i_model_id: UUID,
+        a_i_model_id: typing.Union[UUID, str],
         a_i_model_data: typing.Optional[AIModelUpdateSchema],
     ) -> AIModelItemSchema:
         """
@@ -136,7 +126,7 @@ class AIModelService(BaseService):
         """
         a_i_model = await self._get(a_i_model_id)
         if not a_i_model:
-            raise ex.EntityNotFoundException("{cls_name}", a_i_model_id)
+            raise ex.EntityNotFoundException("AIModel", a_i_model_id)
         if a_i_model_data is not None:
             for key, value in a_i_model_data.model_dump(
                 exclude_unset=True,
@@ -222,8 +212,7 @@ class AIModelService(BaseService):
             query = query.order_by(
                 order_func(getattr(AIModel, query_options.sort_by))
             )
-        # ???
-        rows = list(
+        rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
             .unique()
@@ -247,7 +236,9 @@ class AIModelService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, a_i_model_id: UUID) -> AIModelItemSchema:
+    async def get(
+        self, a_i_model_id: typing.Union[UUID, str]
+    ) -> typing.Optional[AIModelItemSchema]:
         """
         Retrieve a AIModel instance by id.
         Args:
@@ -255,4 +246,25 @@ class AIModelService(BaseService):
         Returns:
             AIModel: Found instance or None
         """
-        return AIModelItemSchema.model_validate(await self._get(a_i_model_id))
+        a_i_model = await self._get(a_i_model_id)
+        if a_i_model:
+            return AIModelItemSchema.model_validate(a_i_model)
+        else:
+            raise ex.EntityNotFoundException("AIModel", a_i_model_id)
+
+    async def _get(
+        self, a_i_model_id: typing.Union[UUID, str]
+    ) -> typing.Optional[AIModel]:
+        filter_condition = (
+            AIModel.id == a_i_model_id
+            if isinstance(a_i_model_id, UUID)
+            else AIModel.fully_qualified_name == a_i_model_id
+        )
+        result = await self.session.execute(
+            select(AIModel)
+            .options(selectinload(AIModel.attributes))
+            .options(selectinload(AIModel.hyper_parameters))
+            .options(selectinload(AIModel.results))
+            .filter(filter_condition)
+        )
+        return result.scalars().first()
