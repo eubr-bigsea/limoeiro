@@ -60,13 +60,13 @@ class UserBaseModel(BaseModel): ...
 class UserItemSchema(UserBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
-        default=None,
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    login: Optional[str] = Field(default=None, description="Informação de login")
+    login: str = Field(description="Informação de login")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -124,13 +124,13 @@ class ResponsibilityTypeBaseModel(BaseModel): ...
 class ResponsibilityTypeItemSchema(ResponsibilityTypeBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -203,13 +203,13 @@ class ContactUpdateSchema(ContactBaseModel):
 class ContactItemSchema(ContactBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     phone_number: Optional[str] = Field(
@@ -219,7 +219,7 @@ class ContactItemSchema(ContactBaseModel):
         default=None, description="Número de celular."
     )
     email: Optional[str] = Field(default=None, description="E-mail.")
-    type: Optional[str] = Field(default=None, description="Tipo de contato")
+    type: str = Field(description="Tipo de contato")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -284,7 +284,7 @@ class CompanyUpdateSchema(ContactUpdateSchema, CompanyBaseModel):
 class CompanyItemSchema(ContactItemSchema, CompanyBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
     organization: Optional[str] = Field(
         default=None, description="Empresa/organização"
     )
@@ -336,7 +336,7 @@ class PersonCreateSchema(ContactCreateSchema, PersonBaseModel):
     company: Optional[str] = Field(default=None, description="Empresa")
 
     # Associations
-    user_id: Optional[UUID] = None
+    user_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -354,7 +354,7 @@ class PersonUpdateSchema(ContactUpdateSchema, PersonBaseModel):
     company: Optional[str] = Field(default=None, description="Empresa")
 
     # Associations
-    user_id: Optional[UUID] = None
+    user_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -362,7 +362,7 @@ class PersonUpdateSchema(ContactUpdateSchema, PersonBaseModel):
 class PersonItemSchema(ContactItemSchema, PersonBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
     organization: Optional[str] = Field(
         default=None, description="Empresa/organização"
     )
@@ -373,7 +373,7 @@ class PersonItemSchema(ContactItemSchema, PersonBaseModel):
     company: Optional[str] = Field(default=None, description="Empresa")
 
     # Associations
-    user: Optional["UserListSchema"] = None
+    user: Optional["UserListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -419,9 +419,9 @@ class ResponsibilityUpdateSchema(ResponsibilityBaseModel):
     """Optional model for serialization of updating objects"""
 
     # Associations
-    contact_id: Optional[UUID] = None
-    type_id: Optional[UUID] = None
-    asset_id: Optional[UUID] = None
+    contact_id: Optional[UUID] = Field(default=None)
+    type_id: Optional[UUID] = Field(default=None)
+    asset_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -430,9 +430,8 @@ class ResponsibilityItemSchema(ResponsibilityBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     # Associations
-    contact: Optional["ContactListSchema"] = None
-    type: Optional["ResponsibilityTypeListSchema"] = None
-    asset: Optional["AssetListSchema"] = None
+    contact: "ContactItemSchema"
+    type: "ResponsibilityTypeItemSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -441,9 +440,9 @@ class ResponsibilityListSchema(ResponsibilityBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     # Associations
-    contact: Optional["ContactListSchema"] = None
-    type: Optional["ResponsibilityTypeListSchema"] = None
-    asset: Optional["AssetListSchema"] = None
+    contact: Optional["ContactListSchema"] = Field(default=None)
+    type: Optional["ResponsibilityTypeListSchema"] = Field(default=None)
+    asset: Optional["AssetListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -485,12 +484,12 @@ class AssetLinkUpdateSchema(AssetLinkBaseModel):
 class AssetLinkItemSchema(AssetLinkBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
     url: Optional[AnyUrlString] = Field(
         default=None,
         description="Url para o recurso correspondente a esta instância.",
     )
-    type: Optional[LinkType] = Field(default=None, description="Tipo do link")
+    type: LinkType = Field(description="Tipo do link")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -506,7 +505,7 @@ class AssetLinkListSchema(AssetLinkBaseModel):
     type: Optional[LinkType] = Field(default=None, description="Tipo do link")
 
     # Associations
-    asset: Optional["AssetListSchema"] = None
+    asset: Optional["AssetListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -547,13 +546,13 @@ class LayerUpdateSchema(LayerBaseModel):
 class LayerItemSchema(LayerBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -619,13 +618,13 @@ class DomainUpdateSchema(DomainBaseModel):
 class DomainItemSchema(DomainBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
 
@@ -661,15 +660,15 @@ class DatabaseProviderTypeBaseModel(BaseModel): ...
 class DatabaseProviderTypeItemSchema(DatabaseProviderTypeBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[str] = None
-    display_name: Optional[str] = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+    id: str
+    display_name: str = Field(
+        description="Nome de exibição que identifica a instância."
     )
     image: Optional[str] = Field(
         default=None, description="Imagem do tipo de provedor"
     )
-    supports_schema: Optional[bool] = Field(
-        default=None, description="Suporta esquema de banco de dados"
+    supports_schema: bool = Field(
+        default=True, description="Suporta esquema de banco de dados"
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -698,10 +697,10 @@ class TagBaseModel(BaseModel): ...
 class TagItemSchema(TagBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
-        default=None,
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
     description: Optional[str] = Field(
@@ -812,8 +811,8 @@ class AssetCreateSchema(AssetBaseModel):
     )
 
     # Associations
-    domain_id: Optional[UUID] = None
-    layer_id: Optional[UUID] = None
+    domain_id: Optional[UUID] = Field(default=None)
+    layer_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -848,8 +847,8 @@ class AssetUpdateSchema(AssetBaseModel):
     )
 
     # Associations
-    domain_id: Optional[UUID] = None
-    layer_id: Optional[UUID] = None
+    domain_id: Optional[UUID] = Field(default=None)
+    layer_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -857,36 +856,33 @@ class AssetUpdateSchema(AssetBaseModel):
 class AssetItemSchema(AssetBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    fully_qualified_name: Optional[str] = Field(
-        default=None,
-        description="Nome que identifica exclusivamente a instância.",
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    fully_qualified_name: str = Field(
+        description="Nome que identifica exclusivamente a instância."
     )
-    display_name: Optional[str] = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+    display_name: str = Field(
+        description="Nome de exibição que identifica a instância."
     )
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
     notes: Optional[str] = Field(default=None, description="Observação.")
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    version: Optional[str] = Field(
-        default=None, description="Versão de metadados da instância."
+    version: str = Field(
+        default="0.0.0", description="Versão de metadados da instância."
     )
     updated_at: Optional[datetime.datetime] = Field(
         default=None, description="Última hora de atualização."
     )
-    updated_by: Optional[str] = Field(
-        default=None, description="Usuário que fez a atualização."
-    )
+    updated_by: str = Field(description="Usuário que fez a atualização.")
 
     # Associations
-    domain: Optional["DomainListSchema"] = None
-    layer: Optional["LayerListSchema"] = None
+    domain: Optional["DomainListSchema"] = Field(default=None)
+    layer: Optional["LayerListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -906,6 +902,10 @@ class AssetListSchema(AssetBaseModel):
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
+    deleted: Optional[bool] = Field(
+        default=None,
+        description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
+    )
     version: Optional[str] = Field(
         default=None, description="Versão de metadados da instância."
     )
@@ -915,8 +915,8 @@ class AssetListSchema(AssetBaseModel):
     asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
 
     # Associations
-    domain: Optional["DomainListSchema"] = None
-    layer: Optional["LayerListSchema"] = None
+    domain: Optional["DomainListSchema"] = Field(default=None)
+    layer: Optional["LayerListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -958,7 +958,7 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
     )
 
     # Associations
-    provider_type_id: Optional[str] = None
+    provider_type_id: Optional[str] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -966,13 +966,13 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
 class DatabaseProviderItemSchema(AssetItemSchema, DatabaseProviderBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
     configuration: Optional[str] = Field(
         default=None, description="Configuração"
     )
 
     # Associations
-    provider_type: Optional["DatabaseProviderTypeListSchema"] = None
+    provider_type: "DatabaseProviderTypeItemSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -983,7 +983,9 @@ class DatabaseProviderListSchema(AssetListSchema, DatabaseProviderBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
-    provider_type: Optional["DatabaseProviderTypeListSchema"] = None
+    provider_type: Optional["DatabaseProviderTypeListSchema"] = Field(
+        default=None
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -993,6 +995,9 @@ class DatabaseProviderQuerySchema(BaseQuerySchema):
 
     provider_type_id: Optional[str] = Field(
         default=None, description="Provider type"
+    )
+    deleted: Optional[bool] = Field(
+        default=None, description="Incluir deletados"
     )
     domain_id: Optional[UUID] = Field(default=None, description="Domain")
     layer_id: Optional[UUID] = Field(default=None, description="Layer")
@@ -1040,7 +1045,7 @@ class DatabaseProviderConnectionUpdateSchema(
     )
 
     # Associations
-    provider_id: Optional[UUID] = None
+    provider_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1048,13 +1053,11 @@ class DatabaseProviderConnectionUpdateSchema(
 class DatabaseProviderConnectionItemSchema(DatabaseProviderConnectionBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    user_name: Optional[str] = Field(
-        default=None, description="Nome do usuário / login"
-    )
+    id: UUID
+    user_name: str = Field(description="Nome do usuário / login")
     password: Optional[str] = Field(default=None, description="Senha do usuário")
-    host: Optional[str] = Field(default=None, description="Nome do servidor")
-    port: Optional[int] = Field(default=None, description="Porta do servidor")
+    host: str = Field(description="Nome do servidor")
+    port: int = Field(description="Porta do servidor")
     database: Optional[str] = Field(default=None, description="Banco de dados")
     extra_parameters: Optional[str] = Field(
         default=None, description="Parâmetros extras"
@@ -1189,7 +1192,7 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
     retries: Optional[int] = Field(default=None, description="Max retries")
 
     # Associations
-    provider_id: Optional[UUID] = None
+    provider_id: Optional[UUID] = Field(default=None)
     logs: Optional[List["DatabaseProviderIngestionLogUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1198,13 +1201,13 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
 class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    deleted: Optional[bool] = Field(
-        default=None,
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    type: Optional[str] = Field(default=None, description="Tipo de ingestão")
+    type: str = Field(description="Tipo de ingestão")
     include_database: Optional[str] = Field(
         default=None,
         description="Expressão regular para as bases a serem incluídas na ingestão",
@@ -1229,8 +1232,8 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
         default=None,
         description="Expressão regular para as tabelas a serem excluídas da ingestão",
     )
-    include_view: Optional[bool] = Field(
-        default=None, description="Considerar views na ingestão"
+    include_view: bool = Field(
+        default=False, description="Considerar views na ingestão"
     )
     override_mode: Optional[str] = Field(
         default=None, description="Opção para sobrescrita"
@@ -1239,9 +1242,10 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
-    retries: Optional[int] = Field(default=None, description="Max retries")
+    retries: int = Field(default=5, description="Max retries")
 
     # Associations
+    provider_id: UUID
     logs: Optional[List["DatabaseProviderIngestionLogItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1338,7 +1342,7 @@ class DatabaseProviderIngestionLogUpdateSchema(
     log: Optional[str] = Field(default=None, description="Log de execução")
 
     # Associations
-    ingestion_id: Optional[UUID] = None
+    ingestion_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1348,11 +1352,11 @@ class DatabaseProviderIngestionLogItemSchema(
 ):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[int] = None
+    id: int
     updated_at: Optional[datetime.datetime] = Field(
         default=None, description="Última hora de atualização."
     )
-    status: Optional[str] = Field(default=None, description="Status de execução")
+    status: str = Field(description="Status de execução")
     log: Optional[str] = Field(default=None, description="Log de execução")
 
     model_config = ConfigDict(from_attributes=True)
@@ -1399,7 +1403,7 @@ class DatabaseUpdateSchema(AssetUpdateSchema, DatabaseBaseModel):
     )
 
     # Associations
-    provider_id: Optional[UUID] = None
+    provider_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1407,14 +1411,14 @@ class DatabaseUpdateSchema(AssetUpdateSchema, DatabaseBaseModel):
 class DatabaseItemSchema(AssetItemSchema, DatabaseBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
     retention_period: Optional[str] = Field(
         default=None,
         description="Período de retenção dos dados no banco de dados. O período é expresso como duração no formato ISO 8601 em UTC. Exemplo - P23DT23H.",
     )
 
     # Associations
-    provider: Optional["DatabaseProviderListSchema"] = None
+    provider: "DatabaseProviderItemSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1425,7 +1429,7 @@ class DatabaseListSchema(AssetListSchema, DatabaseBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
-    provider: Optional["DatabaseProviderListSchema"] = None
+    provider: Optional["DatabaseProviderListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1438,6 +1442,9 @@ class DatabaseQuerySchema(BaseQuerySchema):
     layer_id: Optional[UUID] = Field(default=None, description="Camada")
     query: Optional[str] = Field(default=None, description="Consulta")
     tags: Optional[str] = Field(default=None, description="Tags")
+    deleted: Optional[bool] = Field(
+        default=None, description="Incluir deletados"
+    )
     ...
 
 
@@ -1457,7 +1464,7 @@ class DatabaseSchemaUpdateSchema(AssetUpdateSchema, DatabaseSchemaBaseModel):
     """Optional model for serialization of updating objects"""
 
     # Associations
-    database_id: Optional[UUID] = None
+    database_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1465,10 +1472,10 @@ class DatabaseSchemaUpdateSchema(AssetUpdateSchema, DatabaseSchemaBaseModel):
 class DatabaseSchemaItemSchema(AssetItemSchema, DatabaseSchemaBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
+    id: UUID
 
     # Associations
-    database: Optional["DatabaseListSchema"] = None
+    database: "DatabaseItemSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1479,7 +1486,7 @@ class DatabaseSchemaListSchema(AssetListSchema, DatabaseSchemaBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
-    database: Optional["DatabaseListSchema"] = None
+    database: Optional["DatabaseListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1499,7 +1506,9 @@ class DatabaseTableBaseModel(BaseModel): ...
 class DatabaseTableCreateSchema(AssetCreateSchema, DatabaseTableBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    type: TableType = Field(default="REGULAR", description="Tipo da tabela")
+    type: TableType = Field(
+        default=TableType.REGULAR, description="Tipo da tabela"
+    )
     proxy_enabled: bool = Field(
         default=False, description="Indica se a tabela está disponível no proxy."
     )
@@ -1519,7 +1528,7 @@ class DatabaseTableCreateSchema(AssetCreateSchema, DatabaseTableBaseModel):
 
     # Associations
     database_id: UUID
-    database_schema_id: Optional[UUID] = None
+    database_schema_id: Optional[UUID] = Field(default=None)
     columns: Optional[List["TableColumnCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1547,8 +1556,8 @@ class DatabaseTableUpdateSchema(AssetUpdateSchema, DatabaseTableBaseModel):
     )
 
     # Associations
-    database_id: Optional[UUID] = None
-    database_schema_id: Optional[UUID] = None
+    database_id: Optional[UUID] = Field(default=None)
+    database_schema_id: Optional[UUID] = Field(default=None)
     columns: Optional[List["TableColumnUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1557,10 +1566,12 @@ class DatabaseTableUpdateSchema(AssetUpdateSchema, DatabaseTableBaseModel):
 class DatabaseTableItemSchema(AssetItemSchema, DatabaseTableBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    type: Optional[TableType] = Field(default=None, description="Tipo da tabela")
-    proxy_enabled: Optional[bool] = Field(
-        default=None, description="Indica se a tabela está disponível no proxy."
+    id: UUID
+    type: TableType = Field(
+        default=TableType.REGULAR, description="Tipo da tabela"
+    )
+    proxy_enabled: bool = Field(
+        default=False, description="Indica se a tabela está disponível no proxy."
     )
     query: Optional[str] = Field(
         default=None,
@@ -1577,8 +1588,8 @@ class DatabaseTableItemSchema(AssetItemSchema, DatabaseTableBaseModel):
     )
 
     # Associations
-    database: Optional["DatabaseListSchema"] = None
-    database_schema: Optional["DatabaseSchemaListSchema"] = None
+    database: "DatabaseItemSchema"
+    database_schema: Optional["DatabaseSchemaListSchema"] = Field(default=None)
     columns: Optional[List["TableColumnItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -1590,7 +1601,7 @@ class DatabaseTableListSchema(AssetListSchema, DatabaseTableBaseModel):
     id: Optional[UUID] = Field(default=None, description="Identificador")
 
     # Associations
-    database_schema: Optional["DatabaseSchemaListSchema"] = None
+    database_schema: Optional["DatabaseSchemaListSchema"] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1603,6 +1614,9 @@ class DatabaseTableQuerySchema(BaseQuerySchema):
         default=None, description="Schema"
     )
     layer_id: Optional[UUID] = Field(default=None, description="Layer")
+    deleted: Optional[bool] = Field(
+        default=None, description="Incluir deletados"
+    )
     query: Optional[str] = Field(default=None, description="Consulta")
     ...
 
@@ -1639,7 +1653,7 @@ class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     )
 
     # Associations
-    database_table_id: Optional[UUID] = None
+    database_table_id: Optional[UUID] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1647,15 +1661,11 @@ class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
 class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    date: Optional[datetime.datetime] = Field(
-        default=None, description="Data e hora da amosrta"
-    )
-    content: Optional[str] = Field(
-        default=None, description="Conteúdo da amostra (JSON)."
-    )
-    is_visible: Optional[bool] = Field(
-        default=None, description="Amostra pode ser visualizada"
+    id: UUID
+    date: datetime.datetime = Field(description="Data e hora da amosrta")
+    content: str = Field(description="Conteúdo da amostra (JSON).")
+    is_visible: bool = Field(
+        default=True, description="Amostra pode ser visualizada"
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1729,6 +1739,9 @@ class TableColumnCreateSchema(TableColumnBaseModel):
     semantic_type: Optional[str] = Field(
         default=None, description="Tipo semântico da coluna."
     )
+    default_value: Optional[str] = Field(
+        default=None, description="Valor default da coluna."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1779,6 +1792,9 @@ class TableColumnUpdateSchema(TableColumnBaseModel):
     semantic_type: Optional[str] = Field(
         default=None, description="Tipo semântico da coluna."
     )
+    default_value: Optional[str] = Field(
+        default=None, description="Valor default da coluna."
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1786,16 +1802,16 @@ class TableColumnUpdateSchema(TableColumnBaseModel):
 class TableColumnItemSchema(TableColumnBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    display_name: Optional[str] = Field(
-        default=None, description="Nome de exibição que identifica a instância."
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    display_name: str = Field(
+        description="Nome de exibição que identifica a instância."
     )
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    data_type: Optional[DataType] = Field(
-        default=None, description="Tipo de dados da coluna (int, data etc.)"
+    data_type: DataType = Field(
+        description="Tipo de dados da coluna (int, data etc.)"
     )
     array_data_type: Optional[str] = Field(
         default=None, description="Tipo de dados do item do arranjo."
@@ -1815,20 +1831,19 @@ class TableColumnItemSchema(TableColumnBaseModel):
     position: Optional[int] = Field(
         default=None, description="Posição ordinal da coluna na tabela."
     )
-    primary_key: Optional[bool] = Field(
-        default=None, description="Coluna é chave-primária na tabela."
+    primary_key: bool = Field(
+        default=False, description="Coluna é chave-primária na tabela."
     )
-    nullable: Optional[bool] = Field(
-        default=None, description="Coluna aceita valores nulos."
+    nullable: bool = Field(
+        default=True, description="Coluna aceita valores nulos."
     )
-    unique: Optional[bool] = Field(
-        default=None, description="Coluna é um índice UNIQUE."
-    )
-    is_metadata: Optional[bool] = Field(
-        default=None, description="Coluna é um metadado."
-    )
+    unique: bool = Field(default=False, description="Coluna é um índice UNIQUE.")
+    is_metadata: bool = Field(default=False, description="Coluna é um metadado.")
     semantic_type: Optional[str] = Field(
         default=None, description="Tipo semântico da coluna."
+    )
+    default_value: Optional[str] = Field(
+        default=None, description="Valor default da coluna."
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -1892,8 +1907,8 @@ class AIModelUpdateSchema(AssetUpdateSchema, AIModelBaseModel):
 class AIModelItemSchema(AssetItemSchema, AIModelBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    type: Optional[str] = Field(default=None, description="Tipo de modelo")
+    id: UUID
+    type: str = Field(description="Tipo de modelo")
     algorithms: Optional[str] = Field(
         default=None, description="Algoritmos usado"
     )
@@ -1973,17 +1988,17 @@ class AIModelAttributeUpdateSchema(AIModelAttributeBaseModel):
 class AIModelAttributeItemSchema(AIModelAttributeBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
-    deleted: Optional[bool] = Field(
-        default=None,
+    deleted: bool = Field(
+        default=False,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
     )
-    usage: Optional[str] = Field(
-        default=None, description="Uso do atributo no treinamento"
+    usage: str = Field(
+        default="feature", description="Uso do atributo no treinamento"
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -2042,8 +2057,8 @@ class AIModelHyperParameterUpdateSchema(AIModelHyperParameterBaseModel):
 class AIModelHyperParameterItemSchema(AIModelHyperParameterBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
@@ -2099,9 +2114,9 @@ class AIModelResultUpdateSchema(AIModelResultBaseModel):
 class AIModelResultItemSchema(AIModelResultBaseModel):
     """JSON serialization schema for serializing a single object"""
 
-    id: Optional[UUID] = Field(default=None, description="Identificador")
-    name: Optional[str] = Field(default=None, description="Nome da instância.")
-    type: Optional[str] = Field(default=None, description="Tipo do resultado")
+    id: UUID
+    name: str = Field(description="Nome da instância.")
+    type: str = Field(description="Tipo do resultado")
     value: Optional[str] = Field(
         default=None, description="Valor do resultado (JSON)"
     )

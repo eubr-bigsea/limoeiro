@@ -107,8 +107,7 @@ async def find_databases(
     Recupera uma lista de instâncias usando as opções de consulta.
     """
     databases = await service.find(query_options)
-    model = DatabaseListSchema()
-    databases.items = [model.model_validate(d) for d in databases.items]
+    databases.items = [DatabaseListSchema.model_validate(d) for d in databases.items]
     return databases
 
 

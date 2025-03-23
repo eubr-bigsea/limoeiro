@@ -128,6 +128,7 @@ class DatabaseService(BaseService):
                 "ilike",
             ),
             "tags": (None, "tag"),
+            "deleted": (Database.deleted, "__eq__"),
         }
         filters = self.get_filters(Database, filter_opts, query_options)
 

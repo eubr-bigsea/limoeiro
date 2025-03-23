@@ -265,17 +265,14 @@ async def get_responsibility(
                 select(Responsibility)
                 .filter(Responsibility.asset_id == asset_id)
                 .options(
-                    joinedload(Responsibility.type)
-                )  # Eagerly loads Responsibility.type
-                .options(
+                    joinedload(Responsibility.type),
                     joinedload(Responsibility.contact)
-                )  # Eagerly loads Responsibility.contact
+                )  # Eagerly loads Responsibility.type and Responsibility.contact
             )
         )
         .scalars()
         .all()
     )
-    # breakpoint()
     return [
         ResponsibilityItemSchema.model_validate(
             {"type": row.type, "contact": row.contact}
@@ -330,3 +327,19 @@ async def delete_responsibility(
         .where(Responsibility.asset_id == asset_id)
     )
     await session.commit()
+
+
+@router.patch("/assets/disable-many/", tags=["Asset"])
+async def disable_many(
+    ids: typing.List[str],
+    session: AsyncSession = Depends(get_session),
+):
+    """"""
+    await session.execute(
+        update(Asset)
+        .where(Asset.id.in_(ids))
+        .values(deleted=True)
+    )
+    await session.commit()
+    return {"status": "success", "message": "Assets disabled successfully"}
+

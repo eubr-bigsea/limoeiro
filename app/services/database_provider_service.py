@@ -121,6 +121,7 @@ class DatabaseProviderService(BaseService):
         query = select(DatabaseProvider)
         filter_opts = {
             "provider_type_id": (DatabaseProvider.provider_type_id, "__eq__"),
+            "deleted": (DatabaseProvider.deleted, "__eq__"),
             "domain_id": (DatabaseProvider.domain_id, "__eq__"),
             "layer_id": (DatabaseProvider.layer_id, "__eq__"),
             "query": (

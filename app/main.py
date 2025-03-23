@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.exceptions import DatabaseException
+from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
     asset_router,
     collector_router,
@@ -28,15 +28,21 @@ from .utils.middlewares import add_middlewares
 from sqlalchemy.exc import IntegrityError
 from fastapi import Request
 
-from apscheduler.schedulers.background import BackgroundScheduler  # runs tasks in the background
-from apscheduler.triggers.cron import CronTrigger  # allows us to specify a recurring time for execution
+from apscheduler.schedulers.background import (
+    BackgroundScheduler,
+)  # runs tasks in the background
+from apscheduler.triggers.cron import (
+    CronTrigger,
+)  # allows us to specify a recurring time for execution
 from app.collector.data_collection_engine import DataCollectionEngine
 
 load_dotenv()
 
+
 # The task to run
 def daily_task():
     DataCollectionEngine().execute_engine()
+
 
 # Set up the scheduler
 scheduler = BackgroundScheduler()
@@ -52,27 +58,34 @@ app = FastAPI(
     license_info={
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-        }
+    },
 )
 
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    #allow_credentials=False,
+    # allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 add_middlewares(app)
 
+
 @app.exception_handler(DatabaseException)
 async def integrity_error_handler(request: Request, exc: IntegrityError):
     """Global handler for PostgreSQL IntegrityError."""
     detail = str(exc)
-    return JSONResponse(
-        status_code=400,
-        content={"error": detail}
-    )
+    return JSONResponse(status_code=400, content={"error": detail})
+
+
+@app.exception_handler(EntityNotFoundException)
+async def not_found_exception_handler(
+    request: Request, exc: EntityNotFoundException
+):
+    """Global handler for PostgreSQL IntegrityError."""
+    detail = str(exc)
+    return JSONResponse(status_code=404, content={"error": detail})
 
 
 routers = [

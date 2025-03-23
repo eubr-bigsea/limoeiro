@@ -86,7 +86,6 @@ async def update_database_providers(
     """
     Atualiza uma instância da classe DatabaseProvider.
     """
-
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
 

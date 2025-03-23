@@ -143,16 +143,6 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
-class DatabaseProviderTypeDisplayName(str, enum.Enum):
-    HIVE = "HIVE"
-    POSTGRES = "POSTGRES"
-    DRUID = "DRUID"       
-    ELASTICSEARCH = "ELASTICSEARCH"
-
-    @staticmethod
-    def values():
-        return [item.value for item in DatabaseProviderType]
-
 # Model classes
 
 
@@ -834,7 +824,7 @@ class DatabaseTable(Asset):
     )
     type = mapped_column(
         Enum(TableType, name="TableTypeEnumType"),
-        default="REGULAR",
+        default=TableType.REGULAR,
         nullable=False,
     )
     proxy_enabled = mapped_column(Boolean, default=False, nullable=False)
@@ -1010,6 +1000,8 @@ class TableColumn(Base):
     is_metadata = mapped_column(
         Boolean, default=False, nullable=False, server_default="False"
     )
+    semantic_type = mapped_column(String(200))
+    default_value = mapped_column(String(200))
 
     # Associations
     table_id = mapped_column(

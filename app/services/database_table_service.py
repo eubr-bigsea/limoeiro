@@ -149,6 +149,7 @@ class DatabaseTableService(BaseService):
             "database_id": (DatabaseTable.database_id, "__eq__"),
             "database_schema_id": (DatabaseTable.database_schema_id, "__eq__"),
             "layer_id": (DatabaseTable.layer_id, "__eq__"),
+            "deleted": (DatabaseTable.deleted, "__eq__"),
             "query": (
                 (
                     DatabaseTable.name,

@@ -1,199 +1,355 @@
-
-import logging
-from datetime import datetime
-import json
-from app.collector.utils.request_utils import (
-    post_request,
-    patch_request,
-    get_request
-)
-from app.collector.utils.cron_utils import (
-    check_if_cron_is_today
-)
+import datetime
+import re
+import typing
 
 
 import app.collector.utils.constants_utils as constants
-from app.collector.collector import (Collector, GenericTable)
+from app.collector.collector import Collector
 from app.collector.collector_factory import CollectorFactory
-from app.collector.data_collection_logging import DataCollectionLogging
 from app.collector.data_collection_diff_checker import DataCollectionDiffChecker
+from app.collector.data_collection_logging import DataCollectionLogging
+from app.collector.utils.api_client import (
+    AssetApiClient,
+    DatabaseApiClient,
+    DatabaseTableApiClient,
+)
+from app.collector.utils.cron_utils import check_if_cron_is_today
+from app.collector.utils.request_utils import (
+    get_request,
+    patch_request,
+    post_request,
+)
+from app.schemas import (
+    DatabaseCreateSchema,
+    DatabaseItemSchema,
+    DatabaseProviderConnectionItemSchema,
+    DatabaseProviderIngestionItemSchema,
+    DatabaseProviderItemSchema,
+    DatabaseSchemaCreateSchema,
+    DatabaseSchemaItemSchema,
+    DatabaseTableCreateSchema,
+)
 
-import os
+FQN_PREFIXES = {
+    "DatabaseProvider": "pvr",
+    "Database": "db",
+    "Schema": "schm",
+    "Table": "tb",
+}
 
-class DataCollectionEngine():
-    """ Class to implement the collection data engine. """
+
+class DataCollectionEngine:
+    """Class to implement the collection data engine."""
 
     def __init__(self):
         self.log = DataCollectionLogging()
         self.diff = DataCollectionDiffChecker(self.log)
 
-    def _format_fully_qualified_name (self, list_values):
-        """ Format the fully qualified name. """
-        fully_qualified_name = list_values
-        fully_qualified_name = [f.lower().replace(" ", "_") for f in fully_qualified_name]
-        return ".".join(fully_qualified_name)
+    def _format_fqn(self, asset_type: str, list_values: typing.List):
+        """Format the fully qualified name."""
+        fully_qualified_name = [
+            f.lower().replace(" ", "_").replace(".", "-") for f in list_values
+        ]
+        return f"{FQN_PREFIXES[asset_type]}." + ".".join(fully_qualified_name)
 
-    def _process_object (self, route, f_q_name, new_dict):   
-        """ Process an object generically using the Limoeiro API. """
-        f_q_route = route+"/"+constants.F_Q_NAME_ROUTE
-        
-        """ Get the object by the fully qualified name. """
-        response_code, current_dict = get_request (f_q_route, f_q_name)
+    def _process_object(
+        self,
+        route: str,
+        fqn: str,
+        new_asset: typing.Union[
+            DatabaseProviderItemSchema,
+            DatabaseCreateSchema,
+            DatabaseSchemaCreateSchema,
+            DatabaseTableCreateSchema,
+        ],
+    ):
+        """Process an object generically using the Limoeiro API."""
+
+        # Get the object by the fully qualified name.
+        response_code, current_dict = get_request(route, fqn)
 
         if response_code == 404:
-            """ If the object does not exist, create it using a post request. """
-            return post_request (route, new_dict)
-        else:
-            """ If the object already exists, update it using a patch request. """
-            result_dict = self.diff.diff_objects (new_dict, current_dict, route)
-            return patch_request (route, result_dict["id"], result_dict)
-
-    def _process_database (self, collector : Collector, database_name, domain, layer, provider):
-        """ Process the object database. """
-        fqn_elements = collector._get_database_fqn_elements(provider['name'], database_name)
-        f_q_name = self._format_fully_qualified_name(fqn_elements)
-
-        new_dict = {
-          "name": database_name,
-          "display_name": database_name,
-          "description": database_name,
-          "fully_qualified_name": f_q_name,
-          "domain_id": domain['id'],
-          "layer_id": layer['id'],
-          "provider_id": provider['id']
-        }
-
-        self.log.log_obj_collecting('database', database_name)
-        return self._process_object(constants.DATABASE_ROUTE, f_q_name, new_dict)
-
-    def _process_schema (self, collector : Collector, schema_name, domain, layer, provider, database):
-        """ Process the object schema. """
-        fqn_elements = collector._get_schema_fqn_elements(provider['name'], database['name'], schema_name)
-        f_q_name = self._format_fully_qualified_name(fqn_elements)
-
-        new_dict = {
-          "name": schema_name,
-          "fully_qualified_name": f_q_name,
-          "display_name": schema_name,
-          "description": schema_name,
-          "domain_id": domain['id'],
-          "layer_id": layer['id'],
-          "database_id": database['id']
-        }
-
-        self.log.log_obj_collecting('schema', schema_name)
-        return self._process_object(constants.SCHEMA_ROUTE, f_q_name, new_dict)
-
-    def _process_table (self, collector : Collector, generic_table : GenericTable, domain, layer, provider, database, schema):
-        """ Process the object table. """
-        fqn_elements = collector._get_table_fqn_elements(provider['name'], database['name'], schema['name'], generic_table.name)
-        f_q_name = self._format_fully_qualified_name(fqn_elements)
-
-        """ Assemble the columns of the table. """
-        columns = []
-        for column_obj in generic_table.columns:
-            column_name = column_obj.name
-
-            column_type = str(column_obj.type).upper()
-            column_type = constants.SQLTYPES_DICT[column_type]
-
-            primary_key = column_obj.primary_key
-            nullable    = column_obj.nullable
-            unique      = column_obj.unique
-            is_metadata = 'metadata_' in column_name
-            columns.append(
-                {
-                  "name": column_name,
-                  "display_name": column_name,
-                  "description": column_name,
-                  "data_type": column_type,
-                  "primary_key": primary_key,
-                  "nullable": nullable,
-                  "unique": unique,
-                  "is_metadata": is_metadata
-                }
+            # If the object does not exist, create it using a post request.
+            return post_request(route, new_asset.model_dump())
+        elif response_code == 200:
+            # If the object already exists, update it using a patch request.
+            # FIXME result_dict = self.diff.diff_objects(new_asset, current_dict, route)
+            new_asset.version = "1"
+            new_asset.updated_at = datetime.datetime.utcnow()
+            return patch_request(
+                route, new_asset.fully_qualified_name, new_asset.model_dump()
             )
+        else:
+            raise Exception(f"Invalid status {response_code}")
 
-        new_dict = {
-          "name": generic_table.name,
-          "fully_qualified_name":  f_q_name,
-          "display_name": generic_table.name,
-          "description": generic_table.name,
-          "type": "REGULAR",
-          "domain_id": domain['id'],
-          "layer_id": layer['id'],
-          "database_id":  database['id'],
-          "database_schema_id": schema['id'],
-          "columns": columns
-        }
+    def _process_database(
+        self,
+        collector: Collector,
+        database_name: str,
+        provider: DatabaseProviderItemSchema,
+    ):
+        """Process the object database."""
+        # fqn_elements = collector._get_database_fqn_elements(
+        #     provider.name, database_name
+        # )
+        fqn = self._format_fqn("Database", [provider.name, database_name])
 
-        self.log.log_obj_collecting('table', generic_table.name)
-        return self._process_object(constants.TABLE_ROUTE, f_q_name, new_dict)
+        new_db = DatabaseCreateSchema(
+            name=database_name,
+            display_name=database_name,
+            description=database_name,
+            fully_qualified_name=fqn,
+            provider_id=provider.id,
+        )
+        self.log.log_obj_collecting("database", database_name)
+
+        result: typing.Dict[str, typing.Any] = self._process_object(
+            constants.DATABASE_ROUTE, fqn=fqn, new_asset=new_db
+        )
+        return DatabaseItemSchema(**result)
+
+    def _process_schema(
+        self,
+        collector: Collector,
+        schema: DatabaseSchemaCreateSchema,
+        provider,
+        database,
+    ):
+        """Process the object schema."""
+        fqn = self._format_fqn(
+            "Schema", [provider.name, database.name, schema.name]
+        )
+        schema.fully_qualified_name = fqn
+
+        self.log.log_obj_collecting("schema", schema.name)
+        return self._process_object(constants.SCHEMA_ROUTE, fqn, schema)
+
+    def _process_table(
+        self,
+        collector: Collector,
+        table: DatabaseTableCreateSchema,
+        provider: DatabaseProviderItemSchema,
+        database: DatabaseItemSchema,
+        schema: DatabaseSchemaItemSchema,
+    ):
+        """Process the object table."""
+        fqn = self._format_fqn(
+            "Table", [provider.name, database.name, "", table.name]
+        )
+        table.fully_qualified_name = fqn
+
+        self.log.log_obj_collecting("table", table.name)
+        return self._process_object(constants.TABLE_ROUTE, fqn, table)
 
     def _get_ingestions(self, page):
-        """ Load the database provider ingestions. """
-        dict_param = {"page":page, "page_size":20}
-        _, result = get_request(constants.INGESTION_ROUTE, None, dict_param=dict_param)
+        """Load the database provider ingestions."""
+        dict_param = {"page": page, "page_size": 20}
+        _, result = get_request(
+            constants.INGESTION_ROUTE, None, dict_param=dict_param
+        )
         return result["items"], result["page"], result["page_count"]
 
-    def _execute_collection(self, ingestion):
-        """ Execute the collection for the database provider. """
-        
-        _, provider = get_request(constants.PROVIDER_ROUTE, ingestion['provider_id']) 
-        domain = provider['domain']
-        layer = provider['layer']
+    def _execute_collection(
+        self,
+        provider: DatabaseProviderItemSchema,
+        connection: DatabaseProviderConnectionItemSchema,
+        ingestion: DatabaseProviderIngestionItemSchema,
+    ):
+        """Execute the collection for the database provider."""
 
-        """ Create the collector. """
+        # Create the collector.
         collector = CollectorFactory.create_collector(provider)
+        collector.ingestion = ingestion
+        collector.connection_info = connection
 
-        """ Get the databases of the database provider. """
-        database_list = collector.get_databases()
+        # Get the databases of the database provider.
+        database_list = collector.get_databases_names()
 
-        """ Iterate all databases. """
-        for dabase_name in database_list:
+        include_db_re = (
+            re.compile(ingestion.include_database)
+            if ingestion.include_database
+            else None
+        )
+        exclude_db_re = (
+            re.compile(ingestion.exclude_database)
+            if ingestion.exclude_database
+            else None
+        )
+        include_tb_re = (
+            re.compile(ingestion.include_table)
+            if ingestion.include_table
+            else None
+        )
+        exclude_tb_re = (
+            re.compile(ingestion.exclude_table)
+            if ingestion.exclude_table
+            else None
+        )
 
-            """ Process the object database """
-            database = self._process_database(collector, dabase_name, domain, layer, provider)
+        # Iterate all databases.
+        ignored_dbs = []
+        valid_dbs = []
+        for db_name in database_list:
+            # Test if db_name must be excluded from processing (ignored)
+            must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
 
-            """ Get the schemas of the database. """
-            schema_list = collector.get_schemas(dabase_name)
+            # Test if db_name must be processed
+            must_db = bool(include_db_re and include_db_re.match(db_name))
 
-            """ Iterate all schemas. """
-            for schema_name in schema_list:
+            # If both flags, item is explicitly ignored
+            ignore_db = not must_db or must_not_db
 
-                """ Process the object schema """
-                schema = self._process_schema(collector, schema_name, domain, layer, provider, database)
+            if ignore_db:
+                ignored_dbs.append(db_name)
+            elif must_db:
+                # Process the object database
+                database = self._process_database(collector, db_name, provider)
+                valid_dbs.append(db_name)
 
-                """ Get the tables of the schema. """
-                table_list = collector.get_tables(dabase_name, schema_name)
+                # Get the schemas of the database.
 
-                """ Iterate all tables. """
-                for generic_table in table_list:
+                if collector.supports_schema():
+                    schema_list = collector.get_schema_names(db_name)
 
-                    """ Process the object table. """
-                    table = self._process_table(collector, generic_table, domain, layer, provider, database, schema)
+                    ignorable = collector.get_ignorable_schemas()
+                    # Iterate all schemas.
+                    for schema_name in schema_list:
+                        if schema_name in ignorable:
+                            continue
+                        schema = DatabaseSchemaCreateSchema(
+                            name=schema_name,
+                            display_name=schema_name,
+                            database_id=database.id,
+                            fully_qualified_name="placeholder",
+                        )
+                        # Process the object schema
+                        schema = self._process_schema(
+                            collector, schema, provider, database
+                        )
+
+                        # Get the tables of the schema.
+                        table_list = collector.get_tables(db_name, schema_name)
+
+                        # Iterate all tables.
+                        for table in table_list:
+                            # Process the object table.
+                            self._process_table(
+                                collector,
+                                table,
+                                provider,
+                                database,
+                                schema,
+                            )
+                else:
+                    ignored_tbs = []
+                    valid_tbs = []
+                    # Get the tables of the schema.
+                    table_list = collector.get_tables(db_name, db_name)
+
+                    for table in table_list:
+                        self._update_table(
+                            provider,
+                            collector,
+                            include_tb_re,
+                            exclude_tb_re,
+                            database,
+                            table,
+                            ignored_tbs,
+                            valid_tbs,
+                        )
+                    # Handle tables not found in database, but in metadata
+                    db_client = DatabaseTableApiClient()
+                    existing_tbs = db_client.find_by_database(str(database.id))
+                    names_to_disable = []
+                    tb_to_disable = []
+
+                    for tb in existing_tbs:
+                        if tb.name not in valid_tbs:
+                            tb_to_disable.append(tb.id)
+                            names_to_disable.append(tb.name)
+                    if tb_to_disable:
+                        self.log.log.info(
+                            "Tables(s) present in metadata that will be disabled: [%s]",
+                            ", ".join(names_to_disable),
+                        )
+                    AssetApiClient.disable_many(tb_to_disable)
+
+                    if ignored_tbs:
+                        self.log.log.info(
+                            "Table(s) ignored by the rules: [%s]",
+                            ", ".join(ignored_tbs),
+                        )
+        else:
+            # Handle databases not found in provider, but in metadata
+            db_client = DatabaseApiClient()
+            existing_dbs = db_client.find_by_provider(str(provider.id))
+            names_to_disable = []
+            to_disable = []
+            for db in existing_dbs:
+                if db.name not in valid_dbs:
+                    to_disable.append(db.id)
+                    names_to_disable.append(db.name)
+            if to_disable:
+                self.log.log.info(
+                    "Database(s) present in metadata that will be disabled: [%s]",
+                    ", ".join(names_to_disable),
+                )
+            AssetApiClient.disable_many(to_disable)
+
+        if ignored_dbs:
+            self.log.log.info(
+                "Database(s) ignored by the rules: [%s]", ", ".join(ignored_dbs)
+            )
+
+    def _update_table(
+        self,
+        provider,
+        collector,
+        include_tb_re,
+        exclude_tb_re,
+        database,
+        table,
+        ignored_tbs,
+        valid_tbs,
+    ):
+        tb_name = table.name
+        # Test if tb_name must be excluded from processing (ignored)
+        must_not_tb = bool(exclude_tb_re and exclude_tb_re.match(tb_name))
+
+        # Test if tb_name must be processed
+        must_tb = bool(include_tb_re and include_tb_re.match(tb_name))
+        # If both flags, item is explicitly ignored
+        ignore_tb = must_tb and must_not_tb
+        if ignore_tb:
+            ignored_tbs.append(tb_name)
+        else:
+            # Process the object table.
+            table.database_id = database.id
+            self._process_table(collector, table, provider, database, None)
+            valid_tbs.append(tb_name)
 
     def execute_engine(self):
-        """ Execute the collection data engine. """
+        """Execute the collection data engine."""
         current_page = 0
         page_count = None
-        
-        """ Iter until last page. """
-        while (current_page != page_count):
+
+        # Iter until last page.
+        while current_page != page_count:
             """ Get all database providers with pagination. """
             current_page += 1
             ingestions, page, page_count = self._get_ingestions(current_page)
 
-            """ Iterate the database providers. """
+            # Iterate the database providers.
             for i in ingestions:
-
                 cron_expression = None
-                if (('scheduling' in i) and ('expression' in i['scheduling'])):
-                    cron_expression = i['scheduling']['expression']
+                if ("scheduling" in i) and ("expression" in i["scheduling"]):
+                    cron_expression = i["scheduling"]["expression"]
 
-                """ Check if the cron expression should be executed today. """
-                if check_if_cron_is_today(cron_expression):
+                # Check if the cron expression should be executed today.
+                if cron_expression is not None and check_if_cron_is_today(
+                    cron_expression
+                ):
                     self._execute_collection(i)
                 else:
-                    """ If not, skip to the next iteration. """
-                    self.log.log_provider_skipped(i['display_name'])
+                    # If not, skip to the next iteration.
+                    self.log.log_provider_skipped(i["display_name"])
