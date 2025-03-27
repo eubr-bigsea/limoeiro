@@ -2,9 +2,7 @@ import datetime
 import re
 import typing
 
-
 import app.collector.utils.constants_utils as constants
-from app.collector.collector import Collector
 from app.collector.collector_factory import CollectorFactory
 from app.collector.data_collection_diff_checker import DataCollectionDiffChecker
 from app.collector.data_collection_logging import DataCollectionLogging
@@ -16,6 +14,7 @@ from app.collector.utils.api_client import (
 from app.collector.utils.cron_utils import check_if_cron_is_today
 from app.collector.utils.request_utils import (
     get_request,
+    options_request,
     patch_request,
     post_request,
 )
@@ -66,7 +65,7 @@ class DataCollectionEngine:
         """Process an object generically using the Limoeiro API."""
 
         # Get the object by the fully qualified name.
-        response_code, current_dict = get_request(route, fqn)
+        response_code, _ = options_request(constants.ASSET_ROUTE, fqn)
 
         if response_code == 404:
             # If the object does not exist, create it using a post request.
@@ -84,59 +83,63 @@ class DataCollectionEngine:
 
     def _process_database(
         self,
-        collector: Collector,
-        database_name: str,
+        database: DatabaseCreateSchema,
         provider: DatabaseProviderItemSchema,
     ):
         """Process the object database."""
         # fqn_elements = collector._get_database_fqn_elements(
         #     provider.name, database_name
         # )
-        fqn = self._format_fqn("Database", [provider.name, database_name])
+        fqn = self._format_fqn("Database", [provider.name, database.name])
 
-        new_db = DatabaseCreateSchema(
-            name=database_name,
-            display_name=database_name,
-            description=database_name,
-            fully_qualified_name=fqn,
-            provider_id=provider.id,
-        )
-        self.log.log_obj_collecting("database", database_name)
+        database.fully_qualified_name = fqn
+        database.provider_id = provider.id
+
+        self.log.log_obj_collecting("database", database.name)
 
         result: typing.Dict[str, typing.Any] = self._process_object(
-            constants.DATABASE_ROUTE, fqn=fqn, new_asset=new_db
+            constants.DATABASE_ROUTE, fqn=fqn, new_asset=database
         )
         return DatabaseItemSchema(**result)
 
     def _process_schema(
         self,
-        collector: Collector,
         schema: DatabaseSchemaCreateSchema,
         provider,
         database,
-    ):
+    ) -> DatabaseSchemaItemSchema:
         """Process the object schema."""
         fqn = self._format_fqn(
             "Schema", [provider.name, database.name, schema.name]
         )
         schema.fully_qualified_name = fqn
-
+        schema.database_id = database.id
         self.log.log_obj_collecting("schema", schema.name)
-        return self._process_object(constants.SCHEMA_ROUTE, fqn, schema)
+        return DatabaseSchemaItemSchema(
+            **self._process_object(constants.SCHEMA_ROUTE, fqn, schema)
+        )
 
     def _process_table(
         self,
-        collector: Collector,
         table: DatabaseTableCreateSchema,
         provider: DatabaseProviderItemSchema,
         database: DatabaseItemSchema,
-        schema: DatabaseSchemaItemSchema,
+        schema: typing.Optional[DatabaseSchemaItemSchema],
     ):
         """Process the object table."""
         fqn = self._format_fqn(
-            "Table", [provider.name, database.name, "", table.name]
+            "Table",
+            [
+                provider.name,
+                database.name,
+                schema.name if schema else "",
+                table.name,
+            ],
         )
         table.fully_qualified_name = fqn
+        table.database_id = database.id
+        if schema is not None:
+            table.database_schema_id = schema.id
 
         self.log.log_obj_collecting("table", table.name)
         return self._process_object(constants.TABLE_ROUTE, fqn, table)
@@ -145,7 +148,7 @@ class DataCollectionEngine:
         """Load the database provider ingestions."""
         dict_param = {"page": page, "page_size": 20}
         _, result = get_request(
-            constants.INGESTION_ROUTE, None, dict_param=dict_param
+            constants.INGESTION_ROUTE, None, params=dict_param
         )
         return result["items"], result["page"], result["page_count"]
 
@@ -158,12 +161,12 @@ class DataCollectionEngine:
         """Execute the collection for the database provider."""
 
         # Create the collector.
-        collector = CollectorFactory.create_collector(provider)
-        collector.ingestion = ingestion
-        collector.connection_info = connection
+        collector = CollectorFactory.create_collector(
+            provider, ingestion, connection
+        )
 
         # Get the databases of the database provider.
-        database_list = collector.get_databases_names()
+        database_list = collector.get_databases()
 
         include_db_re = (
             re.compile(ingestion.include_database)
@@ -189,7 +192,8 @@ class DataCollectionEngine:
         # Iterate all databases.
         ignored_dbs = []
         valid_dbs = []
-        for db_name in database_list:
+        for db in database_list:
+            db_name = db.name
             # Test if db_name must be excluded from processing (ignored)
             must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
 
@@ -203,38 +207,39 @@ class DataCollectionEngine:
                 ignored_dbs.append(db_name)
             elif must_db:
                 # Process the object database
-                database = self._process_database(collector, db_name, provider)
+                database = self._process_database(db, provider)
                 valid_dbs.append(db_name)
 
                 # Get the schemas of the database.
 
                 if collector.supports_schema():
-                    schema_list = collector.get_schema_names(db_name)
+                    schema_list = collector.get_schemas(db_name)
 
                     ignorable = collector.get_ignorable_schemas()
                     # Iterate all schemas.
-                    for schema_name in schema_list:
+                    for schema in schema_list:
+                        schema_name = schema.name
                         if schema_name in ignorable:
                             continue
-                        schema = DatabaseSchemaCreateSchema(
-                            name=schema_name,
-                            display_name=schema_name,
-                            database_id=database.id,
-                            fully_qualified_name="placeholder",
-                        )
+                        # schema = DatabaseSchemaCreateSchema(
+                        #     name=schema_name,
+                        #     display_name=schema_name,
+                        #     database_id=database.id,
+                        #     fully_qualified_name="placeholder",
+                        # )
                         # Process the object schema
                         schema = self._process_schema(
-                            collector, schema, provider, database
+                            schema, provider, database
                         )
-
                         # Get the tables of the schema.
                         table_list = collector.get_tables(db_name, schema_name)
 
                         # Iterate all tables.
                         for table in table_list:
                             # Process the object table.
+                            table.database_id = database.id
+                            # table.database_schema_id = schema.id #FIXME
                             self._process_table(
-                                collector,
                                 table,
                                 provider,
                                 database,
@@ -249,7 +254,6 @@ class DataCollectionEngine:
                     for table in table_list:
                         self._update_table(
                             provider,
-                            collector,
                             include_tb_re,
                             exclude_tb_re,
                             database,
@@ -304,7 +308,6 @@ class DataCollectionEngine:
     def _update_table(
         self,
         provider,
-        collector,
         include_tb_re,
         exclude_tb_re,
         database,
@@ -325,7 +328,7 @@ class DataCollectionEngine:
         else:
             # Process the object table.
             table.database_id = database.id
-            self._process_table(collector, table, provider, database, None)
+            self._process_table(table, provider, database, None)
             valid_tbs.append(tb_name)
 
     def execute_engine(self):
@@ -337,7 +340,7 @@ class DataCollectionEngine:
         while current_page != page_count:
             """ Get all database providers with pagination. """
             current_page += 1
-            ingestions, page, page_count = self._get_ingestions(current_page)
+            ingestions, _, page_count = self._get_ingestions(current_page)
 
             # Iterate the database providers.
             for i in ingestions:
@@ -349,7 +352,7 @@ class DataCollectionEngine:
                 if cron_expression is not None and check_if_cron_is_today(
                     cron_expression
                 ):
-                    self._execute_collection(i)
+                    self._execute_collection(ingestion)
                 else:
                     # If not, skip to the next iteration.
                     self.log.log_provider_skipped(i["display_name"])

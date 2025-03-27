@@ -39,4 +39,10 @@ SQLTYPES_DICT = {
     "LARGE_BINARY": "BINARY",
     "LONGTEXT": "TEXT",
     "TINYTEXT": "TEXT",
+    "NVARCHAR": "NVARCHAR",
+    "NCHAR": "NCHAR",
+    "NTEXT": "NTEXT",
+    "MONEY": "MONEY",
+    "BIT": "BIT",
+    "IMAGE": "IMAGE"
 }

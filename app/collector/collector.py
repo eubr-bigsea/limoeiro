@@ -2,39 +2,25 @@ from typing import List
 from abc import ABC, abstractmethod
 import typing
 
-from app.schemas import DatabaseTableCreateSchema
-
-
-class GenericColumn:
-    def __init__(
-        self,
-        name: str,
-        type: str,
-        primary_key: bool,
-        nullable: bool,
-        unique: bool,
-    ):
-        self.name = name
-        self.type = type
-        self.primary_key = primary_key
-        self.nullable = nullable
-        self.unique = unique
-
-
-class GenericTable:
-    def __init__(self, name: str):
-        self.name = name
-        self.columns = []
-
-    def add_column(self, column: GenericColumn):
-        self.columns.append(column)
+from app.schemas import (
+    DatabaseCreateSchema,
+    DatabaseProviderConnectionItemSchema,
+    DatabaseProviderIngestionItemSchema,
+    DatabaseSchemaCreateSchema,
+    DatabaseTableCreateSchema,
+)
 
 
 class Collector(ABC):
     """Abstract Class to define methods to collect data in collection engine."""
 
+    __slots__ = ('connection_info', 'ingestion')
+    def __init__(self):
+        self.connection_info: typing.Optional[DatabaseProviderConnectionItemSchema] = None
+        self.ingestion: typing.Optional[DatabaseProviderIngestionItemSchema] = None
+
     @abstractmethod
-    def get_database_names(self) -> List[str]:
+    def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases in a database provider."""
         pass
 
@@ -46,7 +32,9 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    def get_schema_names(self, database_name: str) -> List[str]:
+    def get_schemas(
+        self, database_name: str
+    ) -> List[DatabaseSchemaCreateSchema]:
         """Return all schemas in a database provider."""
         pass
 
@@ -72,7 +60,11 @@ class Collector(ABC):
         pass
 
     def supports_schema(self) -> bool:
+        """ Indicates if the provider supports the concept of schema """
         return False
 
     def get_ignorable_schemas(self) -> typing.Set[str]:
+        """ Returns the list of schema names to be ignored. In general, they
+        are internal schemas.
+        """
         return {"information_schema"}

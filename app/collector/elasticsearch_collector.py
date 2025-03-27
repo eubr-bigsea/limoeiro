@@ -1,6 +1,9 @@
 from typing import List
 
-from app.collector.collector import Collector, GenericTable, GenericColumn
+GenericTable = str
+
+from app.collector.collector import Collector #, GenericTable, GenericColumn
+
 from elasticsearch import Elasticsearch
 
 

@@ -28,7 +28,7 @@ def _format_url(route: str, path: typing.Optional[str] = None):
 
 
 def post_request(route, json_body):
-    """Method to perform a post request."""
+    """Method to perform a POST request."""
 
     url = _format_url(route)
 
@@ -40,7 +40,7 @@ def post_request(route, json_body):
 
 
 def patch_request(route, path, json_body):
-    """Method to perform a patch request."""
+    """Method to perform a PATCH request."""
     url = _format_url(route, path)
 
     response = requests.patch(
@@ -51,7 +51,7 @@ def patch_request(route, path, json_body):
     return response.json()
 
 def patch_request2(route: str, path: typing.Optional[str], json_body):
-    """Method to perform a patch request."""
+    """Method to perform a PATCH request."""
     url = _format_url(route, path)
 
     response = requests.patch(
@@ -63,7 +63,13 @@ def patch_request2(route: str, path: typing.Optional[str], json_body):
 
 
 def get_request(route: str, path: typing.Optional[str] = None, params=None):
-    """Method to perform a get request."""
+    """Method to perform a GET request."""
     url = _format_url(route, path)
     response = requests.get(url, params=params)
+    return response.status_code, response.json()
+
+def options_request(route: str, path: typing.Optional[str] = None, params=None):
+    """Method to perform a OPTIONS request."""
+    url = _format_url(route, path)
+    response = requests.options(url, params=params)
     return response.status_code, response.json()

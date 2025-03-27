@@ -10,6 +10,8 @@ class DatabaseProviderTypeDisplayName(str, enum.Enum):
     DRUID = "DRUID"
     ELASTICSEARCH = "ELASTICSEARCH"
     MARIADB = "MARIADB"
+    MYSQL = "MYSQL"
+    SQLSERVER = "SQLSERVER"
 
     @classmethod
     def values(cls):
