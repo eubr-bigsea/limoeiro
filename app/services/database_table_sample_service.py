@@ -174,7 +174,7 @@ class DatabaseTableSampleService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_table_sample_id: UUID
+        self, database_table_sample_id: UUID, silent=False
     ) -> typing.Optional[DatabaseTableSampleItemSchema]:
         """
         Retrieve a DatabaseTableSample instance by id.
@@ -188,10 +188,12 @@ class DatabaseTableSampleService(BaseService):
             return DatabaseTableSampleItemSchema.model_validate(
                 database_table_sample
             )
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseTableSample", database_table_sample_id
             )
+        else:
+            return None
 
     async def _get(
         self, database_table_sample_id: UUID

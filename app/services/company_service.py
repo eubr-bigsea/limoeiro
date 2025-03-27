@@ -155,7 +155,9 @@ class CompanyService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, company_id: UUID) -> typing.Optional[CompanyItemSchema]:
+    async def get(
+        self, company_id: UUID, silent=False
+    ) -> typing.Optional[CompanyItemSchema]:
         """
         Retrieve a Company instance by id.
         Args:
@@ -166,8 +168,10 @@ class CompanyService(BaseService):
         company = await self._get(company_id)
         if company:
             return CompanyItemSchema.model_validate(company)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Company", company_id)
+        else:
+            return None
 
     async def _get(self, company_id: UUID) -> typing.Optional[Company]:
         filter_condition = Company.id == company_id

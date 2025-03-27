@@ -156,7 +156,9 @@ class ContactService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, contact_id: UUID) -> typing.Optional[ContactItemSchema]:
+    async def get(
+        self, contact_id: UUID, silent=False
+    ) -> typing.Optional[ContactItemSchema]:
         """
         Retrieve a Contact instance by id.
         Args:
@@ -167,8 +169,10 @@ class ContactService(BaseService):
         contact = await self._get(contact_id)
         if contact:
             return ContactItemSchema.model_validate(contact)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Contact", contact_id)
+        else:
+            return None
 
     async def _get(self, contact_id: UUID) -> typing.Optional[Contact]:
         filter_condition = Contact.id == contact_id

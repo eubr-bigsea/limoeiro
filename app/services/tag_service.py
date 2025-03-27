@@ -151,7 +151,9 @@ class TagService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, tag_id: UUID) -> typing.Optional[TagItemSchema]:
+    async def get(
+        self, tag_id: UUID, silent=False
+    ) -> typing.Optional[TagItemSchema]:
         """
         Retrieve a Tag instance by id.
         Args:
@@ -162,8 +164,10 @@ class TagService(BaseService):
         tag = await self._get(tag_id)
         if tag:
             return TagItemSchema.model_validate(tag)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Tag", tag_id)
+        else:
+            return None
 
     async def _get(self, tag_id: UUID) -> typing.Optional[Tag]:
         filter_condition = Tag.id == tag_id

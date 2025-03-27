@@ -181,7 +181,7 @@ class DatabaseProviderConnectionService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_connection_id: UUID
+        self, database_provider_connection_id: UUID, silent=False
     ) -> typing.Optional[DatabaseProviderConnectionItemSchema]:
         """
         Retrieve a DatabaseProviderConnection instance by id.
@@ -197,10 +197,12 @@ class DatabaseProviderConnectionService(BaseService):
             return DatabaseProviderConnectionItemSchema.model_validate(
                 database_provider_connection
             )
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseProviderConnection", database_provider_connection_id
             )
+        else:
+            return None
 
     async def _get(
         self, database_provider_connection_id: UUID

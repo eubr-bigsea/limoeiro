@@ -32,7 +32,7 @@ class DatabaseProviderTypeService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_type_id: int
+        self, database_provider_type_id: int, silent=False
     ) -> typing.Optional[DatabaseProviderTypeItemSchema]:
         """
         Retrieve a DatabaseProviderType instance by id.
@@ -46,10 +46,12 @@ class DatabaseProviderTypeService(BaseService):
             return DatabaseProviderTypeItemSchema.model_validate(
                 database_provider_type
             )
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseProviderType", database_provider_type_id
             )
+        else:
+            return None
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(

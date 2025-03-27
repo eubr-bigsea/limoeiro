@@ -179,7 +179,7 @@ class DatabaseProviderIngestionService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_ingestion_id: UUID
+        self, database_provider_ingestion_id: UUID, silent=False
     ) -> typing.Optional[DatabaseProviderIngestionItemSchema]:
         """
         Retrieve a DatabaseProviderIngestion instance by id.
@@ -195,10 +195,12 @@ class DatabaseProviderIngestionService(BaseService):
             return DatabaseProviderIngestionItemSchema.model_validate(
                 database_provider_ingestion
             )
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseProviderIngestion", database_provider_ingestion_id
             )
+        else:
+            return None
 
     async def _get(
         self, database_provider_ingestion_id: UUID

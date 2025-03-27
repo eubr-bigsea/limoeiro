@@ -165,7 +165,7 @@ class DatabaseService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_id: typing.Union[UUID, str]
+        self, database_id: typing.Union[UUID, str], silent=False
     ) -> typing.Optional[DatabaseItemSchema]:
         """
         Retrieve a Database instance by id.
@@ -177,8 +177,10 @@ class DatabaseService(BaseService):
         database = await self._get(database_id)
         if database:
             return DatabaseItemSchema.model_validate(database)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Database", database_id)
+        else:
+            return None
 
     async def _get(
         self, database_id: typing.Union[UUID, str]

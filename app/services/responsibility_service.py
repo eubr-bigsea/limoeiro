@@ -162,7 +162,7 @@ class ResponsibilityService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, responsibility_id: int
+        self, responsibility_id: int, silent=False
     ) -> typing.Optional[ResponsibilityItemSchema]:
         """
         Retrieve a Responsibility instance by id.
@@ -174,8 +174,10 @@ class ResponsibilityService(BaseService):
         responsibility = await self._get(responsibility_id)
         if responsibility:
             return ResponsibilityItemSchema.model_validate(responsibility)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Responsibility", responsibility_id)
+        else:
+            return None
 
     async def _get(
         self, responsibility_id: int

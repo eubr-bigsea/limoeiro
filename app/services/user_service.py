@@ -151,7 +151,9 @@ class UserService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, user_id: UUID) -> typing.Optional[UserItemSchema]:
+    async def get(
+        self, user_id: UUID, silent=False
+    ) -> typing.Optional[UserItemSchema]:
         """
         Retrieve a User instance by id.
         Args:
@@ -162,8 +164,10 @@ class UserService(BaseService):
         user = await self._get(user_id)
         if user:
             return UserItemSchema.model_validate(user)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("User", user_id)
+        else:
+            return None
 
     async def _get(self, user_id: UUID) -> typing.Optional[User]:
         filter_condition = User.id == user_id

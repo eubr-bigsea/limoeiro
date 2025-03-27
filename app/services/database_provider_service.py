@@ -172,7 +172,7 @@ class DatabaseProviderService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_provider_id: typing.Union[UUID, str]
+        self, database_provider_id: typing.Union[UUID, str], silent=False
     ) -> typing.Optional[DatabaseProviderItemSchema]:
         """
         Retrieve a DatabaseProvider instance by id.
@@ -184,10 +184,12 @@ class DatabaseProviderService(BaseService):
         database_provider = await self._get(database_provider_id)
         if database_provider:
             return DatabaseProviderItemSchema.model_validate(database_provider)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseProvider", database_provider_id
             )
+        else:
+            return None
 
     async def _get(
         self, database_provider_id: typing.Union[UUID, str]

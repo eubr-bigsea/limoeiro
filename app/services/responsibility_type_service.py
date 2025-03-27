@@ -33,7 +33,7 @@ class ResponsibilityTypeService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, responsibility_type_id: UUID
+        self, responsibility_type_id: UUID, silent=False
     ) -> typing.Optional[ResponsibilityTypeItemSchema]:
         """
         Retrieve a ResponsibilityType instance by id.
@@ -47,10 +47,12 @@ class ResponsibilityTypeService(BaseService):
             return ResponsibilityTypeItemSchema.model_validate(
                 responsibility_type
             )
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "ResponsibilityType", responsibility_type_id
             )
+        else:
+            return None
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(

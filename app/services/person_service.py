@@ -152,7 +152,9 @@ class PersonService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, person_id: UUID) -> typing.Optional[PersonItemSchema]:
+    async def get(
+        self, person_id: UUID, silent=False
+    ) -> typing.Optional[PersonItemSchema]:
         """
         Retrieve a Person instance by id.
         Args:
@@ -163,8 +165,10 @@ class PersonService(BaseService):
         person = await self._get(person_id)
         if person:
             return PersonItemSchema.model_validate(person)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Person", person_id)
+        else:
+            return None
 
     async def _get(self, person_id: UUID) -> typing.Optional[Person]:
         filter_condition = Person.id == person_id

@@ -168,7 +168,7 @@ class DatabaseSchemaService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, database_schema_id: typing.Union[UUID, str]
+        self, database_schema_id: typing.Union[UUID, str], silent=False
     ) -> typing.Optional[DatabaseSchemaItemSchema]:
         """
         Retrieve a DatabaseSchema instance by id.
@@ -180,10 +180,12 @@ class DatabaseSchemaService(BaseService):
         database_schema = await self._get(database_schema_id)
         if database_schema:
             return DatabaseSchemaItemSchema.model_validate(database_schema)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException(
                 "DatabaseSchema", database_schema_id
             )
+        else:
+            return None
 
     async def _get(
         self, database_schema_id: typing.Union[UUID, str]

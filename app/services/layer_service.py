@@ -151,7 +151,9 @@ class LayerService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, layer_id: UUID) -> typing.Optional[LayerItemSchema]:
+    async def get(
+        self, layer_id: UUID, silent=False
+    ) -> typing.Optional[LayerItemSchema]:
         """
         Retrieve a Layer instance by id.
         Args:
@@ -162,8 +164,10 @@ class LayerService(BaseService):
         layer = await self._get(layer_id)
         if layer:
             return LayerItemSchema.model_validate(layer)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Layer", layer_id)
+        else:
+            return None
 
     async def _get(self, layer_id: UUID) -> typing.Optional[Layer]:
         filter_condition = Layer.id == layer_id

@@ -151,7 +151,9 @@ class DomainService(BaseService):
         )
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
-    async def get(self, domain_id: UUID) -> typing.Optional[DomainItemSchema]:
+    async def get(
+        self, domain_id: UUID, silent=False
+    ) -> typing.Optional[DomainItemSchema]:
         """
         Retrieve a Domain instance by id.
         Args:
@@ -162,8 +164,10 @@ class DomainService(BaseService):
         domain = await self._get(domain_id)
         if domain:
             return DomainItemSchema.model_validate(domain)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("Domain", domain_id)
+        else:
+            return None
 
     async def _get(self, domain_id: UUID) -> typing.Optional[Domain]:
         filter_condition = Domain.id == domain_id

@@ -237,7 +237,7 @@ class AIModelService(BaseService):
 
     @handle_db_exceptions("Failed to retrieve {}", status_code=404)
     async def get(
-        self, a_i_model_id: typing.Union[UUID, str]
+        self, a_i_model_id: typing.Union[UUID, str], silent=False
     ) -> typing.Optional[AIModelItemSchema]:
         """
         Retrieve a AIModel instance by id.
@@ -249,8 +249,10 @@ class AIModelService(BaseService):
         a_i_model = await self._get(a_i_model_id)
         if a_i_model:
             return AIModelItemSchema.model_validate(a_i_model)
-        else:
+        elif not silent:
             raise ex.EntityNotFoundException("AIModel", a_i_model_id)
+        else:
+            return None
 
     async def _get(
         self, a_i_model_id: typing.Union[UUID, str]
