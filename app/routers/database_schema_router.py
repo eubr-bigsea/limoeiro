@@ -44,10 +44,6 @@ async def add_database_schema(
     """
     Adiciona uma instância da classe DatabaseSchema.
     """
-
-    if database_schema_data is not None:
-        database_schema_data.updated_by = "FIXME!!!"
-
     result = await service.add(database_schema_data)
     await session.commit()
     return result

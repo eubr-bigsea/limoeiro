@@ -42,10 +42,6 @@ async def add_database(
     """
     Adiciona uma instância da classe Database.
     """
-
-    if database_data is not None:
-        database_data.updated_by = "FIXME!!!"
-
     result = await service.add(database_data)
     await session.commit()
     return result
@@ -107,7 +103,8 @@ async def find_databases(
     Recupera uma lista de instâncias usando as opções de consulta.
     """
     databases = await service.find(query_options)
-    databases.items = [DatabaseListSchema.model_validate(d) for d in databases.items]
+    model = DatabaseListSchema()
+    databases.items = [model.model_validate(d) for d in databases.items]
     return databases
 
 

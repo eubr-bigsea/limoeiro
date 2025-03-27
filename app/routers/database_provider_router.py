@@ -47,6 +47,18 @@ async def add_database_provider(
 
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
+        base_fqn = "".join(
+            char.lower() if char.isalnum() or char == "-" else ""
+            for char in database_provider_data.name.replace(" ", "-")
+        )
+        fully_qualified_name = base_fqn
+        counter = 1
+
+        while await service.get(fully_qualified_name, silent=True):
+            fully_qualified_name = f"{base_fqn}-{counter}"
+            counter += 1
+
+        database_provider_data.fully_qualified_name = fully_qualified_name
 
     result = await service.add(database_provider_data)
     await session.commit()
@@ -86,6 +98,7 @@ async def update_database_providers(
     """
     Atualiza uma instância da classe DatabaseProvider.
     """
+
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
 

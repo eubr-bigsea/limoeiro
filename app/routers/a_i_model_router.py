@@ -42,10 +42,6 @@ async def add_a_i_model(
     """
     Adiciona uma instância da classe AIModel.
     """
-
-    if a_i_model_data is not None:
-        a_i_model_data.updated_by = "FIXME!!!"
-
     result = await service.add(a_i_model_data)
     await session.commit()
     return result
