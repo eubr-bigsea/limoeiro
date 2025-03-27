@@ -7,16 +7,22 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy import and_, asc, delete, desc, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import Asset, AssetLink, AssetTag, Responsibility, Tag
+from app.routers import get_lookup_filter
 
 from ..database import get_session
+from fastapi import HTTPException
 from ..schemas import (
     AssetLinkCreateSchema,
     AssetLinkItemSchema,
     AssetListSchema,
     AssetQuerySchema,
+    DatabaseListSchema,
+    DatabaseProviderListSchema,
+    DatabaseSchemaListSchema,
+    DatabaseTableListSchema,
     PaginatedSchema,
     ResponsibilityCreateSchema,
     ResponsibilityItemSchema,
@@ -44,7 +50,10 @@ async def find_assets(
     limit = min(max(1, query_options.page_size), 100)
     offset = (page - 1) * limit
 
-    query = select(Asset)
+    query = select(Asset).options(
+        selectinload(Asset.domain),  # Load domain if it exists
+        selectinload(Asset.layer),
+    )
     filters = []
     if query_options.query:
         filters.append(
@@ -84,12 +93,22 @@ async def find_assets(
 
     total_rows = (await session.execute(count_query)).scalar_one()
 
+    asset_type_to_pydantic = {
+        "provider": DatabaseProviderListSchema,
+        "database": DatabaseListSchema,
+        "schema": DatabaseSchemaListSchema,
+        "table": DatabaseTableListSchema,
+    }
     return PaginatedSchema[AssetListSchema](
         page_size=limit,
         page_count=math.ceil(total_rows / limit),
         page=page,
         count=total_rows,
-        items=[AssetListSchema.model_validate(row) for row in rows],
+        items=[
+            # asset_type_to_pydantic[row.asset_type].model_validate(row)
+            AssetListSchema.model_validate(row)
+            for row in rows
+        ],
     )
     # sql = select(Asset).order_by(Asset.name)
     # rows = (await session.execute(sql)).scalars().all()
@@ -103,6 +122,28 @@ async def find_assets(
     #     count=total_rows,
     #     items=[AssetListSchema.model_validate(row) for row in rows],
     # )
+
+
+@router.options(
+    "/assets/{entity_id}",
+    tags=["Asset"],
+)
+async def exists(
+    asset_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    session: AsyncSession = Depends(get_session),
+):
+    filter_condition = (
+        Asset.id == asset_id
+        if isinstance(asset_id, UUID)
+        else Asset.fully_qualified_name == asset_id
+    )
+
+    sql = select(func.count()).select_from(Asset).where(filter_condition)
+    exists = (await session.execute(sql)).scalar_one() > 0
+    if exists:
+        return {"status": "success"}
+    else:
+        raise HTTPException(status_code=404, detail="Asset not found")
 
 
 @router.get(
@@ -266,7 +307,7 @@ async def get_responsibility(
                 .filter(Responsibility.asset_id == asset_id)
                 .options(
                     joinedload(Responsibility.type),
-                    joinedload(Responsibility.contact)
+                    joinedload(Responsibility.contact),
                 )  # Eagerly loads Responsibility.type and Responsibility.contact
             )
         )
@@ -329,17 +370,14 @@ async def delete_responsibility(
     await session.commit()
 
 
-@router.patch("/assets/disable-many/", tags=["Asset"])
+@router.patch("/assets/disable-many", tags=["Asset"])
 async def disable_many(
     ids: typing.List[str],
     session: AsyncSession = Depends(get_session),
 ):
     """"""
     await session.execute(
-        update(Asset)
-        .where(Asset.id.in_(ids))
-        .values(deleted=True)
+        update(Asset).where(Asset.id.in_(ids)).values(deleted=True)
     )
     await session.commit()
     return {"status": "success", "message": "Assets disabled successfully"}
-
