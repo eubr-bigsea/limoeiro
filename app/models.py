@@ -69,6 +69,7 @@ class DataType(str, enum.Enum):
     ARRAY = "ARRAY"
     BIGINT = "BIGINT"
     BINARY = "BINARY"
+    BIT = "BIT"
     BLOB = "BLOB"
     BOOLEAN = "BOOLEAN"
     BYTEA = "BYTEA"
@@ -103,10 +104,13 @@ class DataType(str, enum.Enum):
     MAP = "MAP"
     MEDIUMBLOB = "MEDIUMBLOB"
     MEDIUMTEXT = "MEDIUMTEXT"
+    MONEY = "MONEY"
+    NCHAR = "NCHAR"
     NTEXT = "NTEXT"
     NULL = "NULL"
     NUMBER = "NUMBER"
     NUMERIC = "NUMERIC"
+    NVARCHAR = "NVARCHAR"
     PG_LSN = "PG_LSN"
     PG_SNAPSHOT = "PG_SNAPSHOT"
     POINT = "POINT"
@@ -824,7 +828,7 @@ class DatabaseTable(Asset):
     )
     type = mapped_column(
         Enum(TableType, name="TableTypeEnumType"),
-        default=TableType.REGULAR,
+        default="REGULAR",
         nullable=False,
     )
     proxy_enabled = mapped_column(Boolean, default=False, nullable=False)

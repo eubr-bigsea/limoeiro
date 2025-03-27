@@ -902,6 +902,7 @@ class AssetListSchema(AssetBaseModel):
     description: Optional[str] = Field(
         default=None, description="Descrição da instância."
     )
+    notes: Optional[str] = Field(default=None, description="Observação.")
     deleted: Optional[bool] = Field(
         default=None,
         description="Quando true, indica que a entidade foi excluída temporariamente. Padrão: False.",
@@ -944,6 +945,9 @@ class DatabaseProviderCreateSchema(AssetCreateSchema, DatabaseProviderBaseModel)
         default=None, description="Configuração"
     )
 
+    # Extra fields
+    fully_qualified_name: Optional[str] = Field(default=None)  # type: ignore
+
     # Associations
     provider_type_id: str
 
@@ -956,6 +960,9 @@ class DatabaseProviderUpdateSchema(AssetUpdateSchema, DatabaseProviderBaseModel)
     configuration: Optional[str] = Field(
         default=None, description="Configuração"
     )
+
+    # Extra fields
+    fully_qualified_name: Optional[str] = Field(default=None)  # type: ignore
 
     # Associations
     provider_type_id: Optional[str] = Field(default=None)
@@ -1599,6 +1606,7 @@ class DatabaseTableListSchema(AssetListSchema, DatabaseTableBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
+    type: Optional[TableType] = Field(default=None, description="Tipo da tabela")
 
     # Associations
     database_schema: Optional["DatabaseSchemaListSchema"] = Field(default=None)
