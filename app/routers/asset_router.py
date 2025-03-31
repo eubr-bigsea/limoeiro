@@ -5,12 +5,19 @@ import typing
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Query
-from sqlalchemy import and_, asc, delete, desc, func, or_, select, update
+from sqlalchemy import and_, asc, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.models import Asset, AssetLink, AssetTag, Responsibility, Tag
+from app.models import (
+    Asset,
+    AssetLink,
+    AssetTag,
+    Responsibility,
+    Tag,
+)
 from app.routers import get_lookup_filter
+from app.utils import remove_accents
 
 from ..database import get_session
 from fastapi import HTTPException
@@ -19,10 +26,6 @@ from ..schemas import (
     AssetLinkItemSchema,
     AssetListSchema,
     AssetQuerySchema,
-    DatabaseListSchema,
-    DatabaseProviderListSchema,
-    DatabaseSchemaListSchema,
-    DatabaseTableListSchema,
     PaginatedSchema,
     ResponsibilityCreateSchema,
     ResponsibilityItemSchema,
@@ -33,14 +36,14 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-@router.get(
+@router.post(
     "/assets/",
     tags=["Asset"],
     response_model=PaginatedSchema[AssetListSchema],
     response_model_exclude_none=True,
 )
 async def find_assets(
-    query_options: AssetQuerySchema = Query(),
+    query_options: AssetQuerySchema,
     session: AsyncSession = Depends(get_session),
 ) -> PaginatedSchema[AssetListSchema]:
     """
@@ -57,20 +60,55 @@ async def find_assets(
     filters = []
     if query_options.query:
         filters.append(
-            or_(
-                *(
-                    getattr(c, "ilike")(f"%{query_options.query}%")
-                    for c in (
-                        Asset.name,
-                        Asset.description,
-                    )
+            Asset.search.op("@@")(
+                func.to_tsquery(
+                    "portuguese",
+                    remove_accents(query_options.query).replace(" ", " & "),
                 )
             )
         )
-    # if query_options.domain_id:
-    #     filters.append(Asset.domain_id.in_([]))
+        # filters.append(
+        #     or_(
+        #         *(
+        #             getattr(c, "ilike")(f"%{query_options.query}%")
+        #             for c in (
+        #                 Asset.name,
+        #                 Asset.description,
+        #             )
+        #         )
+        #     )
+        # )
+
+    if query_options.responsible_ids:
+        filters.append(
+            Asset.id.in_(
+                select(Responsibility.asset_id).where(
+                    Responsibility.contact_id.in_(query_options.responsible_ids)
+                )
+            )
+        )
+    if query_options.tag_ids:
+        filters.append(
+            Asset.id.in_(
+                select(AssetTag.asset_id).where(
+                    AssetTag.tag_id.in_(query_options.tag_ids)
+                )
+            )
+        )
+    if query_options.domain_id:
+        filters.append(Asset.domain_id.in_(query_options.domain_id))
+
+    if query_options.display == "N":
+        filters.append(Asset.deleted.is_(False))
+    elif query_options.display == "Y":
+        filters.append(Asset.deleted.is_(True))
+
+    if query_options.layer_id:
+        filters.append(Asset.layer_id.in_(query_options.layer_id))
+
     if query_options.asset_type:
         filters.append(Asset.asset_type.in_(query_options.asset_type))
+
     if filters:
         query = query.where(and_(*filters))
 
@@ -93,22 +131,28 @@ async def find_assets(
 
     total_rows = (await session.execute(count_query)).scalar_one()
 
-    asset_type_to_pydantic = {
-        "provider": DatabaseProviderListSchema,
-        "database": DatabaseListSchema,
-        "schema": DatabaseSchemaListSchema,
-        "table": DatabaseTableListSchema,
-    }
+    items: typing.List[AssetListSchema] = [
+        AssetListSchema.model_validate(row) for row in rows
+    ]
+
+    # for row in rows:
+    #     match row:
+    #         case Database():
+    #             # In order to avoid lazy load problems.
+    #             # See https://stackoverflow.com/a/77734769/1646932
+    #             # row.provider = await row.provider.awaitable_attrs.provider
+    #             items.append(DatabaseListSchema.model_validate(row))
+    #         case DatabaseSchema():
+    #             items.append(DatabaseSchemaListSchema.model_validate(row))
+    #         case DatabaseTable():
+    #             items.append(DatabaseTableListSchema.model_validate(row))
+
     return PaginatedSchema[AssetListSchema](
         page_size=limit,
         page_count=math.ceil(total_rows / limit),
         page=page,
         count=total_rows,
-        items=[
-            # asset_type_to_pydantic[row.asset_type].model_validate(row)
-            AssetListSchema.model_validate(row)
-            for row in rows
-        ],
+        items=items,
     )
     # sql = select(Asset).order_by(Asset.name)
     # rows = (await session.execute(sql)).scalars().all()

@@ -12,11 +12,17 @@ from sqlalchemy import (
     Enum,
     DateTime,
     Text,
+    Index,
+    event,
 )
 from sqlalchemy.types import UUID
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import UniqueConstraint, PrimaryKeyConstraint
+from sqlalchemy.sql.expression import func
+
+from sqlalchemy.dialects.postgresql import TSVECTOR
+from sqlalchemy.dialects.postgresql import JSONB
 
 
 def utc_now() -> datetime.datetime:
@@ -523,6 +529,7 @@ class Asset(Base):
         UniqueConstraint(
             "fully_qualified_name", "asset_type", name="inx_uq_asset"
         ),
+        Index("ix_search_search", "search", postgresql_using="gin"),
     )
 
     # Fields
@@ -546,6 +553,8 @@ class Asset(Base):
     updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
     updated_by = mapped_column(String(200), nullable=False)
     asset_type = mapped_column(String(20), nullable=False)
+    tree = mapped_column(JSONB)
+    search = mapped_column(TSVECTOR)
 
     # Associations
     domain_id = mapped_column(
@@ -573,6 +582,48 @@ class Asset(Base):
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
+
+
+@event.listens_for(Asset, "before_insert", propagate=True)
+@event.listens_for(Asset, "before_update", propagate=True)
+def update_search(mapper, connection, target: Asset):
+    target.search = func.to_tsvector(
+        "portuguese", f"{target.name} {target.description} {target.notes}"
+    )
+    match target:
+        case Database():
+            target.tree = {
+                "database_provider": {
+                    "id": str(target.provider.id),
+                    "name": target.provider.name,
+                }
+            }
+        case DatabaseSchema():
+            target.tree = {
+                "database": {
+                    "id": str(target.database.id),
+                    "name": target.database.name,
+                },
+                "database_provider": {
+                    "id": str(target.database.provider.id),
+                    "name": target.database.provider.name,
+                },
+            }
+        case DatabaseTable():
+            target.tree = {
+                "database": {
+                    "id": str(target.database.id),
+                    "name": target.database.name,
+                },
+                "database_provider": {
+                    "id": str(target.database.provider.id),
+                    "name": target.database.provider.name,
+                },
+                "database_schema": {
+                    "id": str(target.database_schema.id),
+                    "name": target.database_schema.name,
+                },
+            }
 
 
 class DatabaseProvider(Asset):

@@ -1,10 +1,11 @@
 import os
-from sqlalchemy.sql.schema import DEFAULT_NAMING_CONVENTION
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy import MetaData
 from typing import AsyncGenerator
+
 from dotenv import load_dotenv
+from sqlalchemy import MetaData
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.sql.schema import DEFAULT_NAMING_CONVENTION
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,7 +16,7 @@ DATABASE_URL = os.environ["DB_URL"]
 
 metadata = MetaData(naming_convention=DEFAULT_NAMING_CONVENTION)
 # Create a base class for models
-class Base(DeclarativeBase):
+class Base(AsyncAttrs, DeclarativeBase):
     metadata = metadata
 
 if 'sqlite' in DATABASE_URL:

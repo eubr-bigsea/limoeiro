@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.exceptions import DatabaseException, EntityNotFoundException
@@ -86,6 +87,18 @@ async def not_found_exception_handler(
     """Global handler for PostgreSQL IntegrityError."""
     detail = str(exc)
     return JSONResponse(status_code=404, content={"error": detail})
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+):
+    exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
+    # logger.error(request, exc_str)
+    content = {"status_code": 10422, "message": exc_str, "data": None}
+    return JSONResponse(
+        content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
+    )
 
 
 routers = [

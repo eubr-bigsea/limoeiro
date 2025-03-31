@@ -1,4 +1,5 @@
 import datetime
+import typing
 from uuid import UUID
 from typing import Annotated, Optional, TypeVar, Generic, List
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
@@ -879,6 +880,10 @@ class AssetItemSchema(AssetBaseModel):
         default=None, description="Última hora de atualização."
     )
     updated_by: str = Field(description="Usuário que fez a atualização.")
+    tree: Optional[typing.Dict[str, typing.Any]] = Field(
+        default=None,
+        description="Árvore com os ativos que são ancestrais do ativo atual (também o inclue).",
+    )
 
     # Associations
     domain: Optional["DomainListSchema"] = Field(default=None)
@@ -914,6 +919,10 @@ class AssetListSchema(AssetBaseModel):
         default=None, description="Última hora de atualização."
     )
     asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
+    tree: Optional[typing.Dict[str, typing.Any]] = Field(
+        default=None,
+        description="Árvore com os ativos que são ancestrais do ativo atual (também o inclue).",
+    )
 
     # Associations
     domain: Optional["DomainListSchema"] = Field(default=None)
@@ -925,12 +934,17 @@ class AssetListSchema(AssetBaseModel):
 class AssetQuerySchema(BaseQuerySchema):
     """Used for querying data"""
 
+    display: Optional[str] = Field(default=None, description="Provider type")
     provider_type_id: Optional[str] = Field(
         default=None, description="Provider type"
     )
     layer_id: Optional[List[UUID]] = Field(default=None, description="Camada")
     domain_id: Optional[List[UUID]] = Field(default=None, description="Domínio")
     asset_type: Optional[List[str]] = Field(default=None, description="Tipo")
+    responsible_ids: Optional[List[UUID]] = Field(
+        default=None, description="Responsáveis"
+    )
+    tag_ids: Optional[List[UUID]] = Field(default=None, description="Tags")
     query: Optional[str] = Field(default=None, description="Consulta")
     ...
 
