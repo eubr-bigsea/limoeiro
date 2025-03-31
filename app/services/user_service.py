@@ -127,6 +127,8 @@ class UserService(BaseService):
             query = query.order_by(
                 order_func(getattr(User, query_options.sort_by))
             )
+        else:
+            query = query.order_by(User.name)
         rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()

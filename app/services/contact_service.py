@@ -132,6 +132,8 @@ class ContactService(BaseService):
             query = query.order_by(
                 order_func(getattr(Contact, query_options.sort_by))
             )
+        else:
+            query = query.order_by(Contact.name)
         rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()

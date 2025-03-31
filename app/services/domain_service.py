@@ -127,6 +127,8 @@ class DomainService(BaseService):
             query = query.order_by(
                 order_func(getattr(Domain, query_options.sort_by))
             )
+        else:
+            query = query.order_by(Domain.name)
         rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()

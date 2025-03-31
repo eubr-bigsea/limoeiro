@@ -79,6 +79,8 @@ class ResponsibilityTypeService(BaseService):
             query = query.order_by(
                 order_func(getattr(ResponsibilityType, query_options.sort_by))
             )
+        else:
+            query = query.order_by(ResponsibilityType.name)
         rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()

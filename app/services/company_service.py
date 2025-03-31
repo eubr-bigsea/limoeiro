@@ -131,6 +131,8 @@ class CompanyService(BaseService):
             query = query.order_by(
                 order_func(getattr(Company, query_options.sort_by))
             )
+        else:
+            query = query.order_by(Company.name)
         rows = (
             (await self.session.execute(query.offset(offset).limit(limit)))
             .scalars()
