@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
+    a_i_model_router,
     asset_router,
     collector_router,
     company_router,
@@ -153,6 +154,8 @@ async def validation_exception_handler(
 
 
 routers = [
+
+    a_i_model_router.router,
     asset_router.router,
     collector_router.router,
     company_router.router,
