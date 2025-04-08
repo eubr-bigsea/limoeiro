@@ -1,7 +1,12 @@
+from contextlib import asynccontextmanager
+import os
+import asyncpg
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pgqueuer import AsyncpgDriver, Queries
 
+from app.database import DATABASE_URL
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
     asset_router,
@@ -12,6 +17,8 @@ from app.routers import (
     database_provider_type_router,
     database_provider_connection_router,
     database_provider_ingestion_router,
+    database_provider_ingestion_execution_router,
+    database_provider_ingestion_start_router,
     database_router,
     database_schema_router,
     database_table_router,
@@ -22,6 +29,7 @@ from app.routers import (
     tag_router,
     user_router,
 )
+from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import domain_router
 from dotenv import load_dotenv
@@ -51,6 +59,16 @@ trigger = CronTrigger(hour=1, minute=0)
 scheduler.add_job(daily_task, trigger)
 scheduler.start()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage async database connection throughout the app's lifespan."""
+    connection = await asyncpg.connect(dsn=DATABASE_URL.replace("+asyncpg", ""))
+    app.extra["pgq_queries"] = Queries(AsyncpgDriver(connection)) # type: ignore
+    try:
+        yield
+    finally:
+        await connection.close()
+
 
 app = FastAPI(
     title="Limoeiro API",
@@ -60,7 +78,26 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
+    lifespan=lifespan,
 )
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Limoeiro",
+        version="1.0.0",
+        description="API de catálogo de dados do Lemonade.",
+        routes=app.routes,
+        contact={
+            "name": "DCC/UFMG"
+        },
+        #servers=os.environ.get("OPEN_API_SERVERS", '').split(","),
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 origins = ["*"]
 app.add_middleware(
@@ -111,6 +148,8 @@ routers = [
     database_provider_router.router,
     database_provider_connection_router.router,
     database_provider_ingestion_router.router,
+    database_provider_ingestion_execution_router.router,
+    database_provider_ingestion_start_router.router,
     database_router.router,
     database_schema_router.router,
     database_table_router.router,

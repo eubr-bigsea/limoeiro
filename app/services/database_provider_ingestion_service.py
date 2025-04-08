@@ -211,7 +211,6 @@ class DatabaseProviderIngestionService(BaseService):
         result = await self.session.execute(
             select(DatabaseProviderIngestion)
             .options(selectinload(DatabaseProviderIngestion.provider))
-            .options(selectinload(DatabaseProviderIngestion.logs))
             .filter(filter_condition)
         )
         return result.scalars().first()

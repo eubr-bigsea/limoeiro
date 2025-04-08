@@ -24,6 +24,7 @@ dependencies = [
     "elasticsearch-dbapi==0.2.11",
     "pymysql>=1.1.1",
     "pymssql>=2.3.2",
+    "pgqueuer>=0.19.6",
 ]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -32,6 +33,7 @@ asyncio_default_fixture_loop_scope = "function"
 [dependency-groups]
 dev = [
     "alembic>=1.14.0",
+    "babel>=2.17.0",
     "httpx>=0.28.1",
     "psycopg2>=2.9.10",
     "pytest>=8.3.3",
@@ -40,3 +42,5 @@ dev = [
     "time-machine>=2.16.0",
     "uvicorn>=0.34.0",
 ]
+[tool.scripts]
+init_pgqueuer = "python app/util/pgq_util install"

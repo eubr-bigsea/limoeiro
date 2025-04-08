@@ -8,7 +8,6 @@ from app.collector import DEFAULT_UUID
 from app.collector.sql_alchemy_collector import SqlAlchemyCollector
 from app.schemas import (
     DatabaseCreateSchema,
-    DatabaseProviderConnectionItemSchema,
     DatabaseSchemaCreateSchema,
 )
 

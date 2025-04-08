@@ -5,6 +5,7 @@ from app.collector.utils.constants_utils import (
     ASSET_ROUTE,
     CONNECTION_ROUTE,
     DATABASE_ROUTE,
+    EXECUTION_ROUTE,
     INGESTION_ROUTE,
     PROVIDER_ROUTE,
     TABLE_ROUTE,
@@ -14,6 +15,7 @@ from app.schemas import (
     DatabaseItemSchema,
     DatabaseListSchema,
     DatabaseProviderConnectionItemSchema,
+    DatabaseProviderIngestionExecutionItemSchema,
     DatabaseProviderIngestionItemSchema,
     DatabaseProviderItemSchema,
     DatabaseTableListSchema,
@@ -44,6 +46,14 @@ class DatabaseProviderApiClient:
             )
             for info in ingestion_info.get("items")
         ]
+
+    def get_ingestion(self, ingestion_id: str):
+        status, ingestion_info = get_request(INGESTION_ROUTE, path=ingestion_id)
+        return DatabaseProviderIngestionItemSchema(**ingestion_info)
+
+    def get_ingestion_execution(self, execution_id: str) -> DatabaseProviderIngestionExecutionItemSchema:
+        status, execution_info = get_request(EXECUTION_ROUTE, path=execution_id)
+        return DatabaseProviderIngestionExecutionItemSchema(**execution_info)
 
     def get_connections(self, provider_id: str):
         status, connection_info = get_request(

@@ -7,6 +7,7 @@ SCHEMA_ROUTE = "schemas"
 TABLE_ROUTE = "tables"
 CONNECTION_ROUTE = "connections"
 INGESTION_ROUTE = "ingestions"
+EXECUTION_ROUTE = "executions"
 
 SQLTYPES_DICT = {
     "VARBINARY": "BINARY",

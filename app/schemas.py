@@ -1,5 +1,5 @@
-import datetime
 import typing
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import Annotated, Optional, TypeVar, Generic, List
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
@@ -13,9 +13,9 @@ M = TypeVar("M")
 AnyUrlString = Annotated[AnyUrl, AfterValidator(str)]
 
 
-def utc_now() -> datetime.datetime:
+def utc_now() -> datetime:
     """Utility function to get current date as UTC"""
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class PaginatedSchema(BaseModel, Generic[M]):
@@ -804,7 +804,7 @@ class AssetCreateSchema(AssetBaseModel):
     version: Optional[str] = Field(
         default=None, description="Versão de metadados da instância."
     )
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
@@ -840,7 +840,7 @@ class AssetUpdateSchema(AssetBaseModel):
     version: Optional[str] = Field(
         default=None, description="Versão de metadados da instância."
     )
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     updated_by: Optional[str] = Field(
@@ -876,7 +876,7 @@ class AssetItemSchema(AssetBaseModel):
     version: str = Field(
         default="0.0.0", description="Versão de metadados da instância."
     )
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     updated_by: str = Field(description="Usuário que fez a atualização.")
@@ -915,7 +915,7 @@ class AssetListSchema(AssetBaseModel):
     version: Optional[str] = Field(
         default=None, description="Versão de metadados da instância."
     )
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     asset_type: Optional[str] = Field(default=None, description="Tipo de ativo")
@@ -1162,7 +1162,6 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
 
     # Associations
     provider_id: UUID
-    logs: Optional[List["DatabaseProviderIngestionLogCreateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1214,7 +1213,6 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
 
     # Associations
     provider_id: Optional[UUID] = Field(default=None)
-    logs: Optional[List["DatabaseProviderIngestionLogUpdateSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1267,7 +1265,6 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
 
     # Associations
     provider_id: UUID
-    logs: Optional[List["DatabaseProviderIngestionLogItemSchema"]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1318,9 +1315,6 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
-    # Associations
-    logs: Optional[List["DatabaseProviderIngestionLogListSchema"]] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -1328,6 +1322,134 @@ class DatabaseProviderIngestionQuerySchema(BaseQuerySchema):
     """Used for querying data"""
 
     provider_id: Optional[str] = Field(default=None, description="Provider")
+    ...
+
+
+class DatabaseProviderIngestionExecutionBaseModel(BaseModel): ...
+
+
+class DatabaseProviderIngestionExecutionCreateSchema(
+    DatabaseProviderIngestionExecutionBaseModel
+):
+    """JSON serialization schema for creating an instance"""
+
+    created_at: datetime = Field(default=utc_now, description="Data de criação.")
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Última hora de atualização."
+    )
+    status: str = Field(description="Status de execução")
+    job_id: Optional[int] = Field(
+        default=None, description="Número do job (fila)"
+    )
+    finished: Optional[datetime] = Field(
+        default=None, description="Data/hora de finalização da execução"
+    )
+    trigger_mode: str = Field(description="Como a execução foi disparada")
+
+    # Associations
+    triggered_by_id: Optional[UUID] = Field(default=None)
+    ingestion_id: UUID
+    logs: Optional[List["DatabaseProviderIngestionLogCreateSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderIngestionExecutionUpdateSchema(
+    DatabaseProviderIngestionExecutionBaseModel
+):
+    """Optional model for serialization of updating objects"""
+
+    created_at: Optional[datetime] = Field(
+        default=None, description="Data de criação."
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Última hora de atualização."
+    )
+    status: Optional[str] = Field(default=None, description="Status de execução")
+    job_id: Optional[int] = Field(
+        default=None, description="Número do job (fila)"
+    )
+    finished: Optional[datetime] = Field(
+        default=None, description="Data/hora de finalização da execução"
+    )
+    trigger_mode: Optional[str] = Field(
+        default=None, description="Como a execução foi disparada"
+    )
+
+    # Associations
+    triggered_by_id: Optional[UUID] = Field(default=None)
+    ingestion_id: Optional[UUID] = Field(default=None)
+    logs: Optional[List["DatabaseProviderIngestionLogUpdateSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderIngestionExecutionItemSchema(
+    DatabaseProviderIngestionExecutionBaseModel
+):
+    """JSON serialization schema for serializing a single object"""
+
+    id: int
+    created_at: datetime = Field(default=utc_now, description="Data de criação.")
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Última hora de atualização."
+    )
+    status: str = Field(description="Status de execução")
+    job_id: Optional[int] = Field(
+        default=None, description="Número do job (fila)"
+    )
+    finished: Optional[datetime] = Field(
+        default=None, description="Data/hora de finalização da execução"
+    )
+    trigger_mode: str = Field(description="Como a execução foi disparada")
+
+    # Associations
+    triggered_by: Optional["UserListSchema"] = Field(default=None)
+    ingestion: "DatabaseProviderIngestionItemSchema"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderIngestionExecutionListSchema(
+    DatabaseProviderIngestionExecutionBaseModel
+):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[int] = None
+    created_at: Optional[datetime] = Field(
+        default=None, description="Data de criação."
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Última hora de atualização."
+    )
+    status: Optional[str] = Field(default=None, description="Status de execução")
+    job_id: Optional[int] = Field(
+        default=None, description="Número do job (fila)"
+    )
+    finished: Optional[datetime] = Field(
+        default=None, description="Data/hora de finalização da execução"
+    )
+    trigger_mode: Optional[str] = Field(
+        default=None, description="Como a execução foi disparada"
+    )
+
+    # Associations
+    triggered_by: Optional["UserListSchema"] = Field(default=None)
+    ingestion: Optional["DatabaseProviderIngestionListSchema"] = Field(
+        default=None
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderIngestionExecutionQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    ingestion_id: Optional[str] = Field(default=None, description="Ingestão")
+    status: Optional[str] = Field(default=None, description="Status")
+    trigger_mode: Optional[str] = Field(
+        default=None, description="Modo de disparo"
+    )
     ...
 
 
@@ -1339,7 +1461,7 @@ class DatabaseProviderIngestionLogCreateSchema(
 ):
     """JSON serialization schema for creating an instance"""
 
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     status: str = Field(description="Status de execução")
@@ -1347,6 +1469,7 @@ class DatabaseProviderIngestionLogCreateSchema(
 
     # Associations
     ingestion_id: UUID
+    execution_id: int
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1356,7 +1479,7 @@ class DatabaseProviderIngestionLogUpdateSchema(
 ):
     """Optional model for serialization of updating objects"""
 
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     status: Optional[str] = Field(default=None, description="Status de execução")
@@ -1364,6 +1487,7 @@ class DatabaseProviderIngestionLogUpdateSchema(
 
     # Associations
     ingestion_id: Optional[UUID] = Field(default=None)
+    execution_id: Optional[int] = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1374,11 +1498,14 @@ class DatabaseProviderIngestionLogItemSchema(
     """JSON serialization schema for serializing a single object"""
 
     id: int
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     status: str = Field(description="Status de execução")
     log: Optional[str] = Field(default=None, description="Log de execução")
+
+    # Associations
+    execution: "DatabaseProviderIngestionExecutionItemSchema"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1389,11 +1516,16 @@ class DatabaseProviderIngestionLogListSchema(
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[int] = None
-    updated_at: Optional[datetime.datetime] = Field(
+    updated_at: Optional[datetime] = Field(
         default=None, description="Última hora de atualização."
     )
     status: Optional[str] = Field(default=None, description="Status de execução")
     log: Optional[str] = Field(default=None, description="Log de execução")
+
+    # Associations
+    execution: Optional["DatabaseProviderIngestionExecutionListSchema"] = Field(
+        default=None
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1649,7 +1781,7 @@ class DatabaseTableSampleBaseModel(BaseModel): ...
 class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    date: datetime.datetime = Field(description="Data e hora da amosrta")
+    sample_date: datetime = Field(description="Data e hora da amostra")
     content: str = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
@@ -1664,8 +1796,8 @@ class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
 class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     """Optional model for serialization of updating objects"""
 
-    date: Optional[datetime.datetime] = Field(
-        default=None, description="Data e hora da amosrta"
+    sample_date: Optional[datetime] = Field(
+        default=None, description="Data e hora da amostra"
     )
     content: Optional[str] = Field(
         default=None, description="Conteúdo da amostra (JSON)."
@@ -1684,7 +1816,7 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: UUID
-    date: datetime.datetime = Field(description="Data e hora da amosrta")
+    sample_date: datetime = Field(description="Data e hora da amostra")
     content: str = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
@@ -1697,8 +1829,8 @@ class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    date: Optional[datetime.datetime] = Field(
-        default=None, description="Data e hora da amosrta"
+    sample_date: Optional[datetime] = Field(
+        default=None, description="Data e hora da amostra"
     )
     is_visible: Optional[bool] = Field(
         default=None, description="Amostra pode ser visualizada"
