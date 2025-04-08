@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -28,6 +29,7 @@ from dotenv import load_dotenv
 from .utils.middlewares import add_middlewares
 from sqlalchemy.exc import IntegrityError
 from fastapi import Request
+from fastapi.openapi.utils import get_openapi
 
 from apscheduler.schedulers.background import (
     BackgroundScheduler,
@@ -61,7 +63,56 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
-app.openapi_version = "3.0.2"
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        license_info=app.license_info,
+        description=app.description,
+        routes=app.routes,
+        openapi_version="3.0.2",  # Set your desired OpenAPI version here
+    )
+	
+    # remover type: null
+    def process_schema (schema):
+        anyOf = schema.get("anyOf", {})
+        if anyOf:
+            for a in anyOf:
+                if a.get("type") == "null":
+                    anyOf.remove(a)
+                    schema["nullable"] = True
+                    break
+        return schema
+
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            parameters = method.get("parameters", [])
+            for p in parameters:
+                schema = p.get("schema", {})
+                process_schema (schema)
+
+            requestBody = method.get("requestBody")
+            if requestBody:
+                content = requestBody.get("content")
+                if content:
+                    application_json = content.get("application/json")
+                    schema = application_json.get("schema")
+                    process_schema (schema)
+
+    for component in openapi_schema["components"].values():
+        for propertie in component.values():
+            if propertie and propertie.get("properties"):
+                for field in propertie.get("properties").values():
+                    process_schema (field)
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
 origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
