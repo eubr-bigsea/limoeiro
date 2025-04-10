@@ -3,11 +3,8 @@ node_modules
 bower_components
 
 # Ignore logs
-*.log
+**/*.log
 logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Ignore build and production directories
 dist
