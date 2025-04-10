@@ -44,6 +44,10 @@ async def add_database_table(
     """
     Adiciona uma instância da classe DatabaseTable.
     """
+
+    if database_table_data is not None:
+        database_table_data.updated_by = "FIXME!!!"
+
     result = await service.add(database_table_data)
     await session.commit()
     return result
