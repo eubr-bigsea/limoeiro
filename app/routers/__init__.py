@@ -12,7 +12,7 @@ def get_lookup_filter(
     entity_id: str = Path(
         ...,
         description="Entity identifier - can be either a UUID or an FQN (Fully Qualified Name)",
-        examples={
+        examples=[{
             "uuid":
             {
                 "name": "test",
@@ -28,7 +28,7 @@ def get_lookup_filter(
                 "description": "Lookup by Fully Qualified Name",
                 "value": "my.entity.name",
             },
-        }, # type: ignore
+        }]
     ),
 ):
     # Same implementation as before

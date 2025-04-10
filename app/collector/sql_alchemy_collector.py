@@ -1,3 +1,4 @@
+import logging
 import typing
 from abc import abstractmethod
 from typing import List
@@ -14,6 +15,8 @@ from app.schemas import (
     TableColumnCreateSchema,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class SqlAlchemyCollector(Collector):
     """Class to implement methods, using SqlAlchemy, to collect data in collection engine."""
@@ -27,6 +30,20 @@ class SqlAlchemyCollector(Collector):
     ) -> typing.Optional[sqlalchemy.Engine]:
         """Return the connection engine to get the schemas."""
         pass
+
+    def supports_pk(self) -> bool:
+        """Return if the database supports primary keys."""
+        return True
+
+    def supports_views(self) -> bool:
+        """Return if the database supports primary keys."""
+        return True
+
+    def post_process_table(
+        self, engine: sqlalchemy.Engine, table: DatabaseTableCreateSchema
+    ):
+        """Post process the table."""
+        return table
 
     @abstractmethod
     def get_connection_engine_for_tables(
@@ -47,25 +64,31 @@ class SqlAlchemyCollector(Collector):
         )
         inspector = sqlalchemy.inspect(engine)
         tables = []
-        view_names = inspector.get_view_names(schema=schema_name)
+        if self.supports_views():
+            view_names = inspector.get_view_names(schema=schema_name)
+        else:
+            view_names = []
+            logger.info("Provedor de dados não suporta views")
         table_names = inspector.get_table_names(schema=schema_name)
         for item_type, items in zip(
             ["VIEW", "REGULAR"], [view_names, table_names]
         ):
             for name in items:
-                table_info = inspector.get_table_comment(
-                    name, schema=schema_name
-                )
                 columns: typing.List[TableColumnCreateSchema] = []
-                primary_keys = inspector.get_pk_constraint(
-                    name, schema=schema_name
-                ).get("constrained_columns", [])
+                if self.supports_pk():
+                    primary_keys = inspector.get_pk_constraint(
+                        name, schema=schema_name
+                    ).get("constrained_columns", [])
+                else:
+                    primary_keys = []
                 try:
                     unique_constraints = inspector.get_unique_constraints(
                         name, schema=schema_name
                     )
                 except NotImplementedError:
-                    print("FIXME, unique constraing not implemented")
+                    logger.info(
+                        "Provedor de dados não suporta unique constraint"
+                    )
                     unique_constraints = []
 
                 unique_columns = [
@@ -105,10 +128,15 @@ class SqlAlchemyCollector(Collector):
                         )
                     )
 
-                table_comment = inspector.get_table_comment(
-                    name, schema=schema_name
-                ).get("text")
-                tables.append(
+                try:
+                    table_comment = inspector.get_table_comment(
+                        name, schema=schema_name
+                    ).get("text")
+                except NotImplementedError:
+                    table_comment = None
+
+                database_table = self.post_process_table(
+                    engine,
                     DatabaseTableCreateSchema(
                         name=name,
                         display_name=name,
@@ -117,8 +145,9 @@ class SqlAlchemyCollector(Collector):
                         database_id=DEFAULT_UUID,
                         columns=columns,
                         type=TableType[item_type],
-                    )
+                    ),
                 )
+                tables.append(database_table)
         engine.dispose()
         return tables
 
@@ -152,8 +181,7 @@ class SqlAlchemyCollector(Collector):
         """Return the elements of the database fqn."""
         return []
 
-    @abstractmethod
     def get_schemas(
         self, database_name: typing.Optional[str] = None
     ) -> List[DatabaseSchemaCreateSchema]:
-        pass
+        return []

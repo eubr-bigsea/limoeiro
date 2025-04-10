@@ -1,6 +1,8 @@
 import datetime
+
 import enum
 import uuid
+from datetime import datetime, timezone
 from .database import Base
 from sqlalchemy.orm import mapped_column
 from sqlalchemy import (
@@ -25,9 +27,9 @@ from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.dialects.postgresql import JSONB
 
 
-def utc_now() -> datetime.datetime:
+def utc_now() -> datetime:
     """Utility function to get current date as UTC"""
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class LinkType(str, enum.Enum):
@@ -590,6 +592,7 @@ def update_search(mapper, connection, target: Asset):
     target.search = func.to_tsvector(
         "portuguese", f"{target.name} {target.description} {target.notes}"
     )
+    return
     match target:
         case Database():
             target.tree = {
@@ -745,7 +748,6 @@ class DatabaseProviderIngestion(Base):
         index=True,
     )
     provider = relationship("DatabaseProvider", foreign_keys=[provider_id])
-    logs = relationship("DatabaseProviderIngestionLog", lazy="joined")
 
     def __str__(self):
         return str(self.name)
@@ -754,8 +756,57 @@ class DatabaseProviderIngestion(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
+class DatabaseProviderIngestionExecution(Base):
+    """Execução de ingestão"""
+
+    __tablename__ = "tb_database_provider_ingestion_execution"
+
+    # Fields
+    id = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    created_at = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
+    status = mapped_column(String(100), nullable=False)
+    job_id = mapped_column(Integer)
+    finished = mapped_column(DateTime)
+    trigger_mode = mapped_column(String(50), nullable=False)
+
+    # Associations
+    triggered_by_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_user.id",
+            name="fk_database_provider_ingestion_execution_triggered_by_id",
+        ),
+        index=True,
+    )
+    triggered_by = relationship("User", foreign_keys=[triggered_by_id])
+    ingestion_id = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "tb_database_provider_ingestion.id",
+            name="fk_database_provider_ingestion_execution_ingestion_id",
+        ),
+        nullable=False,
+        index=True,
+    )
+    ingestion = relationship(
+        "DatabaseProviderIngestion", foreign_keys=[ingestion_id], lazy="joined"
+    )
+    logs = relationship("DatabaseProviderIngestionLog", lazy="joined")
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
 class DatabaseProviderIngestionLog(Base):
-    """Banco de dados"""
+    """Log de execução de ingestão"""
 
     __tablename__ = "tb_database_provider_ingestion_log"
 
@@ -780,9 +831,21 @@ class DatabaseProviderIngestionLog(Base):
         index=True,
     )
     ingestion = relationship(
-        "DatabaseProviderIngestion",
+        "DatabaseProviderIngestion", foreign_keys=[ingestion_id]
+    )
+    execution_id = mapped_column(
+        Integer,
+        ForeignKey(
+            "tb_database_provider_ingestion_execution.id",
+            name="fk_database_provider_ingestion_log_execution_id",
+        ),
+        nullable=False,
+        index=True,
+    )
+    execution = relationship(
+        "DatabaseProviderIngestionExecution",
         back_populates="logs",
-        foreign_keys=[ingestion_id],
+        foreign_keys=[execution_id],
     )
 
     def __str__(self):
@@ -934,7 +997,7 @@ class DatabaseTableSample(Base):
         autoincrement=False,
         default=uuid.uuid4,
     )
-    date = mapped_column(DateTime, nullable=False)
+    sample_date = mapped_column(DateTime, nullable=False)
     content = mapped_column(JSON, nullable=False)
     is_visible = mapped_column(Boolean, default=True, nullable=False)
 

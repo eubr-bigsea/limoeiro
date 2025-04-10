@@ -34,7 +34,9 @@ def handle_db_exceptions(
                 # Re-raise DatabaseExceptions without modification
                 raise
             except SQLAlchemyError as e:
-                log.error(f"Database error in {func.__name__}: {str(e)}")
+                log.error(
+                    f"Database error in {func.__name__}: {str(e)}", exc_info=True
+                )
                 raise DatabaseException(
                     message=error_message, status_code=status_code, cause=e
                 )

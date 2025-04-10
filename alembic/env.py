@@ -34,6 +34,28 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+# PgQueuer tables, must be ignored
+IGNORE_TABLES = [
+    "pgqueuer",
+    "pgqueuer_log",
+    "pgqueuer_schedules",
+    "pgqueuer_statistics",
+]
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    """
+    Should you include this table or not?
+    """
+    if type_ == "table" and (
+        name in IGNORE_TABLES or object.info.get("skip_autogenerate", False)
+    ):
+        return False
+    elif type_ == "column" and object.info.get("skip_autogenerate", False):
+        return False
+
+    return True
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -48,8 +70,8 @@ def run_migrations_offline() -> None:
 
     """
     # url = config.get_main_option("sqlalchemy.url")
-    url = os.environ['DB_URL']
-    url = url.replace('+asyncpg', '')  # Remove async prefix for offline mode
+    url = os.environ["DB_URL"]
+    url = url.replace("+asyncpg", "")  # Remove async prefix for offline mode
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -73,12 +95,16 @@ def run_migrations_online() -> None:
     #     prefix="sqlalchemy.",
     #     poolclass=pool.NullPool,
     # )
-    url = os.environ['DB_URL'].replace('+asyncpg', '')  # Remove async prefix for offline mode
+    url = os.environ["DB_URL"].replace(
+        "+asyncpg", ""
+    )  # Remove async prefix for offline mode
     connectable = create_engine(url)
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            include_object=include_object,
         )
 
         with context.begin_transaction():
