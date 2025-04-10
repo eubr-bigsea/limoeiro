@@ -5,6 +5,7 @@ from app.collector.elasticsearch_collector import ElasticsearchCollector
 from app.collector.hive_collector import HiveCollector
 from app.collector.mariadb_collector import MariaDbCollector
 from app.collector.mssql_collector import SqlServerCollector
+from app.collector.oracle_collector import OracleCollector
 from app.collector.postgres_collector import PostgresCollector
 from app.schemas import (
     DatabaseProviderConnectionItemSchema,
@@ -41,6 +42,7 @@ class CollectorFactory:
             SUPPORTED_TYPES.MARIADB.value: MariaDbCollector,
             SUPPORTED_TYPES.MYSQL.value: MariaDbCollector,
             SUPPORTED_TYPES.SQLSERVER.value: SqlServerCollector,
+            SUPPORTED_TYPES.ORACLE.value: OracleCollector,
         }
         collector_class = collectors.get(p_type_name)
         if collector_class:

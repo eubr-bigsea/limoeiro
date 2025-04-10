@@ -12,6 +12,7 @@ class DatabaseProviderTypeDisplayName(str, enum.Enum):
     MARIADB = "MARIADB"
     MYSQL = "MYSQL"
     SQLSERVER = "SQLSERVER"
+    ORACLE = "ORACLE"
 
     @classmethod
     def values(cls):
