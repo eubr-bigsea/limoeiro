@@ -1,3 +1,6 @@
+from token import NUMBER
+
+
 ASSET_ROUTE = "assets"
 DOMAIN_ROUTE = "domains"
 LAYER_ROUTE = "layers"
@@ -45,5 +48,8 @@ SQLTYPES_DICT = {
     "NTEXT": "NTEXT",
     "MONEY": "MONEY",
     "BIT": "BIT",
-    "IMAGE": "IMAGE"
+    "IMAGE": "IMAGE",
+
+    #Oracle
+    "NUMBER": "NUMBER",
 }

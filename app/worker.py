@@ -49,7 +49,7 @@ async def main() -> PgQueuer:
             )  # type: ignore
 
             status = "success"
-            retries = 5
+            retries = 1
             for attempt in range(retries):
                 try:
                     runner.execute(payload["execution"])
@@ -57,7 +57,7 @@ async def main() -> PgQueuer:
                     break
                 except Exception as e:
                     logger.warning(f"Tentativa {attempt + 1} falhou: {str(e)}")
-                    await asyncio.sleep(30)
+                    #await asyncio.sleep(30)
                     if attempt == retries - 1:
                         logger.error(f"Error {str(e)}", exc_info=True)
                         status = "error"
