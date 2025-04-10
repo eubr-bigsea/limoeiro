@@ -1,11 +1,22 @@
 from contextlib import asynccontextmanager
-import os
+
 import asyncpg
-from fastapi import FastAPI, status
+from apscheduler.schedulers.background import (
+    BackgroundScheduler,
+)  # runs tasks in the background
+from apscheduler.triggers.cron import (
+    CronTrigger,
+)  # allows us to specify a recurring time for execution
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from pgqueuer import AsyncpgDriver, Queries
+from sqlalchemy.exc import IntegrityError
 
+from app.collector.data_collection_engine import DataCollectionEngine
 from app.database import DATABASE_URL
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
@@ -14,12 +25,12 @@ from app.routers import (
     collector_router,
     company_router,
     contact_router,
+    database_provider_connection_router,
+    database_provider_ingestion_execution_router,
+    database_provider_ingestion_router,
+    database_provider_ingestion_start_router,
     database_provider_router,
     database_provider_type_router,
-    database_provider_connection_router,
-    database_provider_ingestion_router,
-    database_provider_ingestion_execution_router,
-    database_provider_ingestion_start_router,
     database_router,
     database_schema_router,
     database_table_router,
@@ -30,21 +41,9 @@ from app.routers import (
     tag_router,
     user_router,
 )
-from fastapi.openapi.utils import get_openapi
-from fastapi.middleware.cors import CORSMiddleware
-from .routers import domain_router
-from dotenv import load_dotenv
-from .utils.middlewares import add_middlewares
-from sqlalchemy.exc import IntegrityError
-from fastapi import Request
 
-from apscheduler.schedulers.background import (
-    BackgroundScheduler,
-)  # runs tasks in the background
-from apscheduler.triggers.cron import (
-    CronTrigger,
-)  # allows us to specify a recurring time for execution
-from app.collector.data_collection_engine import DataCollectionEngine
+from .routers import domain_router
+from .utils.middlewares import add_middlewares
 
 load_dotenv()
 
@@ -60,11 +59,12 @@ trigger = CronTrigger(hour=1, minute=0)
 scheduler.add_job(daily_task, trigger)
 scheduler.start()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage async database connection throughout the app's lifespan."""
     connection = await asyncpg.connect(dsn=DATABASE_URL.replace("+asyncpg", ""))
-    app.extra["pgq_queries"] = Queries(AsyncpgDriver(connection)) # type: ignore
+    app.extra["pgq_queries"] = Queries(AsyncpgDriver(connection))  # type: ignore
     try:
         yield
     finally:
@@ -79,23 +79,56 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    lifespan=lifespan,
 )
+
 
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="Limoeiro",
-        version="1.0.0",
-        description="API de catálogo de dados do Lemonade.",
+        title=app.title,
+        version=app.version,
+        license_info=app.license_info,
+        description=app.description,
         routes=app.routes,
-        contact={
-            "name": "DCC/UFMG"
-        },
+        openapi_version="3.0.2",  # Set your desired OpenAPI version here
     )
+
+    # remover type: null
+    def process_schema(schema):
+        anyOf = schema.get("anyOf", {})
+        if anyOf:
+            for a in anyOf:
+                if a.get("type") == "null":
+                    anyOf.remove(a)
+                    schema["nullable"] = True
+                    break
+        return schema
+
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            parameters = method.get("parameters", [])
+            for p in parameters:
+                schema = p.get("schema", {})
+                process_schema(schema)
+
+            requestBody = method.get("requestBody")
+            if requestBody:
+                content = requestBody.get("content")
+                if content:
+                    application_json = content.get("application/json")
+                    schema = application_json.get("schema")
+                    process_schema(schema)
+
+    for component in openapi_schema["components"].values():
+        for propertie in component.values():
+            if propertie and propertie.get("properties"):
+                for field in propertie.get("properties").values():
+                    process_schema(field)
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
 
 app.openapi = custom_openapi
 
@@ -139,7 +172,6 @@ async def validation_exception_handler(
 
 
 routers = [
-
     a_i_model_router.router,
     asset_router.router,
     collector_router.router,

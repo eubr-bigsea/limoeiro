@@ -169,11 +169,11 @@ async def find_assets(
 
 
 @router.options(
-    "/assets/{entity_id}",
+    "/assets/{asset_id}",
     tags=["Asset"],
 )
 async def exists(
-    asset_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    asset_id: UUID = Path(..., description="Identificador do ativo"),
     session: AsyncSession = Depends(get_session),
 ):
     filter_condition = (
