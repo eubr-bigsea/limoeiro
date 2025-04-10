@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -50,12 +50,12 @@ async def add_database_schema(
 
 
 @router.delete(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_schemas(
-    database_schema_id: UUID = Path(..., description="Identificador"),
+    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseSchemaService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
@@ -68,13 +68,13 @@ async def delete_schemas(
 
 
 @router.patch(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=True,
 )
 async def update_schemas(
-    database_schema_id: UUID = Path(..., description="Identificador"),
+    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_schema_data: typing.Optional[DatabaseSchemaUpdateSchema] = None,
     service: DatabaseSchemaService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -111,13 +111,13 @@ async def find_schemas(
 
 
 @router.get(
-    "/schemas/{database_schema_id}",
+    "/schemas/{entity_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database_schema(
-    database_schema_id: UUID = Path(..., description="Identificador"),
+    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
     """

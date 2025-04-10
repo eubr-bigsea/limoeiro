@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -50,12 +50,12 @@ async def add_database_table(
 
 
 @router.delete(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_tables(
-    database_table_id: UUID = Path(..., description="Identificador"),
+    database_table_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseTableService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
@@ -68,13 +68,13 @@ async def delete_tables(
 
 
 @router.patch(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=True,
 )
 async def update_tables(
-    database_table_id: UUID = Path(..., description="Identificador"),
+    database_table_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_table_data: typing.Optional[DatabaseTableUpdateSchema] = None,
     service: DatabaseTableService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -111,13 +111,13 @@ async def find_tables(
 
 
 @router.get(
-    "/tables/{database_table_id}",
+    "/tables/{entity_id}",
     tags=["DatabaseTable"],
     response_model=DatabaseTableItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database_table(
-    database_table_id: UUID = Path(..., description="Identificador"),
+    database_table_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseTableService = Depends(_get_service),
 ) -> DatabaseTableItemSchema:
     """
