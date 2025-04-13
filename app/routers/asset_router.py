@@ -303,7 +303,7 @@ async def update_link(
             .where(AssetLink.asset_id == asset_id)
             .values(
                 {
-                    AssetLink.url: link_data.url.unicode_string(),
+                    AssetLink.url: link_data.url, # .unicode_string(),
                     AssetLink.type: link_data.type,
                 }
             )
@@ -325,7 +325,7 @@ async def add_link(
             AssetLink(
                 asset_id=asset_id,
                 type=link_data.type,
-                url=link_data.url.unicode_string(),
+                url=link_data.url #.unicode_string(),
             )
         )
     await session.commit()
