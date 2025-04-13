@@ -1522,12 +1522,14 @@ class DatabaseProviderIngestionLogListSchema(
     status: Optional[str] = Field(default=None, description="Status de execução")
     log: Optional[str] = Field(default=None, description="Log de execução")
 
-    # Associations
-    execution: Optional["DatabaseProviderIngestionExecutionListSchema"] = Field(
-        default=None
-    )
-
     model_config = ConfigDict(from_attributes=True)
+
+
+class DatabaseProviderIngestionLogQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    execution_id: Optional[int] = Field(default=None, description="Execução")
+    ...
 
 
 class DatabaseBaseModel(BaseModel): ...

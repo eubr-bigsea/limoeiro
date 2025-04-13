@@ -1,5 +1,3 @@
-import datetime
-
 import enum
 import uuid
 from datetime import datetime, timezone
@@ -796,7 +794,11 @@ class DatabaseProviderIngestionExecution(Base):
     ingestion = relationship(
         "DatabaseProviderIngestion", foreign_keys=[ingestion_id], lazy="joined"
     )
-    logs = relationship("DatabaseProviderIngestionLog", lazy="joined")
+    logs = relationship(
+        "DatabaseProviderIngestionLog",
+        cascade="all, delete-orphan",
+        lazy="joined",
+    )
 
     def __str__(self):
         return str("")
