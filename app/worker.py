@@ -1,22 +1,21 @@
-from __future__ import annotations
-import asyncio
 import json
 import os
 
-from fastapi import Request
-from pgqueuer import Queries
-
-
 import asyncpg
-
-from pgqueuer import PgQueuer
+from fastapi import Request
+from pgqueuer import PgQueuer, Queries
 from pgqueuer.db import AsyncpgDriver
 from pgqueuer.models import Job
-from app.collector import runner
-from app.collector.utils.logging_config import setup_collector_logger
-from app.models import DatabaseProviderIngestionLog
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+from app.collector import runner
+from app.collector.utils.logging_config import setup_collector_logger
+from app.models import (
+    DatabaseProviderIngestionExecution,
+    DatabaseProviderIngestionLog,
+)
 
 
 def get_pgq_queries(request: Request) -> Queries:
@@ -43,7 +42,7 @@ async def main() -> PgQueuer:
             engine = create_async_engine(db_url, echo=True)
 
             async_session = sessionmaker(
-                bind=engine, # type: ignore
+                bind=engine,  # type: ignore
                 class_=AsyncSession,
                 expire_on_commit=False,
             )  # type: ignore
@@ -57,19 +56,27 @@ async def main() -> PgQueuer:
                     break
                 except Exception as e:
                     logger.warning(f"Tentativa {attempt + 1} falhou: {str(e)}")
-                    #await asyncio.sleep(30)
+                    # await asyncio.sleep(30)
                     if attempt == retries - 1:
                         logger.error(f"Error {str(e)}", exc_info=True)
                         status = "error"
-
+            execution_id = int(payload["execution"])
             async with async_session() as session:  # type: ignore
                 log_entry = DatabaseProviderIngestionLog(
-                    execution_id=int(payload["execution"]),
+                    execution_id=execution_id,
                     ingestion_id=payload["ingestion"],
                     log=str(memory_stream.getvalue()),
                     status=status,
                 )
                 session.add(log_entry)
+
+
+                await session.execute(
+                    update(DatabaseProviderIngestionExecution)
+                    .where(DatabaseProviderIngestionExecution.id == execution_id)
+                    .values(status=status)
+                )
+
                 await session.commit()
         # raise ValueError("Simulated error")
 
