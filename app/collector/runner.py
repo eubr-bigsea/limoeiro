@@ -39,7 +39,7 @@ def main():
 
 def execute(execution_id: str):
     provider_client = DatabaseProviderApiClient()
-    logger.info("Iniciando ingestão %s", execution_id)
+    logger.info("Iniciando execução %s", execution_id)
 
     execution = provider_client.get_ingestion_execution(execution_id)
     if execution is None:

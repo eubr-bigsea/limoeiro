@@ -36,7 +36,7 @@ async def main() -> PgQueuer:
         if job.payload is not None:
             logger, memory_stream = setup_collector_logger("app.collector")
             payload = json.loads(job.payload.decode())
-            logger.info(f"Processando mensagem: {job!r}: {payload}")
+            logger.info(f"Processando mensagem {job.id}: {job.payload.decode()}")
 
             db_url = os.getenv("DB_URL", "")
             engine = create_async_engine(db_url, echo=True)
