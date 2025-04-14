@@ -119,6 +119,146 @@ class UserQuerySchema(BaseQuerySchema):
     ...
 
 
+class PermissionBaseModel(BaseModel): ...
+
+
+class PermissionItemSchema(PermissionBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: str
+    description: str = Field(description="Description")
+    enabled: bool = Field(default=True, description="Enabled")
+    applicable_to: Optional[str] = Field(
+        default=None, description="Applicable to"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PermissionListSchema(PermissionBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[str] = None
+    description: Optional[str] = Field(default=None, description="Description")
+    enabled: Optional[bool] = Field(default=None, description="Enabled")
+    applicable_to: Optional[str] = Field(
+        default=None, description="Applicable to"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PermissionCreateSchema(PermissionBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    description: str = Field(description="Description")
+    enabled: bool = Field(default=True, description="Enabled")
+    applicable_to: Optional[str] = Field(
+        default=None, description="Applicable to"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PermissionUpdateSchema(PermissionBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    description: Optional[str] = Field(default=None, description="Description")
+    enabled: Optional[bool] = Field(default=None, description="Enabled")
+    applicable_to: Optional[str] = Field(
+        default=None, description="Applicable to"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleBaseModel(BaseModel): ...
+
+
+class RoleItemSchema(RoleBaseModel):
+    """JSON serialization schema for serializing a single object"""
+
+    id: UUID
+    name: str = Field(description="Name")
+    description: Optional[str] = Field(default=None, description="Description")
+    all_user: bool = Field(
+        default=False, description="Role applies to all users"
+    )
+    system: bool = Field(default=False, description="Role is a system one")
+    deleted: bool = Field(default=False, description="Deleted")
+
+    # Associations
+    permissions: Optional[List["PermissionItemSchema"]] = None
+    users: Optional[List["UserItemSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleListSchema(RoleBaseModel):
+    """JSON serialization schema for serializing a list of objects"""
+
+    id: Optional[UUID] = Field(default=None, description="Identificador")
+    name: Optional[str] = Field(default=None, description="Name")
+    description: Optional[str] = Field(default=None, description="Description")
+    all_user: Optional[bool] = Field(
+        default=None, description="Role applies to all users"
+    )
+    system: Optional[bool] = Field(
+        default=None, description="Role is a system one"
+    )
+    deleted: Optional[bool] = Field(default=None, description="Deleted")
+
+    # Associations
+    users: Optional[List["UserListSchema"]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleCreateSchema(RoleBaseModel):
+    """JSON serialization schema for creating an instance"""
+
+    name: str = Field(description="Name")
+    description: Optional[str] = Field(default=None, description="Description")
+    all_user: bool = Field(
+        default=False, description="Role applies to all users"
+    )
+    system: bool = Field(default=False, description="Role is a system one")
+    deleted: bool = Field(default=False, description="Deleted")
+
+    # Associations
+    permissions: Optional[List[str]] = None
+    users: Optional[List[UUID]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleUpdateSchema(RoleBaseModel):
+    """Optional model for serialization of updating objects"""
+
+    name: Optional[str] = Field(default=None, description="Name")
+    description: Optional[str] = Field(default=None, description="Description")
+    all_user: Optional[bool] = Field(
+        default=None, description="Role applies to all users"
+    )
+    system: Optional[bool] = Field(
+        default=None, description="Role is a system one"
+    )
+    deleted: Optional[bool] = Field(default=None, description="Deleted")
+
+    # Associations
+    permissions: Optional[List[str]] = None
+    users: Optional[List[UUID]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleQuerySchema(BaseQuerySchema):
+    """Used for querying data"""
+
+    query: Optional[str] = Field(default=None, description="Consulta")
+    ...
+
+
 class ResponsibilityTypeBaseModel(BaseModel): ...
 
 

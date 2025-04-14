@@ -12,8 +12,10 @@ from sqlalchemy import (
     Enum,
     DateTime,
     Text,
+    Table,
     Index,
     event,
+    Column,
 )
 from sqlalchemy.types import UUID
 from sqlalchemy.dialects.postgresql import JSON
@@ -153,6 +155,45 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
+# Association Table for Many-to-Many Relationship
+role_permission = Table(
+    "tb_role_permission",
+    Base.metadata,
+    Column(
+        "role_id",
+        UUID(as_uuid=True),
+        ForeignKey("tb_role.id"),
+        nullable=False,
+        primary_key=True,
+    ),
+    Column(
+        "tb_permission_id",
+        String(100),
+        ForeignKey("tb_permission.id"),
+        nullable=False,
+        primary_key=True,
+    ),
+)
+# Association Table for Many-to-Many Relationship
+user_role = Table(
+    "tb_user_role",
+    Base.metadata,
+    Column(
+        "role_id",
+        UUID(as_uuid=True),
+        ForeignKey("tb_role.id"),
+        nullable=False,
+        primary_key=True,
+    ),
+    Column(
+        "tb_user_id",
+        UUID(as_uuid=True),
+        ForeignKey("tb_user.id"),
+        nullable=False,
+        primary_key=True,
+    ),
+)
+
 # Model classes
 
 
@@ -177,6 +218,69 @@ class User(Base):
 
     def __str__(self):
         return str(self.name)
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class Permission(Base):
+    """Permission in Lemonade"""
+
+    __tablename__ = "tb_permission"
+
+    # Fields
+    id = mapped_column(
+        String(100),
+        primary_key=True,
+        autoincrement=False,
+    )
+    description = mapped_column(String(100), nullable=False)
+    enabled = mapped_column(Boolean, default=True, nullable=False)
+    applicable_to = mapped_column(String(40))
+
+    def __str__(self):
+        return str("")
+
+    def __repr__(self):
+        return f"<Instance {self.__class__}: {self.id}>"
+
+
+class Role(Base):
+    """Roles in Lemonade"""
+
+    __tablename__ = "tb_role"
+
+    # Fields
+    id = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        autoincrement=False,
+        default=uuid.uuid4,
+    )
+    name = mapped_column(String(100), nullable=False)
+    description = mapped_column(String(100))
+    all_user = mapped_column(Boolean, default=False, nullable=False)
+    system = mapped_column(Boolean, default=False, nullable=False)
+    deleted = mapped_column(Boolean, default=False, nullable=False)
+
+    # Associations
+    permissions = relationship(
+        "Permission",
+        overlaps="roles",
+        secondary=role_permission,
+        cascade="save-update",
+        lazy="joined",
+    )
+    users = relationship(
+        "User",
+        overlaps="roles",
+        secondary=user_role,
+        cascade="save-update",
+        lazy="joined",
+    )
+
+    def __str__(self):
+        return str("")
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
@@ -1196,30 +1300,6 @@ class ColumnProfile(Base):
 
     def __str__(self):
         return str("")
-
-    def __repr__(self):
-        return f"<Instance {self.__class__}: {self.id}>"
-
-
-class Role(Base):
-    """Perfil de usuário"""
-
-    __tablename__ = "tb_role"
-
-    # Fields
-    id = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        autoincrement=False,
-        default=uuid.uuid4,
-    )
-    name = mapped_column(String(200), nullable=False)
-    deleted = mapped_column(
-        Boolean, default=False, nullable=False, server_default="False"
-    )
-
-    def __str__(self):
-        return str(self.name)
 
     def __repr__(self):
         return f"<Instance {self.__class__}: {self.id}>"
