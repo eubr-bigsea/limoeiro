@@ -1,0 +1,31 @@
+### Tests for entity Company API ###
+@path = roles
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Common users",
+    "permissions": []
+}
+
+###
+# @name list
+GET {{host}}/{{path}}?sort_by=id&sort_order=desc
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Common users 2",
+    "permissions": [
+        "ADMIN"
+    ]
+}

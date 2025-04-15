@@ -20,10 +20,10 @@ POST {{host}}/{{path}} HTTP/1.1
     "cache_type": "cache_type" ,
     "cache_ttl_in_seconds": 32,
     "cache_validation": "cache_validation" ,
-    "database_id": "d485c47a-65d1-4523-813e-7e488f2f5c50"
-
-
+    "database_id": "10e71f8b-c9a0-4653-b8cc-d4ba06dfdcdc"
 }
+###
+DELETE {{host}}/{{path}}/customers.orders
 
 ###
 # @name list
@@ -100,4 +100,12 @@ PATCH {{host}}/{{path}}/f63c9a28-9c53-4ba3-a2be-642a666631b4
             "description": "Período"
         }
     ]
+}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "description": "Teste para tabela" ,
+    "version": "1.0.0"
 }
