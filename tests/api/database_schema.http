@@ -5,18 +5,18 @@
 POST {{host}}/{{path}} HTTP/1.1
 
 {
-    "name": "Josué da Costa" , 
-    "fully_qualified_name": "desktop-54.nogueira.org" , 
-    "display_name": "Beatriz Borges" , 
-    "description": "Accusantium corrupti ea." , 
-    "notes": "Error animi labore itaque." , 
-    "deleted": true , 
-    "version": "887.6.4" , 
-    "updated_at": "2025-02-07T19:14:16.008232" , 
-    "updated_by": "tester" , 
-    "domain_id": "domain" , 
-    "layer_id": "layer" , 
-    "database_id": "database" 
+    "name": "Josué da Costa" ,
+    "fully_qualified_name": "desktop-54.nogueira.org" ,
+    "display_name": "Beatriz Borges" ,
+    "description": "Accusantium corrupti ea." ,
+    "notes": "Error animi labore itaque." ,
+    "deleted": true ,
+    "version": "887.6.4" ,
+    "updated_at": "2025-02-07T19:14:16.008232" ,
+    "updated_by": "tester" ,
+    "domain_id": "domain" ,
+    "layer_id": "layer" ,
+    "database_id": "database"
 
 }
 
@@ -35,16 +35,25 @@ GET {{host}}/{{path}}/{{id}}
 PATCH {{host}}/{{path}}/{{id}}
 
 {
-    "name": "Dom da Paz" , 
-    "fully_qualified_name": "web-95.lopes.net" , 
-    "display_name": "Ana Sophia da Paz" , 
-    "description": "Id deserunt ullam atque." , 
-    "notes": "Eligendi totam veritatis eos." , 
-    "deleted": false , 
-    "version": "62.79.947" , 
-    "updated_at": "2025-02-07T15:20:51.881909" , 
-    "updated_by": "tester" , 
-    "domain_id": "domain" , 
-    "layer_id": "layer" , 
-    "database_id": "database" 
+    "name": "Dom da Paz" ,
+    "fully_qualified_name": "web-95.lopes.net" ,
+    "display_name": "Ana Sophia da Paz" ,
+    "description": "Id deserunt ullam atque." ,
+    "notes": "Eligendi totam veritatis eos." ,
+    "deleted": false ,
+    "version": "62.79.947" ,
+    "updated_at": "2025-02-07T15:20:51.881909" ,
+    "updated_by": "tester" ,
+    "domain_id": "domain" ,
+    "layer_id": "layer" ,
+    "database_id": "database"
 }
+
+
+###
+# @name list2
+GET {{host}}/{{path}}?query=db_
+
+###
+@id2 = {{list2.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id2}}

@@ -1,0 +1,32 @@
+### Tests for entity User API ###
+@path = assets
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Benicio Fogaça" ,
+    "deleted": true ,
+    "login": "mathiascastro@example.net"
+
+}
+
+###
+# @name list
+GET {{host}}/{{path}}
+
+###
+@id = {{list.response.body.items.$[0].id}}
+DELETE {{host}}/{{path}}/{{id}}
+
+###
+GET {{host}}/{{path}}/{{id}}
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "name": "Cecília Vargas" ,
+    "deleted": true ,
+    "login": "lcardoso@example.org"
+}

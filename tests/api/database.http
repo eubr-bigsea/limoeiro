@@ -54,3 +54,11 @@ PATCH {{host}}/{{path}}/{{id}}
     "layer_id": "layer" ,
     "provider_id": "provider"
 }
+
+###
+PATCH {{host}}/{{path}}/{{id}}
+
+{
+    "description": "Teste de índice em português" ,
+    "version": "714.572.307"
+}

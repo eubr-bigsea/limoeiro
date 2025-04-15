@@ -68,3 +68,20 @@ PATCH {{host}}/{{path}}/{{fqn}}
     "updated_by": "tester" ,
     "configuration": "configuration"
 }
+
+
+
+###
+POST {{host}}/{{path}} HTTP/1.1
+
+{
+    "name": "Servidor SQL Server" ,
+    "fully_qualified_name": "ms.sql-server" ,
+    "display_name": "Servidor SQL Server" ,
+    "description": "Servidor de teste" ,
+    "deleted": false ,
+    "version": "1" ,
+    "updated_at": "2025-02-21T10:46:30.268860" ,
+    "provider_type_id": "SQLSERVER"
+
+}

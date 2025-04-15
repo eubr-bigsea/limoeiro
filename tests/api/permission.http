@@ -1,0 +1,6 @@
+### Tests for entity DatabaseProviderType API ###
+@path = permissions
+
+###
+# @name list
+GET {{host}}/{{path}}
