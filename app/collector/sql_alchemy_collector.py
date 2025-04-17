@@ -36,8 +36,13 @@ class SqlAlchemyCollector(Collector):
         return True
 
     def supports_views(self) -> bool:
-        """Return if the database supports primary keys."""
+        """Return if the database supports views."""
         return True
+
+    def get_view_names(self, schema_name: str,
+                      engine, inspector) -> List[str]:
+        """Return the views names."""
+        return inspector.get_view_names(schema=schema_name)
 
     def post_process_table(
         self, engine: sqlalchemy.Engine, table: DatabaseTableCreateSchema
@@ -65,7 +70,7 @@ class SqlAlchemyCollector(Collector):
         inspector = sqlalchemy.inspect(engine)
         tables = []
         if self.supports_views():
-            view_names = inspector.get_view_names(schema=schema_name)
+            view_names = self.get_view_names(schema_name, engine, inspector)
         else:
             view_names = []
             logger.info("Provedor de dados não suporta views")
