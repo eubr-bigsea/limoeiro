@@ -16,7 +16,7 @@ IGNORE_SCHEMA = ["information_schema"]
 
 
 class PostgresCollector(SqlAlchemyCollector):
-    """Class to implement methods, to collect data in HIVE."""
+    """Class to implement methods, to collect data in Postgres."""
 
     def _get_connection_string(self):
         params = self.connection_info
