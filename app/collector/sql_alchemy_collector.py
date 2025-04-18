@@ -140,12 +140,17 @@ class SqlAlchemyCollector(Collector):
                 except NotImplementedError:
                     table_comment = None
 
+                if self.supports_schema():
+                    table_fqn = f"{database_name}.{schema_name}.{name}"
+                else:
+                    table_fqn = f"{database_name}.{name}"
+
                 database_table = self.post_process_table(
                     engine,
                     DatabaseTableCreateSchema(
                         name=name,
                         display_name=name,
-                        fully_qualified_name=f"{database_name}.{schema_name}.{name}",
+                        fully_qualified_name=table_fqn,
                         notes=table_comment,
                         database_id=DEFAULT_UUID,
                         columns=columns,
