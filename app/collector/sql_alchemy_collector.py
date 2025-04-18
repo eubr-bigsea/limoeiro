@@ -57,6 +57,13 @@ class SqlAlchemyCollector(Collector):
         """Return the connection engine to get the tables."""
         pass
 
+    def get_data_type_str(self, column) -> str:
+        """Return the data type from a column."""
+        data_type_str = SQLTYPES_DICT[
+                        column.get("type").__class__.__name__.upper()
+                    ]
+        return data_type_str
+
     # def get_database_names(self) -> List[str]:
     #     """Return all databases in a database provider using SqlAlchemy."""
     #     return self.get_schema_names("")
@@ -106,9 +113,8 @@ class SqlAlchemyCollector(Collector):
                 for i, column in enumerate(
                     inspector.get_columns(name, schema=schema_name)
                 ):
-                    data_type_str = SQLTYPES_DICT[
-                        column.get("type").__class__.__name__.upper()
-                    ]
+                    data_type_str = self.get_data_type_str(column)
+                    
                     columns.append(
                         TableColumnCreateSchema(
                             name=column.get("name"),
@@ -140,12 +146,17 @@ class SqlAlchemyCollector(Collector):
                 except NotImplementedError:
                     table_comment = None
 
+                if self.supports_schema():
+                    table_fqn = f"{database_name}.{schema_name}.{name}"
+                else:
+                    table_fqn = f"{database_name}.{name}"
+
                 database_table = self.post_process_table(
                     engine,
                     DatabaseTableCreateSchema(
                         name=name,
                         display_name=name,
-                        fully_qualified_name=f"{database_name}.{schema_name}.{name}",
+                        fully_qualified_name=table_fqn,
                         notes=table_comment,
                         database_id=DEFAULT_UUID,
                         columns=columns,

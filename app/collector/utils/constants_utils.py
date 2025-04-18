@@ -16,6 +16,8 @@ SQLTYPES_DICT = {
     "VARBINARY": "BINARY",
     "DATE": "DATE",
     "BIG_INTEGER": "BIGINT",
+    "BIGINTEGER": "BIGINT",
+    "LONG": "BIGINT",
     "BLOB": "BLOB",
     "CHAR": "CHAR",
     "DECIMAL": "DECIMAL",
@@ -52,4 +54,5 @@ SQLTYPES_DICT = {
 
     #Oracle
     "NUMBER": "NUMBER",
+    "COMPLETION": "TEXT",
 }
