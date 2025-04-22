@@ -5,7 +5,6 @@ from app.collector.sql_alchemy_collector import SqlAlchemyCollector
 from app.collector import DEFAULT_UUID
 from app.schemas import (
     DatabaseCreateSchema,
-    DatabaseSchemaCreateSchema,
 )
 from app.collector.utils.constants_utils import SQLTYPES_DICT
 
@@ -22,14 +21,14 @@ class HiveCollector(SqlAlchemyCollector):
         self, database_name: str, schema_name: str
     ):
         """Return the connection engine to get the tables."""
-        engine = create_engine(self._get_connection_string()+f"/{schema_name}", 
-                               connect_args={'auth': 'LDAP'})       
+        engine = create_engine(self._get_connection_string()+f"/{schema_name}",
+                               connect_args={'auth': 'LDAP'})
         return engine
 
     def get_view_names(self, schema_name: str,
                       engine, inspector) -> List[str]:
         """Return the views names."""
-        
+
         view_names = []
         query = db.text("SHOW TABLES")
         with engine.connect() as conn:
@@ -48,14 +47,14 @@ class HiveCollector(SqlAlchemyCollector):
                 if any("VIRTUAL_VIEW" in str(row) for row in describe):
                     view_names.append(table_name)
         return view_names
-    
+
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
         engine = create_engine(self._get_connection_string(), connect_args={'auth': 'LDAP'})
         insp = db.inspect(engine)
         result = insp.get_schema_names()
         engine.dispose()
-        
+
         return [
             DatabaseCreateSchema(
                 name=r,

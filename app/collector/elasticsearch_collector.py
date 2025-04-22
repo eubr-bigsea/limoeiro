@@ -1,4 +1,5 @@
 from typing import List,Optional
+import typing
 
 from app.collector.collector import Collector
 from app.collector import DEFAULT_UUID
@@ -25,6 +26,8 @@ class ElasticsearchCollector(Collector):
         """Return all tables in a database provider."""
 
         params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
         es = Elasticsearch(
             params.host,
             port=params.port,
@@ -59,7 +62,7 @@ class ElasticsearchCollector(Collector):
                             fully_qualified_name=f"{database_name}.{name}",
                             database_id=DEFAULT_UUID,
                             columns=columns,
-                            type=TableType.REGULAR.value
+                            type=TableType.REGULAR
                         )
                 tables.append(database_table)
 
@@ -69,7 +72,7 @@ class ElasticsearchCollector(Collector):
 
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
-        
+
         return [
             DatabaseCreateSchema(
                 name="default",
