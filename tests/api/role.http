@@ -26,6 +26,9 @@ PATCH {{host}}/{{path}}/{{id}}
 {
     "name": "Common users 2",
     "permissions": [
-        "ADMIN"
+        "EDIT_ROLES"
+    ],
+    "users": [
+        "00000000-0000-0000-0000-000000000001"
     ]
 }

@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import logging
 import math
 import typing
@@ -5,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 
 import app.exceptions as ex
+from app.utils.models import update_related_collection
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -18,7 +20,7 @@ from ..schemas import (
     RoleUpdateSchema,
     RoleQuerySchema,
 )
-from ..models import Role
+from ..models import Permission, Role, User
 from . import BaseService
 
 log = logging.getLogger(__name__)
@@ -86,7 +88,38 @@ class RoleService(BaseService):
             for key, value in role_data.model_dump(
                 exclude_unset=True, exclude={}
             ).items():
-                setattr(role, key, value)
+                if key not in ("permissions", "users"):
+                    setattr(role, key, value)
+
+        # Generalize handling for related collections
+        for field, klass in zip(("permissions", "users"), (Permission, User)):
+            ids = getattr(role_data, field, None)
+            # Get all related entities matching the provided keys
+            if ids:
+                related_entities = (
+                    (
+                        await self.session.execute(
+                            select(klass).where(klass.id.in_(ids))
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+
+                # Verify all requested entities exist
+                found_keys = {entity.id for entity in related_entities}
+                missing_keys = set(ids) - found_keys
+
+                if missing_keys:
+                    # Raise error if any keys don't exist
+                    raise ex.EntityNotFoundException(
+                        entity_type=klass.__name__,
+                        entity_id=", ".join(missing_keys),
+                        status_code=HTTPStatus.BAD_REQUEST,
+                    )
+
+                # Replace all related entities with the new set
+                setattr(role, field, related_entities)
 
         await self.session.flush()
         await self.session.refresh(role)
