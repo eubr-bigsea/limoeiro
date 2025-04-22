@@ -26,6 +26,7 @@ class CollectorFactory:
         connection: DatabaseProviderConnectionItemSchema,
     ) -> Collector:
         """Create a collector based on database provider."""
+        
         if (
             provider.provider_type is not None
             and provider.provider_type.id is not None
@@ -33,7 +34,7 @@ class CollectorFactory:
             p_type_name = provider.provider_type.id
         else:
             p_type_name = "UNKNOWN"
-
+        
         collectors: typing.Dict[str, type[Collector]] = {
             SUPPORTED_TYPES.HIVE.value: HiveCollector,
             SUPPORTED_TYPES.POSTGRESQL.value: PostgresCollector,
@@ -44,6 +45,7 @@ class CollectorFactory:
             SUPPORTED_TYPES.SQLSERVER.value: SqlServerCollector,
             SUPPORTED_TYPES.ORACLE.value: OracleCollector,
         }
+
         collector_class = collectors.get(p_type_name)
         if collector_class:
             collector = collector_class()

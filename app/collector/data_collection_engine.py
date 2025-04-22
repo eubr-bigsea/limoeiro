@@ -10,6 +10,7 @@ from app.collector.utils.api_client import (
     AssetApiClient,
     DatabaseApiClient,
     DatabaseTableApiClient,
+    DatabaseProviderApiClient,
 )
 from app.collector.utils.cron_utils import check_if_cron_is_today
 from app.collector.utils.request_utils import (
@@ -164,10 +165,8 @@ class DataCollectionEngine:
         collector = CollectorFactory.create_collector(
             provider, ingestion, connection
         )
-
         # Get the databases of the database provider.
         database_list = collector.get_databases()
-
         include_db_re = (
             re.compile(ingestion.include_database)
             if ingestion.include_database
@@ -346,13 +345,20 @@ class DataCollectionEngine:
             for i in ingestions:
                 cron_expression = None
                 if ("scheduling" in i) and ("expression" in i["scheduling"]):
-                    cron_expression = i["scheduling"]["expression"]
-
+                    if type(i["scheduling"]) == str:
+                        cron_expression = eval(i["scheduling"])["expression"]
+                    else:
+                        cron_expression = i["scheduling"]["expression"]
                 # Check if the cron expression should be executed today.
                 if cron_expression is not None and check_if_cron_is_today(
                     cron_expression
                 ):
-                    self._execute_collection(ingestion)
+                    provider_client = DatabaseProviderApiClient()
+                    
+                    ingestion = provider_client.get_ingestion(i["id"])
+                    provider = provider_client.get(str(ingestion.provider_id))
+                    connections = provider_client.get_connections(str(ingestion.provider_id))
+                    self._execute_collection(provider, connections[0], ingestion)
                 else:
                     # If not, skip to the next iteration.
-                    self.log.log_provider_skipped(i["display_name"])
+                    self.log.log_provider_skipped(i["name"])

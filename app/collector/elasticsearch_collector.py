@@ -1,80 +1,112 @@
-from typing import List
+from typing import List,Optional
+import typing
 
-GenericTable = str
-
-from app.collector.collector import Collector #, GenericTable, GenericColumn
-
+from app.collector.collector import Collector
+from app.collector import DEFAULT_UUID
 from elasticsearch import Elasticsearch
+from app.collector.utils.constants_utils import SQLTYPES_DICT
+from app.models import DataType, TableType
+from app.schemas import (
+    DatabaseSchemaCreateSchema,
+    DatabaseCreateSchema,
+    DatabaseTableCreateSchema,
+    TableColumnCreateSchema,
 
+)
 
 class ElasticsearchCollector(Collector):
-    """Class to implement methods, using SqlAlchemy, to collect data in collection engine."""
+    """Class to implement methods, to collect data in Elasticsearch."""
 
-    def __init__(self, user: str, password: str, host: str, port: str):
-        self.user = user
-        self.password = password
-        self.host = host
-        self.port = port
-
-    def get_databases_names(self) -> List[str]:
-        """Return just the Default value."""
-
-        database_list = ["default"]
-        return database_list
-
-    def get_schema_names(self, database_name: str) -> List[str]:
-        """Return just the Default value."""
-
-        database_list = ["default"]
-        return database_list
+    def __init__(self):
+        super().__init__()
 
     def get_tables(
         self, database_name: str, schema_name: str
-    ) -> List[GenericTable]:
+    ) -> List[DatabaseTableCreateSchema]:
         """Return all tables in a database provider."""
 
+        params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
         es = Elasticsearch(
-            self.host,
-            port=self.port,
-            http_auth=(self.user, self.password),
+            params.host,
+            port=params.port,
+            http_auth=(params.user_name, params.password),
             http_compress=True,
         )
 
         dict_es = es.indices.get("*")
         dict_es_keys = dict_es.keys()
 
-        generic_table_list = []
-        table_list = meta_data.tables
+        tables = []
         for idx in dict_es_keys:
-            generic_table = GenericTable(idx)
-            idx_fields = dict_es[idx]["mappings"]["properties"]
-            for field in idx_fields.keys():
-                column_type = idx_fields[field]["type"]
+            if "properties" in  dict_es[idx]["mappings"]:
+                idx_fields = dict_es[idx]["mappings"]["properties"]
 
-                generic_table.add_column(
-                    GenericColumn(field, column_type, false, false, false)
-                )
-
-            generic_table_list.append(generic_table)
+                columns: typing.List[TableColumnCreateSchema] = []
+                for field in idx_fields.keys():
+                    data_type_str = SQLTYPES_DICT[
+                        idx_fields[field]["type"].upper()
+                    ]
+                    columns.append(
+                            TableColumnCreateSchema(
+                                name=field,
+                                display_name=field,
+                                data_type=DataType[data_type_str]
+                            )
+                    )
+                name = idx
+                database_table = DatabaseTableCreateSchema(
+                            name=name,
+                            display_name=name,
+                            fully_qualified_name=f"{database_name}.{name}",
+                            database_id=DEFAULT_UUID,
+                            columns=columns,
+                            type=TableType.REGULAR
+                        )
+                tables.append(database_table)
 
         es.close()
 
-        return generic_table_list
+        return tables
 
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        return [provider_name, database_name]
+    def get_databases(self) -> List[DatabaseCreateSchema]:
+        """Return all databases."""
 
+        return [
+            DatabaseCreateSchema(
+                name="default",
+                display_name="default",
+                fully_qualified_name="placeholder",
+                provider_id=DEFAULT_UUID,
+            )
+        ]
+
+    def supports_schema(self):
+        return False
+
+    # FIXME: Review
     def _get_schema_fqn_elements(
         self, provider_name, database_name, schema_name
     ) -> List[str]:
         """Return the elements of the schema fqn."""
-        return [provider_name, database_name, schema_name]
+        return []
 
     def _get_table_fqn_elements(
         self, provider_name, database_name, schema_name, table_name
     ) -> List[str]:
         """Return the elements of the table fqn."""
-        return [provider_name, database_name, schema_name, table_name]
+        return []
+
+    def _get_database_fqn_elements(
+        self, provider_name, database_name
+    ) -> List[str]:
+        """Return the elements of the database fqn."""
+        return []
+
+    def get_schemas(
+        self, database_name: Optional[str] = None
+    ) -> List[DatabaseSchemaCreateSchema]:
+        return []
+
+
