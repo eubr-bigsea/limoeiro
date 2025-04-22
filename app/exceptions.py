@@ -36,10 +36,12 @@ class DatabaseException(BaseApplicationException):
 class EntityNotFoundException(DatabaseException):
     """Raised when an entity is not found in the database"""
 
-    def __init__(self, entity_type: str, entity_id: Any):
+    def __init__(
+        self, entity_type: str, entity_id: Any, status_code=HTTPStatus.NOT_FOUND
+    ):
         super().__init__(
             message=f"{entity_type} with id {entity_id} not found",
-            status_code=HTTPStatus.NOT_FOUND,
+            status_code=status_code,
         )
 
 
