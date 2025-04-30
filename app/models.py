@@ -258,7 +258,7 @@ class Role(Base):
         default=uuid.uuid4,
     )
     name = mapped_column(String(100), nullable=False)
-    description = mapped_column(String(100))
+    description = mapped_column(String(250))
     all_user = mapped_column(Boolean, default=False, nullable=False)
     system = mapped_column(Boolean, default=False, nullable=False)
     deleted = mapped_column(Boolean, default=False, nullable=False)
