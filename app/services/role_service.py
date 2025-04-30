@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import asc, desc, and_, func
 
 import app.exceptions as ex
-from app.utils.models import update_related_collection
 from ..utils.decorators import handle_db_exceptions
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -46,7 +45,20 @@ class RoleService(BaseService):
         Returns:
             Role: Created instance
         """
-        role = Role(**role_data.model_dump(exclude_unset=True))
+        if role_data is not None:
+            role = Role(
+                **role_data.model_dump(
+                    exclude_unset=True, exclude={"permissions", "users"}
+                )
+            )
+            for key, value in role_data.model_dump(
+                exclude_unset=True, exclude={}
+            ).items():
+                if key not in ("permissions", "users"):
+                    setattr(role, key, value)
+
+            await self.update_related_collections(role, role_data)
+
         self.session.add(role)
         await self.session.flush()
         await self.session.refresh(role)
@@ -91,6 +103,20 @@ class RoleService(BaseService):
                 if key not in ("permissions", "users"):
                     setattr(role, key, value)
 
+            await self.update_related_collections(role, role_data)
+
+        await self.session.flush()
+        await self.session.refresh(role)
+        return RoleItemSchema.model_validate(role)
+
+    async def update_related_collections(
+        self,
+        role: Role,
+        role_data: typing.Union[RoleUpdateSchema, RoleCreateSchema],
+    ):
+        """
+        Update related collections for a Role instance.
+        """
         # Generalize handling for related collections
         for field, klass in zip(("permissions", "users"), (Permission, User)):
             ids = getattr(role_data, field, None)
@@ -120,10 +146,9 @@ class RoleService(BaseService):
 
                 # Replace all related entities with the new set
                 setattr(role, field, related_entities)
-
-        await self.session.flush()
-        await self.session.refresh(role)
-        return RoleItemSchema.model_validate(role)
+            else:
+                # Clear the collection if no IDs are provided
+                setattr(role, field, [])
 
     @handle_db_exceptions("Failed to retrieve {}")
     async def find(
