@@ -37,7 +37,9 @@ from app.routers import (
     database_table_router,
     database_table_sample_router,
     layer_router,
+    permission_router,
     person_router,
+    role_router,
     responsibility_type_router,
     tag_router,
     user_router,
@@ -199,9 +201,11 @@ routers = [
     database_table_router.router,
     database_table_sample_router.router,
     layer_router.router,
+    permission_router.router,
     person_router.router,
-    tag_router.router,
     responsibility_type_router.router,
+    role_router.router,
+    tag_router.router,
     user_router.router,
 ]
 for router in routers:
