@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,7 +15,6 @@ from ..schemas import (
 )
 from ..services.database_schema_service import DatabaseSchemaService
 from ..database import get_session
-from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -54,12 +53,14 @@ async def add_database_schema(
 
 
 @router.delete(
-    "/schemas/{entity_id}",
+    "/schemas/{database_schema_id}",
     tags=["DatabaseSchema"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_schemas(
-    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_schema_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseSchemaService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
@@ -72,13 +73,15 @@ async def delete_schemas(
 
 
 @router.patch(
-    "/schemas/{entity_id}",
+    "/schemas/{database_schema_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=True,
 )
 async def update_schemas(
-    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_schema_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     database_schema_data: typing.Optional[DatabaseSchemaUpdateSchema] = None,
     service: DatabaseSchemaService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -115,13 +118,15 @@ async def find_schemas(
 
 
 @router.get(
-    "/schemas/{entity_id}",
+    "/schemas/{database_schema_id}",
     tags=["DatabaseSchema"],
     response_model=DatabaseSchemaItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database_schema(
-    database_schema_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_schema_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseSchemaService = Depends(_get_service),
 ) -> DatabaseSchemaItemSchema:
     """
