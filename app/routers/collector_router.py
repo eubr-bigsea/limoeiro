@@ -25,7 +25,7 @@ async def collect_data(
     return True
 
 
-@router.get("/secure-endpoint")
+@router.get("/collector/secure-endpoint", tags=["Collector"])
 async def secure_endpoint(request: Request, x_jwt_assertion: Optional[str] = Header(None)):
     if not x_jwt_assertion:
         return {"error": "X-JWT-Assertion header missing"}
