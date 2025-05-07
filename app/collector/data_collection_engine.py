@@ -193,15 +193,20 @@ class DataCollectionEngine:
         valid_dbs = []
         for db in database_list:
             db_name = db.name
-            # Test if db_name must be excluded from processing (ignored)
-            must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
+            
+            if collector.supports_database():
+                # Test if db_name must be excluded from processing (ignored)
+                must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
 
-            # Test if db_name must be processed
-            must_db = bool(include_db_re and include_db_re.match(db_name))
+                # Test if db_name must be processed
+                must_db = bool(include_db_re and include_db_re.match(db_name))
 
-            # If both flags, item is explicitly ignored
-            ignore_db = not must_db or must_not_db
-
+                # If both flags, item is explicitly ignored
+                ignore_db = not must_db or must_not_db
+            else:
+                ignore_db = False
+                must_db   = True
+                
             if ignore_db:
                 ignored_dbs.append(db_name)
             elif must_db:

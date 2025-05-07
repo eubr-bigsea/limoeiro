@@ -7,6 +7,8 @@ from app.collector.mariadb_collector import MariaDbCollector
 from app.collector.mssql_collector import SqlServerCollector
 from app.collector.oracle_collector import OracleCollector
 from app.collector.postgres_collector import PostgresCollector
+from app.collector.mongo_collector import MongoCollector
+from app.collector.hdfs_collector import HdfsCollector
 from app.schemas import (
     DatabaseProviderConnectionItemSchema,
     DatabaseProviderIngestionItemSchema,
@@ -44,6 +46,8 @@ class CollectorFactory:
             SUPPORTED_TYPES.MYSQL.value: MariaDbCollector,
             SUPPORTED_TYPES.SQLSERVER.value: SqlServerCollector,
             SUPPORTED_TYPES.ORACLE.value: OracleCollector,
+            SUPPORTED_TYPES.MONGODB.value: MongoCollector,
+            SUPPORTED_TYPES.HDFS.value: HdfsCollector
         }
 
         collector_class = collectors.get(p_type_name)

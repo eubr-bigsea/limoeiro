@@ -62,6 +62,10 @@ class Collector(ABC):
     def supports_schema(self) -> bool:
         """ Indicates if the provider supports the concept of schema """
         return False
+    
+    def supports_database(self) -> bool:
+        """ Indicates if the provider supports the concept of database """
+        return True
 
     def get_ignorable_schemas(self) -> typing.Set[str]:
         """ Returns the list of schema names to be ignored. In general, they
