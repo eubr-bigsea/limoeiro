@@ -4,7 +4,7 @@ import math
 import typing
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Path
 from sqlalchemy import and_, asc, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -16,7 +16,6 @@ from app.models import (
     Responsibility,
     Tag,
 )
-from app.routers import get_lookup_filter
 from app.utils import remove_accents
 
 from ..database import get_session
@@ -169,11 +168,13 @@ async def find_assets(
 
 
 @router.options(
-    "/assets/{entity_id}",
+    "/assets/{asset_id}",
     tags=["Asset"],
 )
 async def exists(
-    asset_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    asset_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     session: AsyncSession = Depends(get_session),
 ):
     filter_condition = (
