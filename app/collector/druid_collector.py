@@ -44,6 +44,9 @@ class DruidCollector(SqlAlchemyCollector):
     def supports_schema(self):
         return False
 
+    def supports_database(self) -> bool:
+        return False
+
     def supports_pk(self) -> bool:
         """Return if the database supports primary keys."""
         return False

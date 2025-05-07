@@ -55,4 +55,12 @@ SQLTYPES_DICT = {
     #Oracle
     "NUMBER": "NUMBER",
     "COMPLETION": "TEXT",
+    
+    "STR": "STRING",
+    "INT": "INT",
+    "DICT":"TABLE",
+    "LIST":"TABLE",
+    "BOOL": "BOOLEAN",
+    "NONETYPE": "UNKNOWN",
+    "NONE": "UNKNOWN",
 }

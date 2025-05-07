@@ -85,6 +85,9 @@ class ElasticsearchCollector(Collector):
     def supports_schema(self):
         return False
 
+    def supports_database(self) -> bool:
+        return False
+
     # FIXME: Review
     def _get_schema_fqn_elements(
         self, provider_name, database_name, schema_name
