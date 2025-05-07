@@ -15,7 +15,6 @@ from ..schemas import (
 )
 from ..services.a_i_model_service import AIModelService
 from ..database import get_session
-from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
