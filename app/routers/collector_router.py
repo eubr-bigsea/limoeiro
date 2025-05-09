@@ -31,13 +31,12 @@ async def secure_endpoint(request: Request, x_jwt_assertion: Optional[str] = Hea
     if not x_jwt_assertion:
         return {"error": "X-JWT-Assertion header missing"}
 
+    header, payload, signature = x_jwt_assertion.split('.')
+    padded = payload + '=' * (-len(payload) % 4)
     try:
-        header, payload, signature = x_jwt_assertion.split('.')
-        # Base64 decode the JWT payload
-        payload_decoded = base64.urlsafe_b64decode(payload)
-        payload_decoded= json.loads(payload_decoded)
-
+        payload_decoded = base64.urlsafe_b64decode(padded)
+        payload_decoded = json.loads(payload_decoded)
         return payload_decoded
-
     except Exception as e:
         return {"error": str(e)}
+    
