@@ -8,6 +8,7 @@ from fastapi import (
 )
 from typing import Optional
 import base64
+import json
 import jwt
 from app.collector.data_collection_engine import DataCollectionEngine
 
@@ -31,13 +32,12 @@ async def secure_endpoint(request: Request, x_jwt_assertion: Optional[str] = Hea
         return {"error": "X-JWT-Assertion header missing"}
 
     try:
-        # Base64 decode the JWT string from the header
-        jwt_bytes = base64.b64decode(x_jwt_assertion)
-        jwt_str = jwt_bytes.decode('utf-8')
+        header, payload, signature = x_jwt_assertion.split('.')
+        # Base64 decode the JWT payload
+        payload_decoded = base64.urlsafe_b64decode(payload)
+        payload_decoded= json.loads(payload_decoded)
 
-        # Decode the JWT payload without verifying signature
-        decoded_token = jwt.decode(jwt_str, options={"verify_signature": False})
-        return {"decoded_jwt": decoded_token}
+        return payload_decoded
 
     except Exception as e:
         return {"error": str(e)}
