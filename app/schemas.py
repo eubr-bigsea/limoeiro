@@ -1455,6 +1455,9 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
 
+    # Extra fields
+    provider_id: Optional[UUID] = Field(default=None)  # type: ignore
+
     model_config = ConfigDict(from_attributes=True)
 
 
