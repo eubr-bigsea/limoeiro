@@ -10,7 +10,7 @@ from typing import Optional
 import base64
 import json
 import jwt
-from app.collector.data_collection_engine import DataCollectionEngine
+from app.collector.data_collection_scheduling_engine import DataCollectionSchedulingEngine
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 async def collect_data(
     background_tasks: BackgroundTasks,
 ):
-    engine = DataCollectionEngine()
+    engine = DataCollectionSchedulingEngine()
     if background_tasks is not None:
         background_tasks.add_task(engine.execute_engine)
     return True

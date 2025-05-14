@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from pgqueuer import AsyncpgDriver, Queries
 from sqlalchemy.exc import IntegrityError
 
-from app.collector.data_collection_engine import DataCollectionEngine
+from app.collector.data_collection_scheduling_engine import DataCollectionSchedulingEngine
 from app.database import DATABASE_URL
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
@@ -48,20 +48,25 @@ from app.routers import (
 from .routers import domain_router
 from .utils.middlewares import add_middlewares
 import urllib.parse
+import os
 
 load_dotenv()
 
-
-# The task to run
-def daily_task():
-    DataCollectionEngine().execute_engine()
+ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
 
 
-# Set up the scheduler
-scheduler = BackgroundScheduler()
-trigger = CronTrigger(hour=1, minute=0)
-scheduler.add_job(daily_task, trigger)
-scheduler.start()
+
+if ENABLE_SCHEDULER == True:
+    # The task to run
+    def daily_task():
+        DataCollectionSchedulingEngine().execute_engine()
+
+
+    # Set up the scheduler
+    scheduler = BackgroundScheduler()
+    trigger = CronTrigger(hour=1, minute=0)
+    scheduler.add_job(daily_task, trigger)
+    scheduler.start()
 
 
 @asynccontextmanager
