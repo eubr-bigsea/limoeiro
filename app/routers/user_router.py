@@ -1,12 +1,24 @@
 #
+import base64
+import json
 import logging
 import typing
 from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, Header, status, Path
+
+from app.models import (
+    Permission,
+    Role,
+    User,
+    role_permission,
+    user_role
+)
 
 from ..schemas import (
     PaginatedSchema,
+    PermissionItemSchema,
     UserItemSchema,
     UserListSchema,
     UserCreateSchema,
@@ -119,3 +131,38 @@ async def get_user(
     if user is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return user
+
+@router.get(
+    "/users/permissions/",
+    tags=["User"],
+    response_model=typing.List[PermissionItemSchema],
+    response_model_exclude_none=False
+)
+async def get_user_permissions(
+    x_jwt_assertion: typing.Optional[str] = Header(None),
+    session: AsyncSession = Depends(get_session),
+) -> typing.List[PermissionItemSchema]:
+    """
+    Recupera uma lista de permissões que o usuário passado pelo jwt_token possui.
+    """
+    if not x_jwt_assertion:
+        return {"error": "X-JWT-Assertion header missing"}
+
+    _, payload, _ = x_jwt_assertion.split('.')
+    padded = payload + '=' * (-len(payload) % 4)
+    try:
+        payload_decoded = base64.urlsafe_b64decode(padded)
+        payload_decoded = json.loads(payload_decoded)
+        username = payload_decoded['scope']
+        sql = (
+            select(Permission).distinct()
+            .join(role_permission, Permission.id == role_permission.c.tb_permission_id)
+            .join(Role, role_permission.c.role_id == Role.id)
+            .join(user_role, Role.id == user_role.c.role_id)
+            .join(User, user_role.c.tb_user_id == User.id)
+            .where(User.login == username)
+        )
+        permissions = (await session.execute(sql)).scalars().all()
+        return [PermissionItemSchema.model_validate(permission) for permission in list(permissions)]
+    except Exception as e:
+        return {"error": str(e)}
