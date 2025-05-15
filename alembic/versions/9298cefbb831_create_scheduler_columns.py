@@ -19,8 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('tb_database_provider_ingestion', sa.Column('scheduling_type', sa.String(length=100), nullable=True))
-
+    op.add_column('tb_database_provider_ingestion', sa.Column('scheduling_type', sa.Enum('MANUAL', 'CRON', name='SchedulingTypeEnumType'), nullable=False))
 
 def downgrade() -> None:
     op.drop_column('tb_database_provider_ingestion', 'scheduling_type')
