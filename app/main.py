@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+import asyncio
 import asyncpg
 from apscheduler.schedulers.background import (
     BackgroundScheduler,
@@ -51,23 +51,6 @@ import urllib.parse
 import os
 
 load_dotenv()
-
-ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
-
-
-
-if ENABLE_SCHEDULER == True:
-    # The task to run
-    def daily_task():
-        DataCollectionSchedulingEngine().execute_engine()
-
-
-    # Set up the scheduler
-    scheduler = BackgroundScheduler()
-    trigger = CronTrigger(hour=1, minute=0)
-    scheduler.add_job(daily_task, trigger)
-    scheduler.start()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -185,6 +168,24 @@ async def validation_exception_handler(
     return JSONResponse(
         content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
     )
+
+ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
+
+# The task to run
+def daily_task():
+    pgq_queries = app.extra["pgq_queries"]
+    engine = DataCollectionSchedulingEngine()
+    asyncio.run(engine.execute_engine(pgq_queries))
+    
+
+    
+
+if ENABLE_SCHEDULER == True:
+    # Set up the scheduler
+    scheduler = BackgroundScheduler()
+    trigger = CronTrigger(hour=1, minute=0)
+    scheduler.add_job(daily_task, trigger)
+    scheduler.start()
 
 
 routers = [

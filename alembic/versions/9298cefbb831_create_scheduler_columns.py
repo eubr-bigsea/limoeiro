@@ -18,8 +18,17 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def upgrade() -> None:
-    op.add_column('tb_database_provider_ingestion', sa.Column('scheduling_type', sa.Enum('MANUAL', 'CRON', name='SchedulingTypeEnumType'), nullable=False))
+scheduling_type_enum = sa.Enum('MANUAL', 'CRON', name='SchedulingTypeEnumType')
 
-def downgrade() -> None:
+def upgrade():
+    scheduling_type_enum.create(op.get_bind())
+
+    op.add_column(
+        'tb_database_provider_ingestion',
+        sa.Column('scheduling_type', scheduling_type_enum, nullable=False,server_default='MANUAL')
+    )
+
+def downgrade():
     op.drop_column('tb_database_provider_ingestion', 'scheduling_type')
+
+    scheduling_type_enum.drop(op.get_bind())
