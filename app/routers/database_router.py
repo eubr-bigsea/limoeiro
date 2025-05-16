@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,6 +15,7 @@ from ..schemas import (
 )
 from ..services.database_service import DatabaseService
 from ..database import get_session
+from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -51,35 +52,31 @@ async def add_database(
 
 
 @router.delete(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Database.
     """
-    await service.delete(database_id)
+    await service.delete(entity_id)
     await session.commit()
     return
 
 
 @router.patch(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=True,
 )
 async def update_databases(
-    database_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_data: typing.Optional[DatabaseUpdateSchema] = None,
     service: DatabaseService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -91,7 +88,7 @@ async def update_databases(
     if database_data is not None:
         database_data.updated_by = "FIXME!!!"
 
-    result = await service.update(database_id, database_data)
+    result = await service.update(entity_id, database_data)
     await session.commit()
     return result
 
@@ -116,22 +113,20 @@ async def find_databases(
 
 
 @router.get(
-    "/databases/{database_id}",
+    "/databases/{entity_id}",
     tags=["Database"],
     response_model=DatabaseItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database(
-    database_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """
     Recupera uma instância da classe Database.
     """
 
-    database = await service.get(database_id)
+    database = await service.get(entity_id)
     if database is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database

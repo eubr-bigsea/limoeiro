@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status, Path
+from fastapi import APIRouter, HTTPException, Depends, status
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,6 +15,7 @@ from ..schemas import (
 )
 from ..services.database_provider_service import DatabaseProviderService
 from ..database import get_session
+from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -65,35 +66,31 @@ async def add_database_provider(
 
 
 @router.delete(
-    "/database-providers/{database_provider_id}",
+    "/database-providers/{entity_id}",
     tags=["DatabaseProvider"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_database_providers(
-    database_provider_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseProviderService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe DatabaseProvider.
     """
-    await service.delete(database_provider_id)
+    await service.delete(entity_id)
     await session.commit()
     return
 
 
 @router.patch(
-    "/database-providers/{database_provider_id}",
+    "/database-providers/{entity_id}",
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=True,
 )
 async def update_database_providers(
-    database_provider_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_provider_data: typing.Optional[DatabaseProviderUpdateSchema] = None,
     service: DatabaseProviderService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -105,7 +102,7 @@ async def update_database_providers(
     if database_provider_data is not None:
         database_provider_data.updated_by = "FIXME!!!"
 
-    result = await service.update(database_provider_id, database_provider_data)
+    result = await service.update(entity_id, database_provider_data)
     await session.commit()
     return result
 
@@ -132,22 +129,20 @@ async def find_database_providers(
 
 
 @router.get(
-    "/database-providers/{database_provider_id}",
+    "/database-providers/{entity_id}",
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database_provider(
-    database_provider_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseProviderService = Depends(_get_service),
 ) -> DatabaseProviderItemSchema:
     """
     Recupera uma instância da classe DatabaseProvider.
     """
 
-    database_provider = await service.get(database_provider_id)
+    database_provider = await service.get(entity_id)
     if database_provider is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_provider

@@ -5,8 +5,6 @@ import requests
 import os
 import typing
 
-API_URL = os.environ["API_URL"]
-
 
 # Serialize UUID properties in json_body
 def custom_serializer(obj):
@@ -21,7 +19,8 @@ def custom_serializer(obj):
 
 def _format_url(route: str, path: typing.Optional[str] = None):
     """Method to format url and parameters to be used in requests."""
-    url = API_URL.rstrip("/") + "/" + route.lstrip("/")
+    api_url = os.environ["API_URL"]
+    url = api_url.rstrip("/") + "/" + route.lstrip("/")
     if path:
         url += "/" + path.lstrip("/")
     return url

@@ -163,6 +163,7 @@ class SchedulingType(str, enum.Enum):
     def values():
         return [item.value for item in SchedulingType]
 
+
 # Association Table for Many-to-Many Relationship
 role_permission = Table(
     "tb_role_permission",
@@ -845,11 +846,8 @@ class DatabaseProviderIngestion(Base):
     override_mode = mapped_column(String(200))
     scheduling = mapped_column(String(200))
     scheduling_type = mapped_column(
-        Enum(SchedulingType, name="SchedulingTypeEnumType"),
-        default="MANUAL",
-        nullable=False,
+        Enum(SchedulingType, name="SchedulingTypeEnumType"), default="MANUAL"
     )
-
     recent_runs_statuses = mapped_column(String(100))
     retries = mapped_column(Integer, default=5, nullable=False)
 
