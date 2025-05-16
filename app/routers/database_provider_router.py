@@ -3,7 +3,7 @@ import logging
 import typing
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Path
 
 from ..schemas import (
     PaginatedSchema,
@@ -15,7 +15,6 @@ from ..schemas import (
 )
 from ..services.database_provider_service import DatabaseProviderService
 from ..database import get_session
-from ..routers import get_lookup_filter
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -66,12 +65,14 @@ async def add_database_provider(
 
 
 @router.delete(
-    "/database-providers/{entity_id}",
+    "/database-providers/{database_provider_id}",
     tags=["DatabaseProvider"],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_database_providers(
-    database_provider_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_provider_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseProviderService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
@@ -84,13 +85,15 @@ async def delete_database_providers(
 
 
 @router.patch(
-    "/database-providers/{entity_id}",
+    "/database-providers/{database_provider_id}",
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=True,
 )
 async def update_database_providers(
-    database_provider_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_provider_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     database_provider_data: typing.Optional[DatabaseProviderUpdateSchema] = None,
     service: DatabaseProviderService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -129,13 +132,15 @@ async def find_database_providers(
 
 
 @router.get(
-    "/database-providers/{entity_id}",
+    "/database-providers/{database_provider_id}",
     tags=["DatabaseProvider"],
     response_model=DatabaseProviderItemSchema,
     response_model_exclude_none=False,
 )
 async def get_database_provider(
-    database_provider_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    database_provider_id: UUID = Path(
+        ..., description="Identificador"
+    ),
     service: DatabaseProviderService = Depends(_get_service),
 ) -> DatabaseProviderItemSchema:
     """

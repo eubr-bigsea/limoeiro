@@ -7,6 +7,7 @@ from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 from .models import LinkType
 from .models import TableType
 from .models import DataType
+from .models import SchedulingType
 
 M = TypeVar("M")
 
@@ -1295,6 +1296,7 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -1346,6 +1348,7 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -1398,6 +1401,7 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
@@ -1450,6 +1454,7 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )

@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+import asyncio
 import asyncpg
 from apscheduler.schedulers.background import (
     BackgroundScheduler,
@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from pgqueuer import AsyncpgDriver, Queries
 from sqlalchemy.exc import IntegrityError
 
-from app.collector.data_collection_engine import DataCollectionEngine
+from app.collector.data_collection_scheduling_engine import DataCollectionSchedulingEngine
 from app.database import DATABASE_URL
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
@@ -48,21 +48,9 @@ from app.routers import (
 from .routers import domain_router
 from .utils.middlewares import add_middlewares
 import urllib.parse
+import os
 
 load_dotenv()
-
-
-# The task to run
-def daily_task():
-    DataCollectionEngine().execute_engine()
-
-
-# Set up the scheduler
-scheduler = BackgroundScheduler()
-trigger = CronTrigger(hour=1, minute=0)
-scheduler.add_job(daily_task, trigger)
-scheduler.start()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -180,6 +168,24 @@ async def validation_exception_handler(
     return JSONResponse(
         content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
     )
+
+ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
+
+# The task to run
+def daily_task():
+    pgq_queries = app.extra["pgq_queries"]
+    engine = DataCollectionSchedulingEngine()
+    asyncio.run(engine.execute_engine(pgq_queries))
+    
+
+    
+
+if ENABLE_SCHEDULER == True:
+    # Set up the scheduler
+    scheduler = BackgroundScheduler()
+    trigger = CronTrigger(hour=1, minute=0)
+    scheduler.add_job(daily_task, trigger)
+    scheduler.start()
 
 
 routers = [
