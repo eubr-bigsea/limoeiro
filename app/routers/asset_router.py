@@ -176,9 +176,9 @@ async def exists(
     session: AsyncSession = Depends(get_session),
 ):
     filter_condition = (
-        Asset.id == asset_id
-        if isinstance(asset_id, UUID)
-        else Asset.fully_qualified_name == asset_id
+        Asset.id == entity_id
+        if isinstance(entity_id, UUID)
+        else Asset.fully_qualified_name == entity_id
     )
 
     sql = select(func.count()).select_from(Asset).where(filter_condition)
