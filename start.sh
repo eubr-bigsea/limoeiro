@@ -1,7 +1,6 @@
 #!/bin/bash
-set -e  # optional: fail fast on errors
 
-#/home/appuser/.venv/bin/pgq install
+/home/appuser/.venv/bin/pgq install
 /home/appuser/.venv/bin/alembic upgrade head
 
 # Start both in background
