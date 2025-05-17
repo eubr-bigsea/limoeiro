@@ -1,6 +1,6 @@
 import json
 import os
-
+import asyncio
 import asyncpg
 from fastapi import Request
 from pgqueuer import PgQueuer, Queries
@@ -18,14 +18,10 @@ from app.models import (
 )
 
 
-def get_pgq_queries(request: Request) -> Queries:
-    """Retrieve Queries instance from FastAPI app context."""
-    return request.app.extra["pgq_queries"]
-
 
 async def main() -> PgQueuer:
     connection = await asyncpg.connect(
-        dsn=os.getenv("DB_URL", "").replace("+asyncpg", "")
+        dsn=os.getenv("DB_URL", "").replace("+asyncpg", "").replace("#", "%23")
     )
     driver = AsyncpgDriver(connection)
     pgq = PgQueuer(driver)
@@ -80,4 +76,7 @@ async def main() -> PgQueuer:
                 await session.commit()
         # raise ValueError("Simulated error")
 
-    return pgq
+    await pgq.run()
+    
+if __name__ == "__main__":
+    asyncio.run(main())

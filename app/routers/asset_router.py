@@ -17,7 +17,7 @@ from app.models import (
     Tag,
 )
 from app.utils import remove_accents
-
+from ..routers import get_lookup_filter
 from ..database import get_session
 from fastapi import HTTPException
 from ..schemas import (
@@ -168,13 +168,11 @@ async def find_assets(
 
 
 @router.options(
-    "/assets/{asset_id}",
+    "/assets/{entity_id}",
     tags=["Asset"],
 )
 async def exists(
-    asset_id: UUID = Path(
-        ..., description="Identificador"
-    ),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     session: AsyncSession = Depends(get_session),
 ):
     filter_condition = (

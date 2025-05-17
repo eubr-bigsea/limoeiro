@@ -11,13 +11,17 @@ from typing import Optional
 import base64
 import json
 import jwt
-from app.worker import get_pgq_queries
 from pgqueuer import Queries
+from fastapi import Request
 from app.collector.data_collection_scheduling_engine import DataCollectionSchedulingEngine
 
 router = APIRouter()
 log = logging.getLogger(__name__)
 
+
+def get_pgq_queries(request: Request) -> Queries:
+    """Retrieve Queries instance from FastAPI app context."""
+    return request.app.extra["pgq_queries"]
 
 def run_engine(pgq_queries):
     engine = DataCollectionSchedulingEngine()
