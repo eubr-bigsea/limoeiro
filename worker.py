@@ -21,7 +21,7 @@ from app.models import (
 
 async def main() -> PgQueuer:
     connection = await asyncpg.connect(
-        dsn=os.getenv("DB_URL", "").replace("+asyncpg", "").replace("#", "%23")
+        dsn=os.getenv("DB_URL", "").replace("+asyncpg", "")
     )
     driver = AsyncpgDriver(connection)
     pgq = PgQueuer(driver)
