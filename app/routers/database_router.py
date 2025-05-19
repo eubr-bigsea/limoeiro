@@ -57,14 +57,14 @@ async def add_database(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_databases(
-    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe Database.
     """
-    await service.delete(database_id)
+    await service.delete(entity_id)
     await session.commit()
     return
 
@@ -76,7 +76,7 @@ async def delete_databases(
     response_model_exclude_none=True,
 )
 async def update_databases(
-    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     database_data: typing.Optional[DatabaseUpdateSchema] = None,
     service: DatabaseService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -88,7 +88,7 @@ async def update_databases(
     if database_data is not None:
         database_data.updated_by = "FIXME!!!"
 
-    result = await service.update(database_id, database_data)
+    result = await service.update(entity_id, database_data)
     await session.commit()
     return result
 
@@ -119,14 +119,14 @@ async def find_databases(
     response_model_exclude_none=False,
 )
 async def get_database(
-    database_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: DatabaseService = Depends(_get_service),
 ) -> DatabaseItemSchema:
     """
     Recupera uma instância da classe Database.
     """
 
-    database = await service.get(database_id)
+    database = await service.get(entity_id)
     if database is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database

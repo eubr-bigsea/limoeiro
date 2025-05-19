@@ -29,6 +29,7 @@ dependencies = [
     "oracledb>=3.1.0",
     "pyarrow==20.0.0",
     "pymongo==4.12.1",
+    "PyJWT==2.10.1",
 ]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

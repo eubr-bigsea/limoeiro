@@ -155,6 +155,15 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
+class SchedulingType(str, enum.Enum):
+    MANUAL = "MANUAL"
+    CRON = "CRON"
+
+    @staticmethod
+    def values():
+        return [item.value for item in SchedulingType]
+
+
 # Association Table for Many-to-Many Relationship
 role_permission = Table(
     "tb_role_permission",
@@ -835,7 +844,10 @@ class DatabaseProviderIngestion(Base):
     exclude_table = mapped_column(String(1000))
     include_view = mapped_column(Boolean, default=False, nullable=False)
     override_mode = mapped_column(String(200))
-    scheduling = mapped_column(JSON)
+    scheduling = mapped_column(String(200))
+    scheduling_type = mapped_column(
+        Enum(SchedulingType, name="SchedulingTypeEnumType"), default="MANUAL"
+    )
     recent_runs_statuses = mapped_column(String(100))
     retries = mapped_column(Integer, default=5, nullable=False)
 

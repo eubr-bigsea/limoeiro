@@ -57,14 +57,14 @@ async def add_a_i_model(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_ai_models(
-    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: AIModelService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
 ):
     """
     Exclui uma instância da classe AIModel.
     """
-    await service.delete(a_i_model_id)
+    await service.delete(entity_id)
     await session.commit()
     return
 
@@ -76,7 +76,7 @@ async def delete_ai_models(
     response_model_exclude_none=True,
 )
 async def update_ai_models(
-    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     a_i_model_data: typing.Optional[AIModelUpdateSchema] = None,
     service: AIModelService = Depends(_get_service),
     session: AsyncSession = Depends(get_session),
@@ -88,7 +88,7 @@ async def update_ai_models(
     if a_i_model_data is not None:
         a_i_model_data.updated_by = "FIXME!!!"
 
-    result = await service.update(a_i_model_id, a_i_model_data)
+    result = await service.update(entity_id, a_i_model_data)
     await session.commit()
     return result
 
@@ -119,14 +119,14 @@ async def find_ai_models(
     response_model_exclude_none=False,
 )
 async def get_a_i_model(
-    a_i_model_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     service: AIModelService = Depends(_get_service),
 ) -> AIModelItemSchema:
     """
     Recupera uma instância da classe AIModel.
     """
 
-    a_i_model = await service.get(a_i_model_id)
+    a_i_model = await service.get(entity_id)
     if a_i_model is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return a_i_model
