@@ -1,6 +1,6 @@
 from typing import List
 import typing
-
+import urllib.parse
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 
@@ -21,8 +21,9 @@ class PostgresCollector(SqlAlchemyCollector):
     def _get_connection_string(self):
         params = self.connection_info
         if params is not None:
+            password = urllib.parse.quote(params.password)
             return (
-                f"postgresql+psycopg2://{params.user_name}:{params.password}"
+                f"postgresql+psycopg2://{params.user_name}:{password}"
                 f"@{params.host}:{params.port}"
             )
         return "FIXME"
