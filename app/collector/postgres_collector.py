@@ -1,6 +1,6 @@
 from typing import List
 import typing
-import urllib.parse
+
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 
@@ -21,9 +21,8 @@ class PostgresCollector(SqlAlchemyCollector):
     def _get_connection_string(self):
         params = self.connection_info
         if params is not None:
-            password = urllib.parse.quote(params.password)
             return (
-                f"postgresql+psycopg2://{params.user_name}:{password}"
+                f"postgresql+psycopg2://{params.user_name}:{params.password}"
                 f"@{params.host}:{params.port}"
             )
         return "FIXME"
@@ -43,7 +42,9 @@ class PostgresCollector(SqlAlchemyCollector):
 
     def get_databases(self) -> typing.List[DatabaseCreateSchema]:
         """Return all databases."""
-        engine = create_engine(self._get_connection_string())
+        database_name = self.connection_info.database
+        connection_string = f"{self._get_connection_string()}/{database_name}"
+        engine = create_engine(connection_string)
         with engine.connect() as connection:
             result = [
                 (r[0], r[1])
