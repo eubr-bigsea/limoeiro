@@ -30,6 +30,7 @@ SQLTYPES_DICT = {
     "TIMESTAMP": "TIMESTAMP",
     "NULL": "NULL",
     "JSON": "JSON",
+    "JSONB": "JSON",
     "BINARY": "BINARY",
     "ENUM": "ENUM",
     "INTEGER": "INT",
