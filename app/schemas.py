@@ -1,7 +1,7 @@
 import typing
 from datetime import datetime, timezone
 from uuid import UUID
-from typing import Annotated, Optional, TypeVar, Generic, List
+from typing import Annotated, Optional, TypeVar, Generic, List, Dict
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
@@ -1932,7 +1932,7 @@ class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for creating an instance"""
 
     sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )
@@ -1949,7 +1949,7 @@ class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     sample_date: Optional[datetime] = Field(
         default=None, description="Data e hora da amostra"
     )
-    content: Optional[str] = Field(
+    content: Optional[List[Dict]] = Field(
         default=None, description="Conteúdo da amostra (JSON)."
     )
     is_visible: Optional[bool] = Field(
@@ -1967,7 +1967,7 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
 
     id: UUID
     sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )

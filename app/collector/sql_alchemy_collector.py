@@ -13,8 +13,9 @@ from app.schemas import (
     DatabaseSchemaCreateSchema,
     DatabaseTableCreateSchema,
     TableColumnCreateSchema,
+    DatabaseTableSampleCreateSchema,
 )
-
+from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
@@ -164,8 +165,39 @@ class SqlAlchemyCollector(Collector):
                     ),
                 )
                 tables.append(database_table)
+                print("TESTE TESTE",  self.get_samples(database_name, schema_name, name))
         engine.dispose()
+
         return tables
+
+    def get_samples(self, database_name: str,
+                    schema_name: str, table_name: str
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
+
+        metadata = sqlalchemy.MetaData()
+        engine = self.get_connection_engine_for_tables(
+                     database_name, schema_name
+                 )
+        
+        # Reflect the table from the database
+        with engine.connect() as conn:
+            metadata.reflect(bind=conn, only=[table_name])
+            table = metadata.tables[table_name]
+
+            # Generic SELECT with LIMIT
+            stmt = sqlalchemy.select(table).limit(10)
+            result = conn.execute(stmt)
+            rows = result.mappings().all()
+            rows = [dict(row) for row in rows]
+
+        engine.dispose()
+        return DatabaseTableSampleCreateSchema(
+                                sample_date=datetime.now(),
+                                content=rows,
+                                is_visible=True,
+                                database_table_id=DEFAULT_UUID,
+        )
 
     @abstractmethod
     def _get_connection_string(self) -> str:

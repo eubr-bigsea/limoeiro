@@ -16,7 +16,7 @@ from app.models import (
     DatabaseProviderIngestionExecution,
     DatabaseProviderIngestionLog,
 )
-
+from dotenv import load_dotenv
 load_dotenv()
 
 
