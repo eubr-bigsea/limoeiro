@@ -192,7 +192,7 @@ class SqlAlchemyCollector(Collector):
 
         engine.dispose()
         return DatabaseTableSampleCreateSchema(
-                                sample_date=datetime.now(),
+                                date=datetime.now(),
                                 content=rows,
                                 is_visible=True,
                                 database_table_id=DEFAULT_UUID,

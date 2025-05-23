@@ -127,3 +127,21 @@ async def get_database_table_sample(
     if database_table_sample is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return database_table_sample
+
+@router.get(
+    "/samples/table/{database_table_id}",
+    tags=["DatabaseTableSample"],
+    response_model=DatabaseTableSampleItemSchema,
+    response_model_exclude_none=False,
+)
+async def get_database_table_sample_by_table(
+    database_table_id: UUID = Path(..., description="Identificador de tabela."),
+    service: DatabaseTableSampleService = Depends(_get_service),
+) -> DatabaseTableSampleItemSchema:
+    """
+    Recupera uma instância da classe DatabaseTableSample com base na chave estrangeira da tabela de banco de dados associada a este sample.
+    """
+    database_table_sample = await service.get_by_table_id(database_table_id)
+    if database_table_sample is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return database_table_sample
