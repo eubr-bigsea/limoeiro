@@ -165,7 +165,6 @@ class SqlAlchemyCollector(Collector):
                     ),
                 )
                 tables.append(database_table)
-                print("TESTE TESTE",  self.get_samples(database_name, schema_name, name))
         engine.dispose()
 
         return tables
