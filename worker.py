@@ -17,6 +17,7 @@ from app.models import (
     DatabaseProviderIngestionLog,
 )
 
+load_dotenv()
 
 
 async def main() -> PgQueuer:
@@ -79,4 +80,6 @@ async def main() -> PgQueuer:
     await pgq.run()
     
 if __name__ == "__main__":
-    asyncio.run(main())
+    ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
+    if ENABLE_SCHEDULER == True:
+        asyncio.run(main())
