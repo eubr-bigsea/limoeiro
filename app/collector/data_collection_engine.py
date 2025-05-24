@@ -1,6 +1,9 @@
 import datetime
+import os
 import re
 import typing
+
+import requests
 
 from app.collector.collector import Collector
 import app.collector.utils.constants_utils as constants
@@ -318,7 +321,16 @@ class DataCollectionEngine:
             )
 
     def _get_semantic_type(self, sample:typing.List[str]) -> str:
-        return "OTHERS"
+        api_url = os.environ["SEMANTIC_API_URL"]
+        url = api_url.rstrip("/") + "/" + "classificar-valores/"
+
+        response = requests.post(
+            url, data=sample
+        )
+        
+        return response.text
+        
+
 
     def _update_table(
         self,
