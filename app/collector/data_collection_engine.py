@@ -2,6 +2,7 @@ import datetime
 import re
 import typing
 
+from app.collector.collector import Collector
 import app.collector.utils.constants_utils as constants
 from app.collector.collector_factory import CollectorFactory
 from app.collector.data_collection_diff_checker import DataCollectionDiffChecker
@@ -28,6 +29,9 @@ from app.schemas import (
     DatabaseSchemaCreateSchema,
     DatabaseSchemaItemSchema,
     DatabaseTableCreateSchema,
+    DatabaseTableItemSchema,
+    DatabaseTableSampleCreateSchema,
+    DatabaseTableSampleItemSchema,
 )
 
 FQN_PREFIXES = {
@@ -51,6 +55,20 @@ class DataCollectionEngine:
             f.lower().replace(" ", "_").replace(".", "-") for f in list_values
         ]
         return f"{FQN_PREFIXES[asset_type]}." + ".".join(fully_qualified_name)
+
+    def _process_sample(self, 
+                        database_table_sample: DatabaseTableSampleCreateSchema):
+        response_code, response = get_request(constants.SAMPLE_ROUTE,f"table/{database_table_sample.database_table_id}")
+
+        if response_code == 404:
+            return post_request(constants.SAMPLE_ROUTE, database_table_sample.model_dump()) 
+        elif response_code == 200:
+            response = DatabaseTableSampleItemSchema.model_validate(response)
+            return patch_request(
+                constants.SAMPLE_ROUTE, str(response.id), database_table_sample.model_dump()
+            )
+        else:
+            raise Exception(f"Invalid status {response_code}")
 
     def _process_object(
         self,
@@ -143,7 +161,7 @@ class DataCollectionEngine:
             table.database_schema_id = schema.id
 
         self.log.log_obj_collecting("table", table.name)
-        return self._process_object(constants.TABLE_ROUTE, fqn, table)
+        return DatabaseTableItemSchema.model_validate(self._process_object(constants.TABLE_ROUTE, fqn, table))
 
     def execute_collection(
         self,
@@ -179,20 +197,16 @@ class DataCollectionEngine:
             if ingestion.exclude_table
             else None
         )
-
         # Iterate all databases.
         ignored_dbs = []
         valid_dbs = []
         for db in database_list:
             db_name = db.name
-            
             if collector.supports_database():
                 # Test if db_name must be excluded from processing (ignored)
                 must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
-
                 # Test if db_name must be processed
                 must_db = bool(include_db_re and include_db_re.match(db_name))
-
                 # If both flags, item is explicitly ignored
                 ignore_db = not must_db or must_not_db
             else:
@@ -223,30 +237,30 @@ class DataCollectionEngine:
                         #     database_id=database.id,
                         #     fully_qualified_name="placeholder",
                         # )
+
                         # Process the object schema
                         schema = self._process_schema(
                             schema, provider, database
                         )
+
                         # Get the tables of the schema.
                         table_list = collector.get_tables(db_name, schema_name)
-
-                        # Iterate all tables.
+                        
                         for table in table_list:
-                            # Process the object table.
-                            table.database_id = database.id
-                            # table.database_schema_id = schema.id #FIXME
-                            self._process_table(
-                                table,
-                                provider,
-                                database,
-                                schema,
-                            )
+                            self._handle_table_samples(table,
+                                                  database,
+                                                  collector,
+                                                  provider,
+                                                  schema
+                                                  )
+                            
+
                 else:
                     ignored_tbs = []
                     valid_tbs = []
                     # Get the tables of the schema.
                     table_list = collector.get_tables(db_name, db_name)
-
+                    
                     for table in table_list:
                         self._update_table(
                             provider,
@@ -256,6 +270,7 @@ class DataCollectionEngine:
                             table,
                             ignored_tbs,
                             valid_tbs,
+                            collector
                         )
                     # Handle tables not found in database, but in metadata
                     db_client = DatabaseTableApiClient()
@@ -275,6 +290,7 @@ class DataCollectionEngine:
                     AssetApiClient.disable_many(tb_to_disable)
 
                     if ignored_tbs:
+                        
                         self.log.log.info(
                             "Table(s) ignored by the rules: [%s]",
                             ", ".join(ignored_tbs),
@@ -301,6 +317,9 @@ class DataCollectionEngine:
                 "Database(s) ignored by the rules: [%s]", ", ".join(ignored_dbs)
             )
 
+    def _get_semantic_type(self, sample:typing.List[str]) -> str:
+        return "OTHERS"
+
     def _update_table(
         self,
         provider,
@@ -310,6 +329,7 @@ class DataCollectionEngine:
         table,
         ignored_tbs,
         valid_tbs,
+        collector
     ):
         tb_name = table.name
         # Test if tb_name must be excluded from processing (ignored)
@@ -324,5 +344,47 @@ class DataCollectionEngine:
         else:
             # Process the object table.
             table.database_id = database.id
-            self._process_table(table, provider, database, None)
+            self._handle_table_samples(table,
+                                       database,
+                                       collector,
+                                       provider
+                                       )
             valid_tbs.append(tb_name)
+
+    def _handle_table_samples(self,
+                              table:DatabaseTableCreateSchema,
+                              database:DatabaseItemSchema,
+                              collector:Collector,
+                              provider:DatabaseProviderItemSchema,
+                              schema:DatabaseSchemaItemSchema=None
+                              ):
+        # Process the object table.
+        table.database_id = database.id
+        # table.database_schema_id = schema.id #FIXME
+
+        database_table_sample = collector.get_samples(database.name,
+                                                        schema.name if schema else None,
+                                                        table.name)
+        
+        if len(database_table_sample.content) > 0:
+        # structure the income sample to {column:list}
+            structured_sample = {c:[] for c in database_table_sample.content[0].keys()}
+            for sample in database_table_sample.content:
+                for column in structured_sample.keys():
+                    structured_sample[column].append(sample[column])
+                    
+        for column in table.columns:
+            
+            sample = structured_sample[column.name]
+            semantic_type = self._get_semantic_type(sample)
+            column.semantic_type = semantic_type
+        
+        table_return = self._process_table(
+                                            table,
+                                            provider,
+                                            database,
+                                            schema,
+                                        )
+        
+        database_table_sample.database_table_id=table_return.id
+        self._process_sample(database_table_sample)
