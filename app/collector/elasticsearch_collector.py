@@ -70,6 +70,47 @@ class ElasticsearchCollector(Collector):
 
         return tables
 
+    def get_samples(self, database_name: str,
+                    schema_name: str, table_name: str
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
+
+        params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
+
+        es = Elasticsearch(
+            params.host,
+            port=params.port,
+            http_auth=(params.user_name, params.password),
+            http_compress=True,
+        )
+        
+        index_name = table_name
+
+        # Perform the search for the top 10 documents
+        response = es.search(
+            index=index_name,
+            body={
+                "size": 10,
+                "query": {
+                    "match_all": {}
+                }
+            }
+        )
+
+        # Get the documents
+        content = [hit["_source"] for hit in response["hits"]["hits"]]        
+
+        es.close()
+
+        return DatabaseTableSampleCreateSchema(
+                                sample_date=datetime.now(),
+                                content=content,
+                                is_visible=True,
+                                database_table_id=DEFAULT_UUID,
+        )
+    
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
 

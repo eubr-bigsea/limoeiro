@@ -15,8 +15,9 @@ from app.schemas import (
     DatabaseCreateSchema,
     DatabaseTableCreateSchema,
     TableColumnCreateSchema,
-
+    DatabaseTableSampleCreateSchema,
 )
+from datetime import datetime
 
 class MongoCollector(Collector):
     """Class to implement methods, to collect data in Mongo."""
@@ -126,6 +127,35 @@ class MongoCollector(Collector):
 
         return tables
 
+    def get_samples(self, database_name: str,
+                    schema_name: str, table_name: str
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
+
+        params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
+        
+        username = params.user_name
+        password = params.password
+        host = params.host
+        port = params.port
+
+        uri = f"mongodb://{username}:{password}@{host}:{port}/"
+        # Connect to Mongodb
+        client = MongoClient(uri)
+        db = client[database_name]
+        collection = db[table_name]
+        content = collection.find().limit(10)
+        content = list(content)
+
+        return DatabaseTableSampleCreateSchema(
+                                sample_date=datetime.now(),
+                                content=content,
+                                is_visible=True,
+                                database_table_id=DEFAULT_UUID,
+        )
+    
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
        

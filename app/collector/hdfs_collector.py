@@ -155,6 +155,49 @@ class HdfsCollector(Collector):
         
         return self._tables
 
+    def get_samples(self, database_name: str,
+                    schema_name: str, table_name: str
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
+
+        params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
+        
+        username = params.user_name
+        host = params.host
+        port = params.port
+        database = params.database
+
+        url = f"http://{host}:{port}/webhdfs/v1/{database_name}/{table_name}"
+        params = {
+            "user.name": username,
+            "op":"OPEN"
+        }
+        response = requests.get(url, params=params)
+        content = None
+        # Ensure the response contains binary data (check status and content type)
+        if response.status_code == 200 and response.headers['Content-Type'] == 'application/octet-stream':
+            binary_data = response.content  # This is the binary data
+
+            # Create a pyarrow BufferReader from the binary data
+            buffer = pa.BufferReader(binary_data)
+
+            # Load the Parquet file
+            parquet_file = pq.ParquetFile(buffer)
+
+            table = parquet_file.read()  
+            df = table.to_pandas()
+            content = df.head(10).to_dict(orient="records")    
+                
+            
+        return DatabaseTableSampleCreateSchema(
+                                sample_date=datetime.now(),
+                                content=content,
+                                is_visible=True,
+                                database_table_id=DEFAULT_UUID,
+        )
+    
 
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
