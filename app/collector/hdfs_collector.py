@@ -15,6 +15,7 @@ from app.schemas import (
     DatabaseCreateSchema,
     DatabaseTableCreateSchema,
     TableColumnCreateSchema,
+    DatabaseTableSampleCreateSchema,
 
 )
 

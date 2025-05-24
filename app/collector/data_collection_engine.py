@@ -2,7 +2,7 @@ import datetime
 import os
 import re
 import typing
-
+import uuid
 import requests
 
 from app.collector.collector import Collector
@@ -22,6 +22,7 @@ from app.collector.utils.request_utils import (
     options_request,
     patch_request,
     post_request,
+    custom_serializer,
 )
 from app.schemas import (
     DatabaseCreateSchema,
@@ -320,12 +321,20 @@ class DataCollectionEngine:
                 "Database(s) ignored by the rules: [%s]", ", ".join(ignored_dbs)
             )
 
-    def _get_semantic_type(self, sample:typing.List[str]) -> str:
+    def _get_semantic_type(self, sample:typing.List) -> str:
+        sample_serialized = []
+        for s in sample:
+            if isinstance(s, uuid.UUID):
+                sample_serialized.append(str(s))
+            elif isinstance(s, datetime.datetime):
+                sample_serialized.append(s.isoformat())
+            else:
+                sample_serialized.append(s)
+
         api_url = os.environ["SEMANTIC_API_URL"]
         url = api_url.rstrip("/") + "/" + "classificar-valores/"
-
         response = requests.post(
-            url, data=sample
+            url, json=sample_serialized
         )
         
         return response.text
