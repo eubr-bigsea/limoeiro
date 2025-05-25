@@ -329,7 +329,7 @@ class DataCollectionEngine:
             elif isinstance(s, datetime.datetime):
                 sample_serialized.append(s.isoformat())
             else:
-                sample_serialized.append(s)
+                sample_serialized.append(str(s))
 
         api_url = os.environ["SEMANTIC_API_URL"]
         url = api_url.rstrip("/") + "/" + "classificar-valores/"
@@ -337,7 +337,10 @@ class DataCollectionEngine:
             url, json=sample_serialized
         )
         
-        return response.text
+        if response.status_code == 200:
+            return response.text.replace("\"", "") 
+        else:
+            return "API_FAILED"
         
 
 
