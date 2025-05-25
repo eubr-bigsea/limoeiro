@@ -148,9 +148,20 @@ class MongoCollector(Collector):
         content = collection.find().limit(10)
         content = list(content)
 
+        serialized_content = []
+        for doc in content:
+            result = {}
+            for key, value in doc.items():
+                if isinstance(value, ObjectId):
+                    result[key] = str(value)
+                else:
+                    result[key] = value
+            serialized_content.append(result)
+        
+        
         return DatabaseTableSampleCreateSchema(
                                 date=datetime.datetime.now(),
-                                content=content,
+                                content=serialized_content,
                                 is_visible=True,
                                 database_table_id=DEFAULT_UUID,
         )
