@@ -17,7 +17,6 @@ from app.schemas import (
     TableColumnCreateSchema,
     DatabaseTableSampleCreateSchema,
 )
-from datetime import datetime
 
 class MongoCollector(Collector):
     """Class to implement methods, to collect data in Mongo."""
@@ -150,7 +149,7 @@ class MongoCollector(Collector):
         content = list(content)
 
         return DatabaseTableSampleCreateSchema(
-                                sample_date=datetime.now(),
+                                sample_date=datetime.datetime.now(),
                                 content=content,
                                 is_visible=True,
                                 database_table_id=DEFAULT_UUID,
