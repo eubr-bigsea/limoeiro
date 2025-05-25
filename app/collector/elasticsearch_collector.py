@@ -106,7 +106,7 @@ class ElasticsearchCollector(Collector):
         es.close()
 
         return DatabaseTableSampleCreateSchema(
-                                sample_date=datetime.now(),
+                                date=datetime.now(),
                                 content=content,
                                 is_visible=True,
                                 database_table_id=DEFAULT_UUID,
