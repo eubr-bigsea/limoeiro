@@ -1,6 +1,6 @@
 from typing import List,Optional
 import typing
-
+import math
 from app.collector.collector import Collector
 from app.collector import DEFAULT_UUID
 from pymongo import MongoClient
@@ -148,20 +148,23 @@ class MongoCollector(Collector):
         content = collection.find().limit(10)
         content = list(content)
 
-        serialized_content = []
-        for doc in content:
-            result = {}
-            for key, value in doc.items():
-                if isinstance(value, ObjectId):
-                    result[key] = str(value)
-                else:
-                    result[key] = value
-            serialized_content.append(result)
+        def sanitize_json(obj):
+            if isinstance(obj, ObjectId):
+                return str(obj)
+            if isinstance(obj, float) and math.isnan(obj):
+                return None
+            if isinstance(obj, dict):
+                return {k: sanitize_json(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [sanitize_json(v) for v in obj]
+            return obj
         
+        
+        cleaned_data = sanitize_json(content)      
         
         return DatabaseTableSampleCreateSchema(
                                 date=datetime.datetime.now(),
-                                content=serialized_content,
+                                content=cleaned_data,
                                 is_visible=True,
                                 database_table_id=DEFAULT_UUID,
         )

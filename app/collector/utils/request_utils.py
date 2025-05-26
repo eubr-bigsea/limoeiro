@@ -4,14 +4,30 @@ import uuid
 import requests
 import os
 import typing
-
+from decimal import Decimal
+import math
 
 # Serialize UUID properties in json_body
 def custom_serializer(obj):
     if isinstance(obj, uuid.UUID):
         return str(obj)
+
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
+
+    elif isinstance(obj, datetime.date):
+        return obj.isoformat()
+
+    elif isinstance(obj, Decimal):
+        float_obj = float(obj)
+        if math.isnan(float_obj):
+            return None
+        else:
+            return float_obj
+
+    elif isinstance(obj, float) and math.isnan(obj):
+        return None
+
     raise TypeError(
         f"Object of type {obj.__class__.__name__} is not JSON serializable"
     )

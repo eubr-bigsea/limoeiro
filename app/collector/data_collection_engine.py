@@ -387,7 +387,7 @@ class DataCollectionEngine:
         # table.database_schema_id = schema.id #FIXME
 
         database_table_sample = collector.get_samples(database.name,
-                                                        schema.name if schema else None,
+                                                        schema.name if schema else database.name,
                                                         table.name)
         
         if len(database_table_sample.content) > 0:
@@ -397,11 +397,11 @@ class DataCollectionEngine:
                 for column in structured_sample.keys():
                     structured_sample[column].append(sample[column])
                     
-        for column in table.columns:
-            
-            sample = structured_sample[column.name]
-            semantic_type = self._get_semantic_type(sample)
-            column.semantic_type = semantic_type
+            for column in table.columns:
+
+                sample = structured_sample[column.name]
+                semantic_type = self._get_semantic_type(sample)
+                column.semantic_type = semantic_type
         
         table_return = self._process_table(
                                             table,
