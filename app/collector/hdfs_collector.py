@@ -3,7 +3,6 @@ import typing
 from datetime import datetime
 from app.collector.collector import Collector
 from app.collector import DEFAULT_UUID
-
 import pyarrow as pa
 import pyarrow.parquet as pq
 import requests
@@ -19,7 +18,7 @@ from app.schemas import (
 
 )
 
-FILE_PATTERN = "part-\d{5}-.*"
+FILE_PATTERN = r"(part-\d{5}).*?(\.parquet)"
 
 class HdfsCollector(Collector):
     """Class to implement methods, to collect data in HDFS."""
@@ -28,7 +27,7 @@ class HdfsCollector(Collector):
         super().__init__()
 
     def _check_file(self, url, username):
-        """Check if there is only one file in the directory."""
+        """Check if there are only files in the directory."""
         params = {
             "user.name": username,
             "op":"LISTSTATUS"
@@ -118,7 +117,7 @@ class HdfsCollector(Collector):
         
         url_host = url+file_str
 
-        # Check if there is only one files in the directory.
+        # Check if there are only files in the directory.
         if self._check_file(url_host, username):
             # Read a single file from the partitions.
             self._process_file(file_str, url, username, database_name)
@@ -157,26 +156,44 @@ class HdfsCollector(Collector):
         return self._tables
 
     def get_samples(self, database_name: str,
-                    schema_name: str, table_name: str
+                    schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
 
-        params = self.connection_info
-        if params is None:
+        connection_params = self.connection_info
+        if connection_params is None:
             raise ValueError("Connection parameters are not set.")
         
-        username = params.user_name
-        host = params.host
-        port = params.port
-        database = params.database
+        username = connection_params.user_name
+        host = connection_params.host
+        port = connection_params.port
+        database = connection_params.database
 
-        url = f"http://{host}:{port}/webhdfs/v1/{database_name}/{table_name}"
+        url = f"http://{host}:{port}/webhdfs/v1/{database}/{table.name}"
+            
+        params = {
+            "user.name": username,
+            "op":"LISTSTATUS"
+        }
+
+        response = requests.get(url, params=params).json()
+        file_name = None
+        for e in response['FileStatuses']['FileStatus']:
+            if (re.fullmatch(FILE_PATTERN, e['pathSuffix'])):
+                file_name = e['pathSuffix']
+
+        if file_name is None:
+            ValueError("Failed to retrieve one of the Parquet file.")
+
+        file_url = url+"/"+file_name
+
         params = {
             "user.name": username,
             "op":"OPEN"
         }
-        response = requests.get(url, params=params)
-        content = None
+        response = requests.get(file_url, params=params)
+
+        content = []
         # Ensure the response contains binary data (check status and content type)
         if response.status_code == 200 and response.headers['Content-Type'] == 'application/octet-stream':
             binary_data = response.content  # This is the binary data
@@ -188,10 +205,8 @@ class HdfsCollector(Collector):
             parquet_file = pq.ParquetFile(buffer)
 
             table = parquet_file.read()  
-            df = table.to_pandas()
-            content = df.head(10).to_dict(orient="records")    
-                
-            
+            content = table.to_pylist()   
+
         return DatabaseTableSampleCreateSchema(
                                 date=datetime.now(),
                                 content=content,

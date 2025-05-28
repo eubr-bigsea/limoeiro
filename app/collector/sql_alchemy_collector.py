@@ -170,7 +170,7 @@ class SqlAlchemyCollector(Collector):
         return tables
 
     def get_samples(self, database_name: str,
-                    schema_name: str, table_name: str
+                    schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
 
@@ -181,8 +181,8 @@ class SqlAlchemyCollector(Collector):
         
         # Reflect the table from the database
         with engine.connect() as conn:
-            metadata.reflect(bind=conn, only=[table_name])
-            table = metadata.tables[table_name]
+            metadata.reflect(bind=conn, only=[table.name])
+            table = metadata.tables[table.name]
 
             # Generic SELECT with LIMIT
             stmt = sqlalchemy.select(table).limit(10)

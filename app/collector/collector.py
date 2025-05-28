@@ -55,7 +55,7 @@ class Collector(ABC):
 
     @abstractmethod
     def get_samples(self, database_name: str,
-                    schema_name: str, table_name: str
+                    schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
         pass

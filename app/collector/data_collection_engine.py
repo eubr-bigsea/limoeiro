@@ -4,6 +4,7 @@ import re
 import typing
 import uuid
 import requests
+from collections import defaultdict
 
 from app.collector.collector import Collector
 import app.collector.utils.constants_utils as constants
@@ -322,6 +323,7 @@ class DataCollectionEngine:
             )
 
     def _get_semantic_type(self, sample:typing.List) -> str:
+        return "API_FAILED"
         sample_serialized = []
         for s in sample:
             if isinstance(s, uuid.UUID):
@@ -388,20 +390,22 @@ class DataCollectionEngine:
 
         database_table_sample = collector.get_samples(database.name,
                                                         schema.name if schema else database.name,
-                                                        table.name)
+                                                        table)
         
-        if len(database_table_sample.content) > 0:
+        if database_table_sample and (len(database_table_sample.content) > 0):
         # structure the income sample to {column:list}
-            structured_sample = {c:[] for c in database_table_sample.content[0].keys()}
+            #structured_sample = {c:[] for c in database_table_sample.content[0].keys()}
+            structured_sample = defaultdict(list)
             for sample in database_table_sample.content:
-                for column in structured_sample.keys():
+                for column in sample.keys():
                     structured_sample[column].append(sample[column])
                     
             for column in table.columns:
 
                 sample = structured_sample[column.name]
-                semantic_type = self._get_semantic_type(sample)
-                column.semantic_type = semantic_type
+                if sample and (len(sample)>0):
+                    semantic_type = self._get_semantic_type(sample)
+                    column.semantic_type = semantic_type
         
         table_return = self._process_table(
                                             table,
@@ -410,5 +414,7 @@ class DataCollectionEngine:
                                             schema,
                                         )
         
-        database_table_sample.database_table_id=table_return.id
-        self._process_sample(database_table_sample)
+        if database_table_sample:
+            database_table_sample.database_table_id=table_return.id
+            self._process_sample(database_table_sample)
+

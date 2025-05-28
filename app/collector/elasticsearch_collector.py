@@ -21,6 +21,63 @@ class ElasticsearchCollector(Collector):
     def __init__(self):
         super().__init__()
 
+        
+    def _process_object(
+        self, database_name : str, idx_name : str,
+        idx_type : TableType, obj : dict
+    ) -> List[DatabaseTableCreateSchema]:
+        """Process the matadata to get the tables objects."""
+        
+        tables : List[DatabaseTableCreateSchema] = []
+        columns : List[TableColumnCreateSchema] = []
+            
+        # Iter all attributes
+        for field, value in obj.items():
+            value_type = None
+            array_type = None
+
+            # If the attribute 'type' exists, use it to determine the attribute's type.
+            if 'type' in value:
+                value_type = value['type']
+                
+                # If the type is 'nested', it is an array of objects
+                if value_type == 'nested':
+                    array_type = "object"
+            else:
+                # If the 'type' attribute is missing and the 'properties' attribute exists, it is an object.
+                if 'properties' in value:
+                    value_type = "object"
+
+            # If the 'properties' attribute exists, it is an object, so process the object recursively.
+            if 'properties' in value:
+                tables += self._process_object(database_name, f"{idx_name}.{field}", TableType.LOCAL, value["properties"])
+
+            # Get the types
+            data_type_str = SQLTYPES_DICT[value_type.upper()]
+            array_data_type_str = SQLTYPES_DICT[array_type.upper()] if array_type is not None else None 
+            
+            # Create the column object
+            columns.append(
+                            TableColumnCreateSchema(
+                                name=field,
+                                display_name=field,
+                                data_type=data_type_str,
+                                array_data_type = array_data_type_str
+                            )
+                    )
+
+        # Create the table object
+        tables.append( DatabaseTableCreateSchema(
+                            name=idx_name,
+                            display_name=idx_name,
+                            fully_qualified_name=f"{database_name}.{idx_name}",
+                            database_id=DEFAULT_UUID,
+                            columns=columns,
+                            type=idx_type
+                       )
+        )
+        return tables
+
     def get_tables(
         self, database_name: str, schema_name: str
     ) -> List[DatabaseTableCreateSchema]:
@@ -29,6 +86,8 @@ class ElasticsearchCollector(Collector):
         params = self.connection_info
         if params is None:
             raise ValueError("Connection parameters are not set.")
+            
+        # Connect to Elasticsearch
         es = Elasticsearch(
             params.host,
             port=params.port,
@@ -36,81 +95,66 @@ class ElasticsearchCollector(Collector):
             http_compress=True,
         )
 
+        # Get all index
         dict_es = es.indices.get("*")
-        dict_es_keys = dict_es.keys()
 
-        tables = []
-        for idx in dict_es_keys:
-            if "properties" in  dict_es[idx]["mappings"]:
-                idx_fields = dict_es[idx]["mappings"]["properties"]
+        tables : List[DatabaseTableCreateSchema] = []
+        
+        # Iter all index
+        for idx, value in dict_es.items():
+            if "properties" in value["mappings"]:
+                
+                # Process the data
+                tables += self._process_object(database_name, idx, TableType.REGULAR, value["mappings"]["properties"])
 
-                columns: typing.List[TableColumnCreateSchema] = []
-                for field in idx_fields.keys():
-                    data_type_str = SQLTYPES_DICT[
-                        idx_fields[field]["type"].upper()
-                    ]
-                    columns.append(
-                            TableColumnCreateSchema(
-                                name=field,
-                                display_name=field,
-                                data_type=DataType[data_type_str]
-                            )
-                    )
-                name = idx
-                database_table = DatabaseTableCreateSchema(
-                            name=name,
-                            display_name=name,
-                            fully_qualified_name=f"{database_name}.{name}",
-                            database_id=DEFAULT_UUID,
-                            columns=columns,
-                            type=TableType.REGULAR
-                        )
-                tables.append(database_table)
-
+        # Close Connection
         es.close()
 
-        return tables
+        return tables 
 
     def get_samples(self, database_name: str,
-                    schema_name: str, table_name: str
+                    schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
 
-        params = self.connection_info
-        if params is None:
-            raise ValueError("Connection parameters are not set.")
+        if table.type != TableType.LOCAL:
+            params = self.connection_info
+            if params is None:
+                raise ValueError("Connection parameters are not set.")
 
-        es = Elasticsearch(
-            params.host,
-            port=params.port,
-            http_auth=(params.user_name, params.password),
-            http_compress=True,
-        )
-        
-        index_name = table_name
+            es = Elasticsearch(
+                params.host,
+                port=params.port,
+                http_auth=(params.user_name, params.password),
+                http_compress=True,
+            )
 
-        # Perform the search for the top 10 documents
-        response = es.search(
-            index=index_name,
-            body={
-                "size": 10,
-                "query": {
-                    "match_all": {}
+            index_name = table.name
+
+            # Perform the search for the top 10 documents
+            response = es.search(
+                index=index_name,
+                body={
+                    "size": 10,
+                    "query": {
+                        "match_all": {}
+                    }
                 }
-            }
-        )
+            )
 
-        # Get the documents
-        content = [hit["_source"] for hit in response["hits"]["hits"]]        
+            # Get the documents
+            content = [hit["_source"] for hit in response["hits"]["hits"]]        
 
-        es.close()
+            es.close()
 
-        return DatabaseTableSampleCreateSchema(
-                                date=datetime.now(),
-                                content=content,
-                                is_visible=True,
-                                database_table_id=DEFAULT_UUID,
-        )
+            return DatabaseTableSampleCreateSchema(
+                                    date=datetime.now(),
+                                    content=content,
+                                    is_visible=True,
+                                    database_table_id=DEFAULT_UUID,
+            )
+        else:
+            return None
     
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""
