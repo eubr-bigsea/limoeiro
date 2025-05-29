@@ -5,9 +5,9 @@ from typing import Annotated, Optional, TypeVar, Generic, List
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
+from .models import SchedulingType
 from .models import TableType
 from .models import DataType
-from .models import SchedulingType
 
 M = TypeVar("M")
 
@@ -1296,11 +1296,20 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
-    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: int = Field(default=5, description="Max retries")
+    collect_sample: bool = Field(
+        default=False,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: bool = Field(
+        default=False, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: UUID
@@ -1348,11 +1357,20 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
-    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
+    collect_sample: Optional[bool] = Field(
+        default=None,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: Optional[bool] = Field(
+        default=None, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: Optional[UUID] = Field(default=None)
@@ -1401,11 +1419,20 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
-    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: int = Field(default=5, description="Max retries")
+    collect_sample: bool = Field(
+        default=False,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: bool = Field(
+        default=False, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: UUID
@@ -1454,11 +1481,20 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
-    scheduling_type: SchedulingType = Field(default=SchedulingType.MANUAL, description="Tipo de Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
+    collect_sample: Optional[bool] = Field(
+        default=None,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: Optional[bool] = Field(
+        default=None, description="Aplicar análise semântica nas colunas"
+    )
 
     # Extra fields
     provider_id: Optional[UUID] = Field(default=None)  # type: ignore

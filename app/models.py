@@ -850,6 +850,10 @@ class DatabaseProviderIngestion(Base):
     )
     recent_runs_statuses = mapped_column(String(100))
     retries = mapped_column(Integer, default=5, nullable=False)
+    collect_sample = mapped_column(Boolean, default=False, nullable=False)
+    apply_semantic_analysis = mapped_column(
+        Boolean, default=False, nullable=False
+    )
 
     # Associations
     provider_id = mapped_column(
