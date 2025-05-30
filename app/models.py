@@ -1119,7 +1119,7 @@ class DatabaseTableSample(Base):
         autoincrement=False,
         default=uuid.uuid4,
     )
-    sample_date = mapped_column(DateTime, nullable=False)
+    date = mapped_column(DateTime, nullable=False)
     content = mapped_column(JSON, nullable=False)
     is_visible = mapped_column(Boolean, default=True, nullable=False)
 

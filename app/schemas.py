@@ -1,7 +1,7 @@
 import typing
 from datetime import datetime, timezone
 from uuid import UUID
-from typing import Annotated, Optional, TypeVar, Generic, List
+from typing import Annotated, Optional, TypeVar, Generic, List, Dict
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
@@ -1967,8 +1967,8 @@ class DatabaseTableSampleBaseModel(BaseModel): ...
 class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    date: datetime = Field(description="Data e hora da amostra")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )
@@ -1982,10 +1982,10 @@ class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
 class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     """Optional model for serialization of updating objects"""
 
-    sample_date: Optional[datetime] = Field(
+    date: Optional[datetime] = Field(
         default=None, description="Data e hora da amostra"
     )
-    content: Optional[str] = Field(
+    content: List[Dict] = Field(
         default=None, description="Conteúdo da amostra (JSON)."
     )
     is_visible: Optional[bool] = Field(
@@ -2002,20 +2002,19 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: UUID
-    sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    date: datetime = Field(description="Data e hora da amostra")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    sample_date: Optional[datetime] = Field(
+    date: Optional[datetime] = Field(
         default=None, description="Data e hora da amostra"
     )
     is_visible: Optional[bool] = Field(

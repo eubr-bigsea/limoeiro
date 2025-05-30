@@ -2,7 +2,7 @@ import logging
 import math
 import typing
 from uuid import UUID
-from sqlalchemy import asc, desc, and_, func
+from sqlalchemy import ColumnElement, asc, desc, and_, func
 
 import app.exceptions as ex
 from ..utils.decorators import handle_db_exceptions
@@ -67,7 +67,8 @@ class DatabaseTableSampleService(BaseService):
         Returns:
             DatabaseTableSample: Deleted instance if found or None
         """
-        database_table_sample = await self._get(database_table_sample_id)
+        filter_condition = DatabaseTableSample.id == database_table_sample_id
+        database_table_sample = await self._get(filter_condition)
         if database_table_sample:
             await self.session.delete(database_table_sample)
             await self.session.flush()
@@ -93,7 +94,8 @@ class DatabaseTableSampleService(BaseService):
             DatabaseTableSample: The updated instance if found, None otheriwse
 
         """
-        database_table_sample = await self._get(database_table_sample_id)
+        filter_condition = DatabaseTableSample.id == database_table_sample_id
+        database_table_sample = await self._get(filter_condition)
         if not database_table_sample:
             raise ex.EntityNotFoundException(
                 "DatabaseTableSample", database_table_sample_id
@@ -183,7 +185,8 @@ class DatabaseTableSampleService(BaseService):
         Returns:
             DatabaseTableSample: Found instance or None
         """
-        database_table_sample = await self._get(database_table_sample_id)
+        filter_condition = DatabaseTableSample.id == database_table_sample_id
+        database_table_sample = await self._get(filter_condition)
         if database_table_sample:
             return DatabaseTableSampleItemSchema.model_validate(
                 database_table_sample
@@ -195,13 +198,39 @@ class DatabaseTableSampleService(BaseService):
         else:
             return None
 
+
+    @handle_db_exceptions("Failed to retrieve {}", status_code=404)
+    async def get_by_table_id(
+        self, database_table_id: UUID, silent=False
+    ) -> typing.Optional[DatabaseTableSampleItemSchema]:
+        """
+        Retrieve a DatabaseTableSample instance by DatabaseTable id.
+        Args:
+            database_table_id: The ID of the DatabaseTable that contains this sample.
+        Returns:
+            DatabaseTableSample: Found instance or None
+        """
+        filter_condition = DatabaseTableSample.database_table_id == database_table_id
+        database_table_sample = await self._get(filter_condition)
+        if database_table_sample:
+            return DatabaseTableSampleItemSchema.model_validate(
+                database_table_sample
+            )
+        elif not silent:
+            raise ex.EntityNotFoundException(
+                "DatabaseTableSample linked to DatabaseTable", database_table_id
+            )
+        else:
+            return None
+
+
     async def _get(
-        self, database_table_sample_id: UUID
+        self, filter_condition: ColumnElement[bool]
     ) -> typing.Optional[DatabaseTableSample]:
-        filter_condition = DatabaseTableSample.id == database_table_sample_id
         result = await self.session.execute(
             select(DatabaseTableSample)
             .options(selectinload(DatabaseTableSample.database_table))
             .filter(filter_condition)
         )
         return result.scalars().first()
+

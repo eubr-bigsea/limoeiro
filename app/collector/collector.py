@@ -8,6 +8,7 @@ from app.schemas import (
     DatabaseProviderIngestionItemSchema,
     DatabaseSchemaCreateSchema,
     DatabaseTableCreateSchema,
+    DatabaseTableSampleCreateSchema,
 )
 
 
@@ -52,6 +53,13 @@ class Collector(ABC):
         """Return all tables in a database provider."""
         pass
 
+    @abstractmethod
+    def get_samples(self, database_name: str,
+                    schema_name: str, table: DatabaseTableCreateSchema
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
+        pass
+    
     @abstractmethod
     def _get_table_fqn_elements(
         self, provider_name, database_name, schema_name, table_name
