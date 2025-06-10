@@ -111,9 +111,6 @@ class DataCollectionEngine:
         provider: DatabaseProviderItemSchema,
     ):
         """Process the object database."""
-        # fqn_elements = collector._get_database_fqn_elements(
-        #     provider.name, database_name
-        # )
         fqn = self._format_fqn("Database", [provider.name, database.name])
 
         database.fully_qualified_name = fqn
@@ -252,10 +249,11 @@ class DataCollectionEngine:
                         table_list = collector.get_tables(db_name, schema_name)
                         
                         for table in table_list:
-                            self._handle_table_samples(table,
+                            self._pre_process_table(table,
                                                   database,
                                                   collector,
                                                   provider,
+                                                  ingestion,  
                                                   schema
                                                   )
                             
@@ -275,7 +273,8 @@ class DataCollectionEngine:
                             table,
                             ignored_tbs,
                             valid_tbs,
-                            collector
+                            collector,
+                            ingestion
                         )
                     # Handle tables not found in database, but in metadata
                     db_client = DatabaseTableApiClient()
@@ -323,7 +322,6 @@ class DataCollectionEngine:
             )
 
     def _get_semantic_type(self, sample:typing.List) -> str:
-        return "API_FAILED"
         sample_serialized = []
         for s in sample:
             if isinstance(s, uuid.UUID):
@@ -355,7 +353,8 @@ class DataCollectionEngine:
         table,
         ignored_tbs,
         valid_tbs,
-        collector
+        collector,
+        ingestion
     ):
         tb_name = table.name
         # Test if tb_name must be excluded from processing (ignored)
@@ -370,42 +369,54 @@ class DataCollectionEngine:
         else:
             # Process the object table.
             table.database_id = database.id
-            self._handle_table_samples(table,
+            self._pre_process_table(table,
                                        database,
                                        collector,
-                                       provider
+                                       provider,
+                                       ingestion
                                        )
             valid_tbs.append(tb_name)
 
-    def _handle_table_samples(self,
+    def _pre_process_table(self,
                               table:DatabaseTableCreateSchema,
                               database:DatabaseItemSchema,
                               collector:Collector,
                               provider:DatabaseProviderItemSchema,
+                              ingestion: DatabaseProviderIngestionItemSchema,
                               schema:DatabaseSchemaItemSchema=None
                               ):
         # Process the object table.
         table.database_id = database.id
         # table.database_schema_id = schema.id #FIXME
 
-        database_table_sample = collector.get_samples(database.name,
-                                                        schema.name if schema else database.name,
-                                                        table)
-        
-        if database_table_sample and (len(database_table_sample.content) > 0):
-        # structure the income sample to {column:list}
-            #structured_sample = {c:[] for c in database_table_sample.content[0].keys()}
-            structured_sample = defaultdict(list)
-            for sample in database_table_sample.content:
-                for column in sample.keys():
-                    structured_sample[column].append(sample[column])
-                    
-            for column in table.columns:
+        database_table_sample = None
+        # check if the parameter to collect the sample was checked
+        if ingestion.collect_sample:
+            
+            # Collect the samples
+            database_table_sample = collector.get_samples(database.name,
+                                                            schema.name if schema else database.name,
+                                                            table)
 
-                sample = structured_sample[column.name]
-                if sample and (len(sample)>0):
-                    semantic_type = self._get_semantic_type(sample)
-                    column.semantic_type = semantic_type
+            # check if the parameter to apply semantic analysis was checked
+            if ingestion.apply_semantic_analysis:
+
+                # check if the there are samples
+                if database_table_sample and (len(database_table_sample.content) > 0):
+                    
+                    # Format samples to infer the semantic values
+                    structured_sample = defaultdict(list)
+                    for sample in database_table_sample.content:
+                        for column in sample.keys():
+                            structured_sample[column].append(sample[column])
+
+                    # For each column, get it's semantic value
+                    for column in table.columns:
+                        sample = structured_sample[column.name]
+                        if sample and (len(sample)>0):
+                            # Get it's semantic value
+                            semantic_type = self._get_semantic_type(sample)
+                            column.semantic_type = semantic_type
         
         table_return = self._process_table(
                                             table,

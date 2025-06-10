@@ -209,25 +209,6 @@ class SqlAlchemyCollector(Collector):
     def _get_ignorable_schemas(self) -> typing.List[str]:
         return ["information_schema"]
 
-    # FIXME: Review
-    def _get_schema_fqn_elements(
-        self, provider_name, database_name, schema_name
-    ) -> List[str]:
-        """Return the elements of the schema fqn."""
-        return []
-
-    def _get_table_fqn_elements(
-        self, provider_name, database_name, schema_name, table_name
-    ) -> List[str]:
-        """Return the elements of the table fqn."""
-        return []
-
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        return []
-
     def get_schemas(
         self, database_name: typing.Optional[str] = None
     ) -> List[DatabaseSchemaCreateSchema]:

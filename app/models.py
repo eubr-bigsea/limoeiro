@@ -1093,7 +1093,9 @@ class DatabaseTable(Asset):
     database_schema = relationship(
         "DatabaseSchema", foreign_keys=[database_schema_id], lazy="joined"
     )
-    columns = relationship("TableColumn", lazy="joined")
+    columns = relationship("TableColumn",
+                           foreign_keys="[TableColumn.table_id]",
+                           lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "table",
@@ -1242,6 +1244,7 @@ class TableColumn(Base):
     )
     semantic_type = mapped_column(String(200))
     default_value = mapped_column(String(200))
+    search = mapped_column(TSVECTOR)
 
     # Associations
     table_id = mapped_column(
@@ -1258,6 +1261,13 @@ class TableColumn(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
+@event.listens_for(TableColumn, "before_insert", propagate=True)
+@event.listens_for(TableColumn, "before_update", propagate=True)
+def update_search_column(mapper, connection, target: TableColumn):
+    target.search = func.to_tsvector(
+        "portuguese", f"{target.name} {target.description} {target.semantic_type}"
+    )
+    
 class ColumnProfile(Base):
     """Perfil de Coluna"""
 

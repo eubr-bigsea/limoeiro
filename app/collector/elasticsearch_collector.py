@@ -21,21 +21,23 @@ class ElasticsearchCollector(Collector):
     def __init__(self):
         super().__init__()
 
-        
+    def _get_column_name(self, column: str, super_column: str):
+        return f"{super_column}>{column}" if super_column else column
+    
     def _process_object(
-        self, database_name : str, idx_name : str,
-        idx_type : TableType, obj : dict
-    ) -> List[DatabaseTableCreateSchema]:
-        """Process the matadata to get the tables objects."""
+        self, database_name : str,
+        obj : dict, super_column: str = None
+    ) -> List[TableColumnCreateSchema]:
+        """Process the matadata to get the columns objects."""
         
-        tables : List[DatabaseTableCreateSchema] = []
         columns : List[TableColumnCreateSchema] = []
             
         # Iter all attributes
         for field, value in obj.items():
+            column_name = self._get_column_name(field, super_column)
+            
             value_type = None
             array_type = None
-
             # If the attribute 'type' exists, use it to determine the attribute's type.
             if 'type' in value:
                 value_type = value['type']
@@ -50,33 +52,28 @@ class ElasticsearchCollector(Collector):
 
             # If the 'properties' attribute exists, it is an object, so process the object recursively.
             if 'properties' in value:
-                tables += self._process_object(database_name, f"{idx_name}.{field}", TableType.LOCAL, value["properties"])
+
+                
+                columns += self._process_object(database_name,
+                                               value["properties"],
+                                               super_column = column_name)
 
             # Get the types
             data_type_str = SQLTYPES_DICT[value_type.upper()]
             array_data_type_str = SQLTYPES_DICT[array_type.upper()] if array_type is not None else None 
             
             # Create the column object
-            columns.append(
-                            TableColumnCreateSchema(
-                                name=field,
-                                display_name=field,
-                                data_type=data_type_str,
-                                array_data_type = array_data_type_str
-                            )
-                    )
+            table_column_object = TableColumnCreateSchema(
+                            name=column_name,
+                            display_name=column_name,
+                            data_type=data_type_str,
+                            array_data_type = array_data_type_str
+                        )
+            
+            # Add the column object to the column list
+            columns.append(table_column_object)
 
-        # Create the table object
-        tables.append( DatabaseTableCreateSchema(
-                            name=idx_name,
-                            display_name=idx_name,
-                            fully_qualified_name=f"{database_name}.{idx_name}",
-                            database_id=DEFAULT_UUID,
-                            columns=columns,
-                            type=idx_type
-                       )
-        )
-        return tables
+        return columns
 
     def get_tables(
         self, database_name: str, schema_name: str
@@ -105,19 +102,60 @@ class ElasticsearchCollector(Collector):
             if "properties" in value["mappings"]:
                 
                 # Process the data
-                tables += self._process_object(database_name, idx, TableType.REGULAR, value["mappings"]["properties"])
+                columns = self._process_object(database_name, value["mappings"]["properties"])
 
+                # Create the table object
+                table_object = DatabaseTableCreateSchema(
+                                name=idx,
+                                display_name=idx,
+                                fully_qualified_name=f"{database_name}.{idx}",
+                                database_id=DEFAULT_UUID,
+                                columns=columns,
+                                type=TableType.REGULAR
+                           )
+
+
+                # Append the table object to the final list.
+                tables.append(table_object)
+                
         # Close Connection
         es.close()
 
         return tables 
 
+    def _flatten_json(self, obj, super_column: str = None):
+        """Return the flattened json of the samples from a column."""
+
+        result_dict = {}
+        # Iterate the object
+        for key, items in obj.items():
+            column_name = self._get_column_name(key, super_column)
+
+            # If the attribute is an object, process it recursively
+            if isinstance(items, dict):
+                sub_dict = self._flatten_json(items, super_column = column_name)
+                result_dict = result_dict | sub_dict
+
+            # If the attribute is a list
+            elif isinstance(items, list) and len(items) > 0:
+                # If the list type is an object, process it recursively
+                if isinstance(items[0], dict):
+                    sub_dict = self._flatten_json(items[0], super_column = column_name)
+                    result_dict = result_dict | sub_dict
+                else:
+                    result_dict[column_name] = items[0]
+
+            else:
+                result_dict[column_name] = items
+                
+        return result_dict
+    
     def get_samples(self, database_name: str,
                     schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
 
-        if table.type != TableType.LOCAL:
+        if table.type != TableType.INTERNAL:
             params = self.connection_info
             if params is None:
                 raise ValueError("Connection parameters are not set.")
@@ -144,12 +182,13 @@ class ElasticsearchCollector(Collector):
 
             # Get the documents
             content = [hit["_source"] for hit in response["hits"]["hits"]]        
+            flattened_json = [self._flatten_json(obj) for obj in content]
 
             es.close()
 
             return DatabaseTableSampleCreateSchema(
                                     date=datetime.now(),
-                                    content=content,
+                                    content=flattened_json,
                                     is_visible=True,
                                     database_table_id=DEFAULT_UUID,
             )
@@ -173,25 +212,6 @@ class ElasticsearchCollector(Collector):
 
     def supports_database(self) -> bool:
         return False
-
-    # FIXME: Review
-    def _get_schema_fqn_elements(
-        self, provider_name, database_name, schema_name
-    ) -> List[str]:
-        """Return the elements of the schema fqn."""
-        return []
-
-    def _get_table_fqn_elements(
-        self, provider_name, database_name, schema_name, table_name
-    ) -> List[str]:
-        """Return the elements of the table fqn."""
-        return []
-
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        return []
 
     def get_schemas(
         self, database_name: Optional[str] = None

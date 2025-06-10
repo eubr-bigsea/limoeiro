@@ -1087,6 +1087,7 @@ class AssetQuerySchema(BaseQuerySchema):
     )
     tag_ids: Optional[List[UUID]] = Field(default=None, description="Tags")
     query: Optional[str] = Field(default=None, description="Consulta")
+    include_column: Optional[bool] = Field(default=None, description="Quando true, indica que a busca também deve ser feita nas colunas. Padrão: False.")
     ...
 
 
