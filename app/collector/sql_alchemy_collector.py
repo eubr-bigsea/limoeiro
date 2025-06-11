@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import List
 
 import sqlalchemy
-
+from sqlalchemy import ARRAY
 from app.collector import DEFAULT_UUID
 from app.collector.collector import Collector
 from app.collector.utils.constants_utils import SQLTYPES_DICT
@@ -60,10 +60,22 @@ class SqlAlchemyCollector(Collector):
 
     def get_data_type_str(self, column) -> str:
         """Return the data type from a column."""
-        data_type_str = SQLTYPES_DICT[
-                        column.get("type").__class__.__name__.upper()
-                    ]
-        return data_type_str
+        column_type = column.get("type")
+        
+        data_type = SQLTYPES_DICT[
+            column_type.__class__.__name__.upper()
+        ]
+        data_type=DataType[data_type]
+                            
+        
+        array_data_type = None
+        if isinstance(column_type, ARRAY):
+            array_data_type = SQLTYPES_DICT[
+                column.get("type").get("item_type").__class__.__name__.upper()
+            ]
+            array_data_type=DataType[array_data_type]
+        
+        return data_type, array_data_type
 
     # def get_database_names(self) -> List[str]:
     #     """Return all databases in a database provider using SqlAlchemy."""
@@ -114,8 +126,8 @@ class SqlAlchemyCollector(Collector):
                 for i, column in enumerate(
                     inspector.get_columns(name, schema=schema_name)
                 ):
-                    data_type_str = self.get_data_type_str(column)
-                    
+                    data_type, array_data_type = self.get_data_type_str(column)
+
                     columns.append(
                         TableColumnCreateSchema(
                             name=column.get("name"),
@@ -123,7 +135,8 @@ class SqlAlchemyCollector(Collector):
                                 "comment"
                             ),  # FIXME: add notes
                             display_name=column.get("name"),
-                            data_type=DataType[data_type_str],
+                            data_type=data_type,
+                            array_data_type=array_data_type,
                             size=getattr(column.get("type"), "length", None),
                             precision=getattr(
                                 column.get("type"), "precision", None

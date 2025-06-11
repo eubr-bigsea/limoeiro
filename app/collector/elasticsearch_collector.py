@@ -155,45 +155,42 @@ class ElasticsearchCollector(Collector):
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
 
-        if table.type != TableType.INTERNAL:
-            params = self.connection_info
-            if params is None:
-                raise ValueError("Connection parameters are not set.")
+        params = self.connection_info
+        if params is None:
+            raise ValueError("Connection parameters are not set.")
 
-            es = Elasticsearch(
-                params.host,
-                port=params.port,
-                http_auth=(params.user_name, params.password),
-                http_compress=True,
-            )
+        es = Elasticsearch(
+            params.host,
+            port=params.port,
+            http_auth=(params.user_name, params.password),
+            http_compress=True,
+        )
 
-            index_name = table.name
+        index_name = table.name
 
-            # Perform the search for the top 10 documents
-            response = es.search(
-                index=index_name,
-                body={
-                    "size": 10,
-                    "query": {
-                        "match_all": {}
-                    }
+        # Perform the search for the top 10 documents
+        response = es.search(
+            index=index_name,
+            body={
+                "size": 10,
+                "query": {
+                    "match_all": {}
                 }
-            )
+            }
+        )
 
-            # Get the documents
-            content = [hit["_source"] for hit in response["hits"]["hits"]]        
-            flattened_json = [self._flatten_json(obj) for obj in content]
+        # Get the documents
+        content = [hit["_source"] for hit in response["hits"]["hits"]]        
+        flattened_json = [self._flatten_json(obj) for obj in content]
 
-            es.close()
+        es.close()
 
-            return DatabaseTableSampleCreateSchema(
-                                    date=datetime.now(),
-                                    content=flattened_json,
-                                    is_visible=True,
-                                    database_table_id=DEFAULT_UUID,
-            )
-        else:
-            return None
+        return DatabaseTableSampleCreateSchema(
+                                date=datetime.now(),
+                                content=flattened_json,
+                                is_visible=True,
+                                database_table_id=DEFAULT_UUID,
+        )
     
     def get_databases(self) -> List[DatabaseCreateSchema]:
         """Return all databases."""

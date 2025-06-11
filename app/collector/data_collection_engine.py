@@ -148,14 +148,18 @@ class DataCollectionEngine:
         schema: typing.Optional[DatabaseSchemaItemSchema],
     ):
         """Process the object table."""
+        list_values = [
+            provider.name,
+            database.name,
+            schema.name if schema else None,
+            table.name,
+        ]
+        # Remove None values
+        list_values = [item for item in list_values if item is not None]
+
         fqn = self._format_fqn(
             "Table",
-            [
-                provider.name,
-                database.name,
-                schema.name if schema else "",
-                table.name,
-            ],
+            list_values,
         )
         table.fully_qualified_name = fqn
         table.database_id = database.id
