@@ -26,24 +26,10 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        pass
-
-    @abstractmethod
     def get_schemas(
         self, database_name: str
     ) -> List[DatabaseSchemaCreateSchema]:
         """Return all schemas in a database provider."""
-        pass
-
-    @abstractmethod
-    def _get_schema_fqn_elements(
-        self, provider_name, database_name, schema_name
-    ) -> List[str]:
-        """Return the elements of the schema fqn."""
         pass
 
     @abstractmethod
@@ -58,13 +44,6 @@ class Collector(ABC):
                     schema_name: str, table: DatabaseTableCreateSchema
     ) -> DatabaseTableSampleCreateSchema:
         """Return the samples from a column."""
-        pass
-    
-    @abstractmethod
-    def _get_table_fqn_elements(
-        self, provider_name, database_name, schema_name, table_name
-    ) -> List[str]:
-        """Return the elements of the table fqn."""
         pass
 
     def supports_schema(self) -> bool:

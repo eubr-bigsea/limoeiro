@@ -13,6 +13,7 @@ CONNECTION_ROUTE = "connections"
 INGESTION_ROUTE = "ingestions"
 EXECUTION_ROUTE = "executions"
 
+
 SQLTYPES_DICT = {
     "VARBINARY": "BINARY",
     "DATE": "DATE",
@@ -59,8 +60,8 @@ SQLTYPES_DICT = {
     "COMPLETION": "TEXT",
     "STR": "STRING",
     "INT": "INT",
-    "DICT":"TABLE",
-    "OBJECT":"TABLE",
+    "DICT":"JSON",
+    "OBJECT":"JSON",
     "LIST":"ARRAY",
     "NESTED": "ARRAY",
     "BOOL": "BOOLEAN",

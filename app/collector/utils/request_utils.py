@@ -63,9 +63,8 @@ def post_request(route, json_body):
     response = requests.post(
         url, data=json.dumps(clean_json_body, default=custom_serializer)
     )
-    assert response.status_code == 201, response.text
+    assert response.status_code in [200, 201], response.text
     return response.json()
-
 
 def patch_request(route, path, json_body):
     """Method to perform a PATCH request."""

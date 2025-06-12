@@ -95,10 +95,11 @@ class HdfsCollector(Collector):
                         )
                 )
 
+            file_name = file.replace("/", "\\")
             database_table = DatabaseTableCreateSchema(
-                name=file,
-                display_name=file,
-                fully_qualified_name=f"{database_name}.{file}",
+                name=file_name,
+                display_name=file_name,
+                fully_qualified_name=f"{database_name}.{file_name}",
                 database_id=DEFAULT_UUID,
                 columns=columns,
                 type=TableType.REGULAR
@@ -235,25 +236,6 @@ class HdfsCollector(Collector):
 
     def supports_schema(self):
         return False
-
-    # FIXME: Review
-    def _get_schema_fqn_elements(
-        self, provider_name, database_name, schema_name
-    ) -> List[str]:
-        """Return the elements of the schema fqn."""
-        return []
-
-    def _get_table_fqn_elements(
-        self, provider_name, database_name, schema_name, table_name
-    ) -> List[str]:
-        """Return the elements of the table fqn."""
-        return []
-
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        return []
 
     def get_schemas(
         self, database_name: Optional[str] = None
