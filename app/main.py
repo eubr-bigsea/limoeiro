@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+import asyncio
 import asyncpg
 from apscheduler.schedulers.background import (
     BackgroundScheduler,
@@ -14,16 +14,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from pgqueuer import AsyncpgDriver, Queries
-from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
-from app.collector.data_collection_engine import DataCollectionEngine
+from app.collector.data_collection_scheduling_engine import DataCollectionSchedulingEngine
 from app.database import DATABASE_URL
 from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
     a_i_model_router,
     asset_router,
-    collector_router,
     company_router,
     contact_router,
     database_provider_connection_router,
@@ -40,38 +38,29 @@ from app.routers import (
     layer_router,
     permission_router,
     person_router,
-    responsibility_type_router,
     role_router,
+    responsibility_type_router,
     tag_router,
     user_router,
 )
 
 from .routers import domain_router
 from .utils.middlewares import add_middlewares
-import logging
-
-# Configure logger
-logger = logging.getLogger(__name__)
+import urllib.parse
+import os
 
 load_dotenv()
-
-
-# The task to run
-def daily_task():
-    DataCollectionEngine().execute_engine()
-
-
-# Set up the scheduler
-scheduler = BackgroundScheduler()
-trigger = CronTrigger(hour=1, minute=0)
-scheduler.add_job(daily_task, trigger)
-scheduler.start()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage async database connection throughout the app's lifespan."""
-    connection = await asyncpg.connect(dsn=DATABASE_URL.replace("+asyncpg", ""))
+    # encode special characters from the password
+    url_1 = DATABASE_URL.replace("+asyncpg", "").split("@")
+    url_2 = url_1[0].split(":")
+    password = url_2[2]
+    password = urllib.parse.quote(password)
+    dns = url_2[0]+":"+url_2[1]+":"+password+"@"+url_1[1]
+    connection = await asyncpg.connect(dsn=dns)
     app.extra["pgq_queries"] = Queries(AsyncpgDriver(connection))  # type: ignore
     try:
         yield
@@ -168,23 +157,35 @@ async def not_found_exception_handler(
     return JSONResponse(status_code=404, content={"error": detail})
 
 
-#@app.exception_handler(RequestValidationError)
-@app.exception_handler(ValidationError)
+@app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ):
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
-    logger.error(request, exc_str)
+    # logger.error(request, exc_str)
     content = {"status_code": 10422, "message": exc_str, "data": None}
     return JSONResponse(
         content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
     )
 
+ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
+
+# The task to run
+def daily_task():
+    engine = DataCollectionSchedulingEngine()
+    asyncio.run(engine.execute_engine())
+
+if ENABLE_SCHEDULER == True:
+    # Set up the scheduler
+    scheduler = BackgroundScheduler()
+    trigger = CronTrigger(minute='*')
+    scheduler.add_job(daily_task, trigger)
+    scheduler.start()
+
 
 routers = [
     a_i_model_router.router,
     asset_router.router,
-    collector_router.router,
     company_router.router,
     contact_router.router,
     domain_router.router,
@@ -202,8 +203,8 @@ routers = [
     layer_router.router,
     permission_router.router,
     person_router.router,
-    role_router.router,
     responsibility_type_router.router,
+    role_router.router,
     tag_router.router,
     user_router.router,
 ]

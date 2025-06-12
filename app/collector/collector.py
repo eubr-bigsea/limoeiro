@@ -8,6 +8,7 @@ from app.schemas import (
     DatabaseProviderIngestionItemSchema,
     DatabaseSchemaCreateSchema,
     DatabaseTableCreateSchema,
+    DatabaseTableSampleCreateSchema,
 )
 
 
@@ -25,24 +26,10 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    def _get_database_fqn_elements(
-        self, provider_name, database_name
-    ) -> List[str]:
-        """Return the elements of the database fqn."""
-        pass
-
-    @abstractmethod
     def get_schemas(
         self, database_name: str
     ) -> List[DatabaseSchemaCreateSchema]:
         """Return all schemas in a database provider."""
-        pass
-
-    @abstractmethod
-    def _get_schema_fqn_elements(
-        self, provider_name, database_name, schema_name
-    ) -> List[str]:
-        """Return the elements of the schema fqn."""
         pass
 
     @abstractmethod
@@ -53,15 +40,19 @@ class Collector(ABC):
         pass
 
     @abstractmethod
-    def _get_table_fqn_elements(
-        self, provider_name, database_name, schema_name, table_name
-    ) -> List[str]:
-        """Return the elements of the table fqn."""
+    def get_samples(self, database_name: str,
+                    schema_name: str, table: DatabaseTableCreateSchema
+    ) -> DatabaseTableSampleCreateSchema:
+        """Return the samples from a column."""
         pass
 
     def supports_schema(self) -> bool:
         """ Indicates if the provider supports the concept of schema """
         return False
+    
+    def supports_database(self) -> bool:
+        """ Indicates if the provider supports the concept of database """
+        return True
 
     def get_ignorable_schemas(self) -> typing.Set[str]:
         """ Returns the list of schema names to be ignored. In general, they

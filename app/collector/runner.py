@@ -34,7 +34,7 @@ def main():
     logger.info("Existe(m) %s conexão(ões) configurada(s).", len(connections))
 
     engine = DataCollectionEngine()
-    engine._execute_collection(provider, connections[0], ingestions[0])
+    engine.execute_collection(provider, connections[0], ingestions[0])
 
 
 def execute(execution_id: str):
@@ -61,7 +61,7 @@ def execute(execution_id: str):
         return
 
     engine = DataCollectionEngine()
-    engine._execute_collection(provider, connections[0], ingestion)
+    engine.execute_collection(provider, connections[0], ingestion)
 
 
 if __name__ == "__main__":

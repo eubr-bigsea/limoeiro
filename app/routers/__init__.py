@@ -12,23 +12,23 @@ def get_lookup_filter(
     entity_id: str = Path(
         ...,
         description="Entity identifier - can be either a UUID or an FQN (Fully Qualified Name)",
-        examples=[{
-            "uuid":
-            {
-                "name": "test",
-                "summary": "Using UUID",
-                "description": "Lookup by UUID primary key",
-                "value": "123e4567-e89b-12d3-a456-426614174000",
-            },
-            "fqn":
-            {
+        # examples=[{
+        #     "uuid":
+        #     {
+        #         "name": "test",
+        #         "summary": "Using UUID",
+        #         "description": "Lookup by UUID primary key",
+        #         "value": "123e4567-e89b-12d3-a456-426614174000",
+        #     },
+        #     "fqn":
+        #     {
 
-                "name": "test2",
-                "summary": "Using FQN",
-                "description": "Lookup by Fully Qualified Name",
-                "value": "my.entity.name",
-            },
-        }]
+        #         "name": "test2",
+        #         "summary": "Using FQN",
+        #         "description": "Lookup by Fully Qualified Name",
+        #         "value": "my.entity.name",
+        #     },
+        # }]
     ),
 ):
     # Same implementation as before

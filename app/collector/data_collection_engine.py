@@ -1,7 +1,12 @@
 import datetime
+import os
 import re
 import typing
+import uuid
+import requests
+from collections import defaultdict
 
+from app.collector.collector import Collector
 import app.collector.utils.constants_utils as constants
 from app.collector.collector_factory import CollectorFactory
 from app.collector.data_collection_diff_checker import DataCollectionDiffChecker
@@ -10,6 +15,7 @@ from app.collector.utils.api_client import (
     AssetApiClient,
     DatabaseApiClient,
     DatabaseTableApiClient,
+    DatabaseProviderApiClient,
 )
 from app.collector.utils.cron_utils import check_if_cron_is_today
 from app.collector.utils.request_utils import (
@@ -17,6 +23,7 @@ from app.collector.utils.request_utils import (
     options_request,
     patch_request,
     post_request,
+    custom_serializer,
 )
 from app.schemas import (
     DatabaseCreateSchema,
@@ -27,6 +34,9 @@ from app.schemas import (
     DatabaseSchemaCreateSchema,
     DatabaseSchemaItemSchema,
     DatabaseTableCreateSchema,
+    DatabaseTableItemSchema,
+    DatabaseTableSampleCreateSchema,
+    DatabaseTableSampleItemSchema,
 )
 
 FQN_PREFIXES = {
@@ -50,6 +60,20 @@ class DataCollectionEngine:
             f.lower().replace(" ", "_").replace(".", "-") for f in list_values
         ]
         return f"{FQN_PREFIXES[asset_type]}." + ".".join(fully_qualified_name)
+
+    def _process_sample(self, 
+                        database_table_sample: DatabaseTableSampleCreateSchema):
+        response_code, response = get_request(constants.SAMPLE_ROUTE,f"table/{database_table_sample.database_table_id}")
+
+        if response_code == 404:
+            return post_request(constants.SAMPLE_ROUTE, database_table_sample.model_dump()) 
+        elif response_code == 200:
+            response = DatabaseTableSampleItemSchema.model_validate(response)
+            return patch_request(
+                constants.SAMPLE_ROUTE, str(response.id), database_table_sample.model_dump()
+            )
+        else:
+            raise Exception(f"Invalid status {response_code}")
 
     def _process_object(
         self,
@@ -87,9 +111,6 @@ class DataCollectionEngine:
         provider: DatabaseProviderItemSchema,
     ):
         """Process the object database."""
-        # fqn_elements = collector._get_database_fqn_elements(
-        #     provider.name, database_name
-        # )
         fqn = self._format_fqn("Database", [provider.name, database.name])
 
         database.fully_qualified_name = fqn
@@ -127,14 +148,18 @@ class DataCollectionEngine:
         schema: typing.Optional[DatabaseSchemaItemSchema],
     ):
         """Process the object table."""
+        list_values = [
+            provider.name,
+            database.name,
+            schema.name if schema else None,
+            table.name,
+        ]
+        # Remove None values
+        list_values = [item for item in list_values if item is not None]
+
         fqn = self._format_fqn(
             "Table",
-            [
-                provider.name,
-                database.name,
-                schema.name if schema else "",
-                table.name,
-            ],
+            list_values,
         )
         table.fully_qualified_name = fqn
         table.database_id = database.id
@@ -142,17 +167,9 @@ class DataCollectionEngine:
             table.database_schema_id = schema.id
 
         self.log.log_obj_collecting("table", table.name)
-        return self._process_object(constants.TABLE_ROUTE, fqn, table)
+        return DatabaseTableItemSchema.model_validate(self._process_object(constants.TABLE_ROUTE, fqn, table))
 
-    def _get_ingestions(self, page):
-        """Load the database provider ingestions."""
-        dict_param = {"page": page, "page_size": 20}
-        _, result = get_request(
-            constants.INGESTION_ROUTE, None, params=dict_param
-        )
-        return result["items"], result["page"], result["page_count"]
-
-    def _execute_collection(
+    def execute_collection(
         self,
         provider: DatabaseProviderItemSchema,
         connection: DatabaseProviderConnectionItemSchema,
@@ -164,10 +181,8 @@ class DataCollectionEngine:
         collector = CollectorFactory.create_collector(
             provider, ingestion, connection
         )
-
         # Get the databases of the database provider.
         database_list = collector.get_databases()
-
         include_db_re = (
             re.compile(ingestion.include_database)
             if ingestion.include_database
@@ -188,21 +203,22 @@ class DataCollectionEngine:
             if ingestion.exclude_table
             else None
         )
-
         # Iterate all databases.
         ignored_dbs = []
         valid_dbs = []
         for db in database_list:
             db_name = db.name
-            # Test if db_name must be excluded from processing (ignored)
-            must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
-
-            # Test if db_name must be processed
-            must_db = bool(include_db_re and include_db_re.match(db_name))
-
-            # If both flags, item is explicitly ignored
-            ignore_db = not must_db or must_not_db
-
+            if collector.supports_database():
+                # Test if db_name must be excluded from processing (ignored)
+                must_not_db = bool(exclude_db_re and exclude_db_re.match(db_name))
+                # Test if db_name must be processed
+                must_db = bool(include_db_re and include_db_re.match(db_name))
+                # If both flags, item is explicitly ignored
+                ignore_db = not must_db or must_not_db
+            else:
+                ignore_db = False
+                must_db   = True
+                
             if ignore_db:
                 ignored_dbs.append(db_name)
             elif must_db:
@@ -227,30 +243,31 @@ class DataCollectionEngine:
                         #     database_id=database.id,
                         #     fully_qualified_name="placeholder",
                         # )
+
                         # Process the object schema
                         schema = self._process_schema(
                             schema, provider, database
                         )
+
                         # Get the tables of the schema.
                         table_list = collector.get_tables(db_name, schema_name)
-
-                        # Iterate all tables.
+                        
                         for table in table_list:
-                            # Process the object table.
-                            table.database_id = database.id
-                            # table.database_schema_id = schema.id #FIXME
-                            self._process_table(
-                                table,
-                                provider,
-                                database,
-                                schema,
-                            )
+                            self._pre_process_table(table,
+                                                  database,
+                                                  collector,
+                                                  provider,
+                                                  ingestion,  
+                                                  schema
+                                                  )
+                            
+
                 else:
                     ignored_tbs = []
                     valid_tbs = []
                     # Get the tables of the schema.
                     table_list = collector.get_tables(db_name, db_name)
-
+                    
                     for table in table_list:
                         self._update_table(
                             provider,
@@ -260,6 +277,8 @@ class DataCollectionEngine:
                             table,
                             ignored_tbs,
                             valid_tbs,
+                            collector,
+                            ingestion
                         )
                     # Handle tables not found in database, but in metadata
                     db_client = DatabaseTableApiClient()
@@ -279,6 +298,7 @@ class DataCollectionEngine:
                     AssetApiClient.disable_many(tb_to_disable)
 
                     if ignored_tbs:
+                        
                         self.log.log.info(
                             "Table(s) ignored by the rules: [%s]",
                             ", ".join(ignored_tbs),
@@ -305,6 +325,29 @@ class DataCollectionEngine:
                 "Database(s) ignored by the rules: [%s]", ", ".join(ignored_dbs)
             )
 
+    def _get_semantic_type(self, sample:typing.List) -> str:
+        sample_serialized = []
+        for s in sample:
+            if isinstance(s, uuid.UUID):
+                sample_serialized.append(str(s))
+            elif isinstance(s, datetime.datetime):
+                sample_serialized.append(s.isoformat())
+            else:
+                sample_serialized.append(str(s))
+
+        api_url = os.environ["SEMANTIC_API_URL"]
+        url = api_url.rstrip("/") + "/" + "classificar-valores/"
+        response = requests.post(
+            url, json=sample_serialized
+        )
+        
+        if response.status_code == 200:
+            return response.text.replace("\"", "") 
+        else:
+            return "API_FAILED"
+        
+
+
     def _update_table(
         self,
         provider,
@@ -314,6 +357,8 @@ class DataCollectionEngine:
         table,
         ignored_tbs,
         valid_tbs,
+        collector,
+        ingestion
     ):
         tb_name = table.name
         # Test if tb_name must be excluded from processing (ignored)
@@ -328,31 +373,63 @@ class DataCollectionEngine:
         else:
             # Process the object table.
             table.database_id = database.id
-            self._process_table(table, provider, database, None)
+            self._pre_process_table(table,
+                                       database,
+                                       collector,
+                                       provider,
+                                       ingestion
+                                       )
             valid_tbs.append(tb_name)
 
-    def execute_engine(self):
-        """Execute the collection data engine."""
-        current_page = 0
-        page_count = None
+    def _pre_process_table(self,
+                              table:DatabaseTableCreateSchema,
+                              database:DatabaseItemSchema,
+                              collector:Collector,
+                              provider:DatabaseProviderItemSchema,
+                              ingestion: DatabaseProviderIngestionItemSchema,
+                              schema:DatabaseSchemaItemSchema=None
+                              ):
+        # Process the object table.
+        table.database_id = database.id
+        # table.database_schema_id = schema.id #FIXME
 
-        # Iter until last page.
-        while current_page != page_count:
-            """ Get all database providers with pagination. """
-            current_page += 1
-            ingestions, _, page_count = self._get_ingestions(current_page)
+        database_table_sample = None
+        # check if the parameter to collect the sample was checked
+        if ingestion.collect_sample:
+            
+            # Collect the samples
+            database_table_sample = collector.get_samples(database.name,
+                                                            schema.name if schema else database.name,
+                                                            table)
 
-            # Iterate the database providers.
-            for i in ingestions:
-                cron_expression = None
-                if ("scheduling" in i) and ("expression" in i["scheduling"]):
-                    cron_expression = i["scheduling"]["expression"]
+            # check if the parameter to apply semantic analysis was checked
+            if ingestion.apply_semantic_analysis:
 
-                # Check if the cron expression should be executed today.
-                if cron_expression is not None and check_if_cron_is_today(
-                    cron_expression
-                ):
-                    self._execute_collection(ingestion)
-                else:
-                    # If not, skip to the next iteration.
-                    self.log.log_provider_skipped(i["display_name"])
+                # check if the there are samples
+                if database_table_sample and (len(database_table_sample.content) > 0):
+                    
+                    # Format samples to infer the semantic values
+                    structured_sample = defaultdict(list)
+                    for sample in database_table_sample.content:
+                        for column in sample.keys():
+                            structured_sample[column].append(sample[column])
+
+                    # For each column, get it's semantic value
+                    for column in table.columns:
+                        sample = structured_sample[column.name]
+                        if sample and (len(sample)>0):
+                            # Get it's semantic value
+                            semantic_type = self._get_semantic_type(sample)
+                            column.semantic_type = semantic_type
+        
+        table_return = self._process_table(
+                                            table,
+                                            provider,
+                                            database,
+                                            schema,
+                                        )
+        
+        if database_table_sample:
+            database_table_sample.database_table_id=table_return.id
+            self._process_sample(database_table_sample)
+

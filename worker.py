@@ -1,6 +1,6 @@
 import json
 import os
-
+import asyncio
 import asyncpg
 from fastapi import Request
 from pgqueuer import PgQueuer, Queries
@@ -16,11 +16,8 @@ from app.models import (
     DatabaseProviderIngestionExecution,
     DatabaseProviderIngestionLog,
 )
-
-
-def get_pgq_queries(request: Request) -> Queries:
-    """Retrieve Queries instance from FastAPI app context."""
-    return request.app.extra["pgq_queries"]
+from dotenv import load_dotenv
+load_dotenv()
 
 
 async def main() -> PgQueuer:
@@ -80,4 +77,9 @@ async def main() -> PgQueuer:
                 await session.commit()
         # raise ValueError("Simulated error")
 
-    return pgq
+    await pgq.run()
+    
+if __name__ == "__main__":
+    ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
+    if ENABLE_SCHEDULER == True:
+        asyncio.run(main())

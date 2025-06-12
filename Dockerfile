@@ -1,7 +1,8 @@
 FROM python:3.11-slim
 
 RUN apt-get update && apt-get install -y \
-    libsasl2-dev libsasl2-modules gettext && \
+    libsasl2-dev libsasl2-modules gettext && apt-get install -y vim   && \
+    apt-get install -y libpq-dev gcc && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user

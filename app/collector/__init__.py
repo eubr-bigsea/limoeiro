@@ -13,6 +13,8 @@ class DatabaseProviderTypeDisplayName(str, enum.Enum):
     MYSQL = "MYSQL"
     SQLSERVER = "SQLSERVER"
     ORACLE = "ORACLE"
+    MONGODB = "MONGODB"
+    HDFS = "HDFS"
 
     @classmethod
     def values(cls):

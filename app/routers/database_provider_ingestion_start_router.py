@@ -6,16 +6,18 @@ from fastapi import APIRouter, Depends, Path, Response
 
 from app.database import get_session
 from app.models import DatabaseProviderIngestionExecution
-from app.worker import get_pgq_queries
 from app.schemas import (
     DatabaseProviderIngestionExecutionItemSchema,
     DatabaseProviderIngestionItemSchema,
 )
 from pgqueuer import Queries
-
+from fastapi import Request
 
 router = APIRouter()
 
+def get_pgq_queries(request: Request) -> Queries:
+    """Retrieve Queries instance from FastAPI app context."""
+    return request.app.extra["pgq_queries"]
 
 @router.post(
     "/ingestions/start/{database_provider_ingestion_id}",

@@ -155,6 +155,15 @@ class DataType(str, enum.Enum):
         return [item.value for item in DataType]
 
 
+class SchedulingType(str, enum.Enum):
+    MANUAL = "MANUAL"
+    CRON = "CRON"
+
+    @staticmethod
+    def values():
+        return [item.value for item in SchedulingType]
+
+
 # Association Table for Many-to-Many Relationship
 role_permission = Table(
     "tb_role_permission",
@@ -258,7 +267,7 @@ class Role(Base):
         default=uuid.uuid4,
     )
     name = mapped_column(String(100), nullable=False)
-    description = mapped_column(String(100))
+    description = mapped_column(String(250))
     all_user = mapped_column(Boolean, default=False, nullable=False)
     system = mapped_column(Boolean, default=False, nullable=False)
     deleted = mapped_column(Boolean, default=False, nullable=False)
@@ -835,9 +844,16 @@ class DatabaseProviderIngestion(Base):
     exclude_table = mapped_column(String(1000))
     include_view = mapped_column(Boolean, default=False, nullable=False)
     override_mode = mapped_column(String(200))
-    scheduling = mapped_column(JSON)
+    scheduling = mapped_column(String(200))
+    scheduling_type = mapped_column(
+        Enum(SchedulingType, name="SchedulingTypeEnumType"), default="MANUAL"
+    )
     recent_runs_statuses = mapped_column(String(100))
     retries = mapped_column(Integer, default=5, nullable=False)
+    collect_sample = mapped_column(Boolean, default=False, nullable=False)
+    apply_semantic_analysis = mapped_column(
+        Boolean, default=False, nullable=False
+    )
 
     # Associations
     provider_id = mapped_column(
@@ -1077,7 +1093,9 @@ class DatabaseTable(Asset):
     database_schema = relationship(
         "DatabaseSchema", foreign_keys=[database_schema_id], lazy="joined"
     )
-    columns = relationship("TableColumn", lazy="joined")
+    columns = relationship("TableColumn",
+                           foreign_keys="[TableColumn.table_id]",
+                           lazy="joined")
 
     __mapper_args__ = {
         "polymorphic_identity": "table",
@@ -1103,7 +1121,7 @@ class DatabaseTableSample(Base):
         autoincrement=False,
         default=uuid.uuid4,
     )
-    sample_date = mapped_column(DateTime, nullable=False)
+    date = mapped_column(DateTime, nullable=False)
     content = mapped_column(JSON, nullable=False)
     is_visible = mapped_column(Boolean, default=True, nullable=False)
 
@@ -1226,6 +1244,7 @@ class TableColumn(Base):
     )
     semantic_type = mapped_column(String(200))
     default_value = mapped_column(String(200))
+    search = mapped_column(TSVECTOR)
 
     # Associations
     table_id = mapped_column(
@@ -1242,6 +1261,13 @@ class TableColumn(Base):
         return f"<Instance {self.__class__}: {self.id}>"
 
 
+@event.listens_for(TableColumn, "before_insert", propagate=True)
+@event.listens_for(TableColumn, "before_update", propagate=True)
+def update_search_column(mapper, connection, target: TableColumn):
+    target.search = func.to_tsvector(
+        "portuguese", f"{target.name} {target.description} {target.semantic_type}"
+    )
+    
 class ColumnProfile(Base):
     """Perfil de Coluna"""
 

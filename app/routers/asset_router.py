@@ -4,7 +4,7 @@ import math
 import typing
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path, Query, Path
 from sqlalchemy import and_, asc, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -15,10 +15,10 @@ from app.models import (
     AssetTag,
     Responsibility,
     Tag,
+    TableColumn,
 )
-from app.routers import get_lookup_filter
 from app.utils import remove_accents
-
+from ..routers import get_lookup_filter
 from ..database import get_session
 from fastapi import HTTPException
 from ..schemas import (
@@ -58,15 +58,34 @@ async def find_assets(
         selectinload(Asset.layer),
     )
     filters = []
-    if query_options.query:
-        filters.append(
-            Asset.search.op("@@")(
-                func.to_tsquery(
-                    "portuguese",
-                    remove_accents(query_options.query).replace(" ", " & "),
+    
+    if (query_options.query):
+        
+        if query_options.include_column:
+            subquery = (
+                select(TableColumn.table_id)
+                .where(TableColumn.search.op("@@")(
+                            func.to_tsquery(
+                                "portuguese",
+                                remove_accents(query_options.query).replace(" ", " & "),
+                            )
+                      ))
+            )
+            filters.append(Asset.id.in_(subquery))
+        
+        else:
+            filters.append(
+                Asset.search.op("@@")(
+                    func.to_tsquery(
+                        "portuguese",
+                        remove_accents(query_options.query).replace(" ", " & "),
+                    )
                 )
             )
-        )
+
+
+
+        
         # filters.append(
         #     or_(
         #         *(
@@ -112,6 +131,7 @@ async def find_assets(
     if filters:
         query = query.where(and_(*filters))
 
+        
     if query_options.sort_by and hasattr(Asset, query_options.sort_by):
         order_func = asc if query_options.sort_order != "desc" else desc
         query = query.order_by(order_func(getattr(Asset, query_options.sort_by)))
@@ -173,13 +193,13 @@ async def find_assets(
     tags=["Asset"],
 )
 async def exists(
-    asset_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
+    entity_id: typing.Union[UUID, str] = Depends(get_lookup_filter),
     session: AsyncSession = Depends(get_session),
 ):
     filter_condition = (
-        Asset.id == asset_id
-        if isinstance(asset_id, UUID)
-        else Asset.fully_qualified_name == asset_id
+        Asset.id == entity_id
+        if isinstance(entity_id, UUID)
+        else Asset.fully_qualified_name == entity_id
     )
 
     sql = select(func.count()).select_from(Asset).where(filter_condition)

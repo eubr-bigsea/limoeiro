@@ -1,10 +1,11 @@
 import typing
 from datetime import datetime, timezone
 from uuid import UUID
-from typing import Annotated, Optional, TypeVar, Generic, List
+from typing import Annotated, Optional, TypeVar, Generic, List, Dict
 from pydantic import AfterValidator, BaseModel, Field, ConfigDict, AnyUrl
 
 from .models import LinkType
+from .models import SchedulingType
 from .models import TableType
 from .models import DataType
 
@@ -1086,6 +1087,7 @@ class AssetQuerySchema(BaseQuerySchema):
     )
     tag_ids: Optional[List[UUID]] = Field(default=None, description="Tags")
     query: Optional[str] = Field(default=None, description="Consulta")
+    include_column: Optional[bool] = Field(default=None, description="Quando true, indica que a busca também deve ser feita nas colunas. Padrão: False.")
     ...
 
 
@@ -1295,10 +1297,20 @@ class DatabaseProviderIngestionCreateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: int = Field(default=5, description="Max retries")
+    collect_sample: bool = Field(
+        default=False,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: bool = Field(
+        default=False, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: UUID
@@ -1346,10 +1358,20 @@ class DatabaseProviderIngestionUpdateSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
+    collect_sample: Optional[bool] = Field(
+        default=None,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: Optional[bool] = Field(
+        default=None, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: Optional[UUID] = Field(default=None)
@@ -1398,10 +1420,20 @@ class DatabaseProviderIngestionItemSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: int = Field(default=5, description="Max retries")
+    collect_sample: bool = Field(
+        default=False,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: bool = Field(
+        default=False, description="Aplicar análise semântica nas colunas"
+    )
 
     # Associations
     provider_id: UUID
@@ -1450,10 +1482,23 @@ class DatabaseProviderIngestionListSchema(DatabaseProviderIngestionBaseModel):
         default=None, description="Opção para sobrescrita"
     )
     scheduling: Optional[str] = Field(default=None, description="Agendamento")
+    scheduling_type: Optional[SchedulingType] = Field(
+        default=None, description="Tipo de agendamento"
+    )
     recent_runs_statuses: Optional[str] = Field(
         default=None, description="Status das últimas execuções"
     )
     retries: Optional[int] = Field(default=None, description="Max retries")
+    collect_sample: Optional[bool] = Field(
+        default=None,
+        description="Obter uma amostra durante o processo de ingestão",
+    )
+    apply_semantic_analysis: Optional[bool] = Field(
+        default=None, description="Aplicar análise semântica nas colunas"
+    )
+
+    # Extra fields
+    provider_id: Optional[UUID] = Field(default=None)  # type: ignore
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -1923,8 +1968,8 @@ class DatabaseTableSampleBaseModel(BaseModel): ...
 class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for creating an instance"""
 
-    sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    date: datetime = Field(description="Data e hora da amostra")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )
@@ -1938,10 +1983,10 @@ class DatabaseTableSampleCreateSchema(DatabaseTableSampleBaseModel):
 class DatabaseTableSampleUpdateSchema(DatabaseTableSampleBaseModel):
     """Optional model for serialization of updating objects"""
 
-    sample_date: Optional[datetime] = Field(
+    date: Optional[datetime] = Field(
         default=None, description="Data e hora da amostra"
     )
-    content: Optional[str] = Field(
+    content: List[Dict] = Field(
         default=None, description="Conteúdo da amostra (JSON)."
     )
     is_visible: Optional[bool] = Field(
@@ -1958,20 +2003,19 @@ class DatabaseTableSampleItemSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a single object"""
 
     id: UUID
-    sample_date: datetime = Field(description="Data e hora da amostra")
-    content: str = Field(description="Conteúdo da amostra (JSON).")
+    date: datetime = Field(description="Data e hora da amostra")
+    content: List[Dict] = Field(description="Conteúdo da amostra (JSON).")
     is_visible: bool = Field(
         default=True, description="Amostra pode ser visualizada"
     )
 
     model_config = ConfigDict(from_attributes=True)
 
-
 class DatabaseTableSampleListSchema(DatabaseTableSampleBaseModel):
     """JSON serialization schema for serializing a list of objects"""
 
     id: Optional[UUID] = Field(default=None, description="Identificador")
-    sample_date: Optional[datetime] = Field(
+    date: Optional[datetime] = Field(
         default=None, description="Data e hora da amostra"
     )
     is_visible: Optional[bool] = Field(
