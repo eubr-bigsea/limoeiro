@@ -22,7 +22,6 @@ from app.exceptions import DatabaseException, EntityNotFoundException
 from app.routers import (
     a_i_model_router,
     asset_router,
-    collector_router,
     company_router,
     contact_router,
     database_provider_connection_router,
@@ -173,17 +172,13 @@ ENABLE_SCHEDULER = eval(os.environ["ENABLE_SCHEDULER"])
 
 # The task to run
 def daily_task():
-    pgq_queries = app.extra["pgq_queries"]
     engine = DataCollectionSchedulingEngine()
-    asyncio.run(engine.execute_engine(pgq_queries))
-    
-
-    
+    asyncio.run(engine.execute_engine())
 
 if ENABLE_SCHEDULER == True:
     # Set up the scheduler
     scheduler = BackgroundScheduler()
-    trigger = CronTrigger(hour=1, minute=0)
+    trigger = CronTrigger(minute='*')
     scheduler.add_job(daily_task, trigger)
     scheduler.start()
 
@@ -191,7 +186,6 @@ if ENABLE_SCHEDULER == True:
 routers = [
     a_i_model_router.router,
     asset_router.router,
-    collector_router.router,
     company_router.router,
     contact_router.router,
     domain_router.router,

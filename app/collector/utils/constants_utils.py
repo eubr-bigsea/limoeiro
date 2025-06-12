@@ -13,6 +13,7 @@ CONNECTION_ROUTE = "connections"
 INGESTION_ROUTE = "ingestions"
 EXECUTION_ROUTE = "executions"
 
+
 SQLTYPES_DICT = {
     "VARBINARY": "BINARY",
     "DATE": "DATE",
