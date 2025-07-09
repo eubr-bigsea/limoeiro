@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 class HiveCollector(SqlAlchemyCollector):
     """Class to implement methods, to collect data in HIVE."""
 
+    def __init__(self):
+        super().__init__()
+        self.comment_obj = None
+
     def _get_connection_string(self):
         params = self.connection_info
         if params is not None:
@@ -74,113 +78,19 @@ class HiveCollector(SqlAlchemyCollector):
             )
             for r in result
         ]
+
         
-    def get_tables(
-        self, database_name: str, schema_name: str
-    ) -> List[DatabaseTableCreateSchema]:
-        engine = self.get_connection_engine_for_tables(
-            database_name, schema_name
-        )
-       
-        inspector = sqlalchemy.inspect(engine)
-        tables = []
-        if self.supports_views():
-            view_names = self.get_view_names(schema_name, engine, inspector)
-        else:
-            view_names = []
-            logger.info("Provedor de dados não suporta views")
-        table_names = inspector.get_table_names(schema=schema_name)
-        for item_type, items in zip(
-            ["VIEW", "REGULAR"], [view_names, table_names]
-        ):
-            for name in items:
-                columns: typing.List[TableColumnCreateSchema] = []
-                if self.supports_pk():
-                    primary_keys = inspector.get_pk_constraint(
-                        name, schema=schema_name
-                    ).get("constrained_columns", [])
-                else:
-                    primary_keys = []
-                try:
-                    unique_constraints = inspector.get_unique_constraints(
-                        name, schema=schema_name
-                    )
-                except NotImplementedError:
-                    logger.info(
-                        "Provedor de dados não suporta unique constraint"
-                    )
-                    unique_constraints = []
-
-                unique_columns = [
-                    col
-                    for constraint in unique_constraints
-                    for col in constraint.get("column_names", [])
-                    if len(constraint.get("column_names", [])) == 1
-                ]
-                
-                query = db.text(f"DESCRIBE FORMATTED {name}")
-                with engine.connect() as conn:
-                    result = conn.execute(query).fetchall()
-
-                for i, column in enumerate(
-                    inspector.get_columns(name, schema=schema_name)
-                ):
-                    column["table_name"] = name
-                    column["schema_name"] = schema_name
-                    
-                    data_type, array_data_type = self.get_data_type_str(column)
-                    
-                    columns.append(
-                        TableColumnCreateSchema(
-                            name=column.get("name"),
-                            description= self.get_column_comment(result, column.get("name")),
-                            # FIXME: add notes
-                            display_name=column.get("name"),
-                            data_type=data_type,
-                            array_data_type=array_data_type,
-                            size=getattr(column.get("type"), "length", None),
-                            precision=getattr(
-                                column.get("type"), "precision", None
-                            ),
-                            scale=getattr(column.get("type"), "scale", None),
-                            nullable=column.get("nullable"),
-                            position=i,
-                            primary_key=column.get("name") in primary_keys,
-                            unique=column.get("name") in unique_columns,
-                            default_value=column.get("default"),
-                        )
-                    )
-                   
-                table_comment = self.get_table_comment(result) 
-                
-                if self.supports_schema():
-                    table_fqn = f"{database_name}.{schema_name}.{name}"
-                else:
-                    table_fqn = f"{database_name}.{name}"
-
-                database_table = self.post_process_table(
-                    engine,
-                    DatabaseTableCreateSchema(
-                        name=name,
-                        display_name=name,
-                        fully_qualified_name=table_fqn,
-                        notes=table_comment,
-                        database_id=DEFAULT_UUID,
-                        columns=columns,
-                        type=TableType[item_type],
-                    ),
-                )
-                tables.append(database_table)
-        engine.dispose()
-
-        return tables
-        
-    def get_table_comment(self, result) -> str:
+    def get_table_comment(self) -> str:
         """Return the table comment."""
+        
+        query = db.text(f"DESCRIBE FORMATTED {name}")
+        with engine.connect() as conn:
+            self.comment_obj = conn.execute(query).fetchall()
+
         try:
             in_table_parameters = False
 
-            for row in result:
+            for row in self.comment_obj:
                 
                 if row[0] == 'Table Parameters:':
                     in_table_parameters = True
@@ -195,15 +105,12 @@ class HiveCollector(SqlAlchemyCollector):
             return None
         except Exception as e:
             return None
-        
-        
-    import sqlalchemy as db
 
-    def get_column_comment(self, result, name) -> str:
+    def get_column_comment(self, column, name) -> str:
         """Return the column comment."""
         try:
             in_columns_section = False
-            for row in result:
+            for row in self.comment_obj:
                 if row[0] and row[0].strip().lower() == "# col_name":
                     in_columns_section = True
                     continue
@@ -234,12 +141,6 @@ class HiveCollector(SqlAlchemyCollector):
     def supports_pk(self) -> bool:
         """Return if the database supports primary keys."""
         return False
-
-    def get_data_type_str(self, column) -> str:
-        """Return the data type from a column."""
-        data_type_str = SQLTYPES_DICT[str(column.get("type"))]
-        return data_type_str
-    
     
     def get_data_type_str(self, column) -> str:
         """Return the data type from a column."""
@@ -260,4 +161,3 @@ class HiveCollector(SqlAlchemyCollector):
         return data_type, array_data_type
     
     
-
