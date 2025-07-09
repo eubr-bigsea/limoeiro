@@ -77,6 +77,20 @@ class SqlAlchemyCollector(Collector):
         
         return data_type, array_data_type
 
+
+    def get_table_comment (self, name, schema_name):
+        try:
+            table_comment = inspector.get_table_comment(
+                name, schema=schema_name
+            ).get("text")
+        except NotImplementedError:
+            table_comment = None
+
+        return table_comment
+
+    def get_column_comment (self, column, name):
+        return column.get("comment")
+
     # def get_database_names(self) -> List[str]:
     #     """Return all databases in a database provider using SqlAlchemy."""
     #     return self.get_schema_names("")
@@ -99,6 +113,8 @@ class SqlAlchemyCollector(Collector):
             ["VIEW", "REGULAR"], [view_names, table_names]
         ):
             for name in items:
+                
+                
                 columns: typing.List[TableColumnCreateSchema] = []
                 if self.supports_pk():
                     primary_keys = inspector.get_pk_constraint(
@@ -123,17 +139,21 @@ class SqlAlchemyCollector(Collector):
                     if len(constraint.get("column_names", [])) == 1
                 ]
 
+                # Get the table comment
+                table_comment = self.get_table_comment(item)
+
                 for i, column in enumerate(
                     inspector.get_columns(name, schema=schema_name)
                 ):
                     data_type, array_data_type = self.get_data_type_str(column)
 
+                    # Get the column comment
+                    column_comment = self.get_column_comment(column, column.get("name"))
+
                     columns.append(
                         TableColumnCreateSchema(
                             name=column.get("name"),
-                            description=column.get(
-                                "comment"
-                            ),  # FIXME: add notes
+                            description=column_comment
                             display_name=column.get("name"),
                             data_type=data_type,
                             array_data_type=array_data_type,
@@ -152,13 +172,6 @@ class SqlAlchemyCollector(Collector):
                             default_value=column.get("default"),
                         )
                     )
-
-                try:
-                    table_comment = inspector.get_table_comment(
-                        name, schema=schema_name
-                    ).get("text")
-                except NotImplementedError:
-                    table_comment = None
 
                 if self.supports_schema():
                     table_fqn = f"{database_name}.{schema_name}.{name}"
