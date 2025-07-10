@@ -80,7 +80,7 @@ class HiveCollector(SqlAlchemyCollector):
         ]
 
         
-    def get_table_comment(self) -> str:
+    def get_table_comment(self, name, schemaname, inspector, engine) -> str:
         """Return the table comment."""
         
         query = db.text(f"DESCRIBE FORMATTED {name}")

@@ -78,7 +78,7 @@ class SqlAlchemyCollector(Collector):
         return data_type, array_data_type
 
 
-    def get_table_comment (self, name, schema_name):
+    def get_table_comment (self, name, schema_name, inspector, engine):
         try:
             table_comment = inspector.get_table_comment(
                 name, schema=schema_name
@@ -140,7 +140,7 @@ class SqlAlchemyCollector(Collector):
                 ]
 
                 # Get the table comment
-                table_comment = self.get_table_comment(item)
+                table_comment = self.get_table_comment(name, schema_name ,inspector, engine)
 
                 for i, column in enumerate(
                     inspector.get_columns(name, schema=schema_name)
@@ -153,7 +153,7 @@ class SqlAlchemyCollector(Collector):
                     columns.append(
                         TableColumnCreateSchema(
                             name=column.get("name"),
-                            description=column_comment
+                            description=column_comment,
                             display_name=column.get("name"),
                             data_type=data_type,
                             array_data_type=array_data_type,
@@ -171,7 +171,9 @@ class SqlAlchemyCollector(Collector):
                             # semantic_type=None
                             default_value=column.get("default"),
                         )
-                    )
+                        )
+                    
+                    
 
                 if self.supports_schema():
                     table_fqn = f"{database_name}.{schema_name}.{name}"
