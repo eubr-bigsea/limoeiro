@@ -260,7 +260,7 @@ class DataCollectionEngine:
                         schema = self._process_schema(
                             schema, provider, database
                         )
-
+                        # Get the tables of the schema.
                         table_list = collector.get_tables(db_name, schema_name)
                     
                         schema_ignored_tbs = []
@@ -311,6 +311,7 @@ class DataCollectionEngine:
                     
                     ignored_tbs = []
                     valid_tbs = []
+                    # Get the tables of the schema.
                     table_list = collector.get_tables(db_name, db_name) 
                     for table in table_list:
                         self._pre_process_table(
@@ -325,6 +326,7 @@ class DataCollectionEngine:
                             valid_tbs,    
                             None             
                         )
+                    # Handle tables not found in database, but in metadata
                     db_client = DatabaseTableApiClient()
                     existing_tbs = db_client.find_by_database(str(database.id))
                     names_to_disable = []
@@ -347,6 +349,7 @@ class DataCollectionEngine:
                             ", ".join(ignored_tbs),
                         )
         else:
+            # Handle databases not found in provider, but in metadata
             db_client = DatabaseApiClient()
             existing_dbs = db_client.find_by_provider(str(provider.id))
             names_to_disable = []
@@ -402,8 +405,11 @@ class DataCollectionEngine:
         schema: typing.Optional[DatabaseSchemaItemSchema] = None,
     ):
         tb_name = table.name
+        # Test if tb_name must be excluded from processing (ignored)
         must_not_tb = bool(exclude_tb_re and exclude_tb_re.match(tb_name))
+        # Test if tb_name must be processed
         must_tb = (include_tb_re is None) or (include_tb_re and include_tb_re.match(tb_name))
+        # If both flags, item is explicitly ignored
         ignore_tb = (not must_tb) or must_not_tb
 
         if ignore_tb:
@@ -412,24 +418,31 @@ class DataCollectionEngine:
             return
 
         self.log.log.info(f"Table '{tb_name}' will be processed.")
+        # Process the object table.
         table.database_id = database.id
+        # table.database_schema_id = schema.id #FIXME
         if schema:
             table.database_schema_id = schema.id
 
         database_table_sample = None
+        # check if the parameter to collect the sample was checked
         if ingestion.collect_sample:
+            # Collect the samples
             database_table_sample = collector.get_samples(
                 database.name,
                 schema.name if schema else database.name,
                 table,
             )
-
+            
+            # check if the parameter to apply semantic analysis was checked
             if ingestion.apply_semantic_analysis and database_table_sample and database_table_sample.content:
+                # Format samples to infer the semantic values
                 structured_sample = defaultdict(list)
                 for sample in database_table_sample.content:
                     for column in sample.keys():
                         structured_sample[column].append(sample[column])
-
+                        
+                # For each column, get it's semantic value
                 for column in table.columns:
                     sample = structured_sample.get(column.name, [])
                     if sample:

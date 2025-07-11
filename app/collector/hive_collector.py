@@ -50,14 +50,14 @@ class HiveCollector(SqlAlchemyCollector):
         with engine.connect() as conn:
             result = conn.execute(query)
             tables = result.fetchall()
-
+            # Check the type of each table, e.g., using `DESCRIBE FORMATTED`
             for table in tables:
                 table_name = table[0]
                 describe_query = db.text(f"DESCRIBE FORMATTED {table_name}")
 
                 desc_result = conn.execute(describe_query)
                 describe = desc_result.fetchall()
-
+                # Check if 'VIRTUAL_VIEW' is found in the table description (indicative of a view)
                 if any("VIRTUAL_VIEW" in str(row) for row in describe):
                     view_names.append(table_name)
         return view_names
