@@ -1,3 +1,5 @@
+import logging
+import typing
 from typing import List, Optional
 from sqlalchemy.engine import create_engine
 import sqlalchemy as db
@@ -6,12 +8,24 @@ from app.collector.sql_alchemy_collector import SqlAlchemyCollector
 from app.collector import DEFAULT_UUID
 from app.schemas import (
     DatabaseCreateSchema,
+    DatabaseTableCreateSchema,
+    TableColumnCreateSchema
 )
 from app.collector.utils.constants_utils import SQLTYPES_DICT
 from app.models import DataType
+import sqlalchemy
+from app.models import DataType, TableType
+logger = logging.getLogger(__name__)
+
+
+
 
 class HiveCollector(SqlAlchemyCollector):
     """Class to implement methods, to collect data in HIVE."""
+
+    def __init__(self):
+        super().__init__()
+        self.comment_obj = None
 
     def _get_connection_string(self):
         params = self.connection_info
@@ -36,7 +50,6 @@ class HiveCollector(SqlAlchemyCollector):
         with engine.connect() as conn:
             result = conn.execute(query)
             tables = result.fetchall()
-
             # Check the type of each table, e.g., using `DESCRIBE FORMATTED`
             for table in tables:
                 table_name = table[0]
@@ -44,7 +57,6 @@ class HiveCollector(SqlAlchemyCollector):
 
                 desc_result = conn.execute(describe_query)
                 describe = desc_result.fetchall()
-
                 # Check if 'VIRTUAL_VIEW' is found in the table description (indicative of a view)
                 if any("VIRTUAL_VIEW" in str(row) for row in describe):
                     view_names.append(table_name)
@@ -67,6 +79,53 @@ class HiveCollector(SqlAlchemyCollector):
             for r in result
         ]
 
+        
+    def get_table_comment(self, name, schemaname, inspector, engine) -> str:
+        """Return the table comment."""
+        
+        query = db.text(f"DESCRIBE FORMATTED {name}")
+        with engine.connect() as conn:
+            self.comment_obj = conn.execute(query).fetchall()
+
+        try:
+            in_table_parameters = False
+
+            for row in self.comment_obj:
+                
+                if row[0] == 'Table Parameters:':
+                    in_table_parameters = True
+                    continue 
+
+                if in_table_parameters and row[1] and row[1].strip().lower() == "comment":
+                    return row[2].strip()
+
+                if row[0].startswith('#') and row[0] != '# Table Parameters:':
+                    in_table_parameters = False
+                    
+            return None
+        except Exception as e:
+            return None
+
+    def get_column_comment(self, column, name) -> str:
+        """Return the column comment."""
+        try:
+            in_columns_section = False
+            for row in self.comment_obj:
+                if row[0] and row[0].strip().lower() == "# col_name":
+                    in_columns_section = True
+                    continue
+                
+                if in_columns_section:
+                    col_name_from_desc = row[0].strip() if row[0] is not None else ""
+                    if not col_name_from_desc and row[1] is None and row[2] is None:
+                        break
+                    if col_name_from_desc == name:
+                        return (row[2] or "").strip() 
+
+            return None
+        except Exception as e:
+            return None
+
     def supports_schema(self):
         return False
 
@@ -82,12 +141,6 @@ class HiveCollector(SqlAlchemyCollector):
     def supports_pk(self) -> bool:
         """Return if the database supports primary keys."""
         return False
-
-    def get_data_type_str(self, column) -> str:
-        """Return the data type from a column."""
-        data_type_str = SQLTYPES_DICT[str(column.get("type"))]
-        return data_type_str
-    
     
     def get_data_type_str(self, column) -> str:
         """Return the data type from a column."""
@@ -108,4 +161,3 @@ class HiveCollector(SqlAlchemyCollector):
         return data_type, array_data_type
     
     
-
