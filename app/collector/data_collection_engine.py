@@ -176,7 +176,7 @@ class DataCollectionEngine:
         ingestion: DatabaseProviderIngestionItemSchema,
     ):
         """Execute the collection for the database provider."""
-
+        
         # Create the collector.
         collector = CollectorFactory.create_collector(
             provider, ingestion, connection
@@ -191,6 +191,16 @@ class DataCollectionEngine:
         exclude_db_re = (
             re.compile(ingestion.exclude_database)
             if ingestion.exclude_database
+            else None
+        )
+        include_sc_re = (
+            re.compile(ingestion.include_schema)
+            if ingestion.include_schema
+            else None
+        )
+        exclude_sc_re = (
+            re.compile(ingestion.exclude_schema)
+            if ingestion.exclude_schema
             else None
         )
         include_tb_re = (
@@ -214,7 +224,7 @@ class DataCollectionEngine:
                 # Test if db_name must be processed
                 must_db = bool(include_db_re and include_db_re.match(db_name))
                 # If both flags, item is explicitly ignored
-                ignore_db = not must_db or must_not_db
+                ignore_db = (include_db_re is not None and not must_db) or must_not_db
             else:
                 ignore_db = False
                 must_db   = True
@@ -225,7 +235,7 @@ class DataCollectionEngine:
                 # Process the object database
                 database = self._process_database(db, provider)
                 valid_dbs.append(db_name)
-
+                
                 # Get the schemas of the database.
 
                 if collector.supports_schema():
@@ -237,48 +247,84 @@ class DataCollectionEngine:
                         schema_name = schema.name
                         if schema_name in ignorable:
                             continue
-                        # schema = DatabaseSchemaCreateSchema(
-                        #     name=schema_name,
-                        #     display_name=schema_name,
-                        #     database_id=database.id,
-                        #     fully_qualified_name="placeholder",
-                        # )
-
+                        
+                        must_not_sc = bool(exclude_sc_re and exclude_sc_re.match(schema_name))
+                        must_sc = bool(include_sc_re and include_sc_re.match(schema_name))
+                        ignore_sc = (include_sc_re is not None and not must_sc) or must_not_sc
+                        
+                        if ignore_sc:
+                            print(f"Schema '{schema_name}' ignored by rules.")
+                            continue
+                        
                         # Process the object schema
                         schema = self._process_schema(
                             schema, provider, database
                         )
-
                         # Get the tables of the schema.
                         table_list = collector.get_tables(db_name, schema_name)
-                        
-                        for table in table_list:
-                            self._pre_process_table(table,
-                                                  database,
-                                                  collector,
-                                                  provider,
-                                                  ingestion,  
-                                                  schema
-                                                  )
-                            
+                    
+                        schema_ignored_tbs = []
+                        schema_valid_tbs = []
 
-                else:
+                        for table in table_list:
+                            self._pre_process_table(
+                                table,
+                                provider,
+                                include_tb_re,
+                                exclude_tb_re,
+                                database,
+                                collector,
+                                ingestion,
+                                schema_ignored_tbs,  # ou ignored_tbs
+                                schema_valid_tbs,    # ou valid_tbs
+                                schema               # ou None se não houver schema
+                            )
+                        
+                        db_table_api_client = DatabaseTableApiClient()
+                        existing_tbs_in_database = db_table_api_client.find_by_database(str(database.id))
+                        
+                        existing_tbs_in_schema = [
+                            tb for tb in existing_tbs_in_database 
+                            if tb.database_schema and str(tb.database_schema.id) == str(schema.id)
+                        ]
+                        names_to_disable = []
+                        tb_ids_to_disable = []
+
+                        for tb in existing_tbs_in_schema:
+                            if tb.name not in schema_valid_tbs:
+                                tb_ids_to_disable.append(tb.id)
+                                names_to_disable.append(tb.name)
+                        if tb_ids_to_disable:
+                            self.log.log.info(
+                                "Tables(s) present in metadata under schema '%s' that will be disabled: [%s]",
+                                schema_name, ", ".join(names_to_disable),
+                            )
+                        AssetApiClient.disable_many(tb_ids_to_disable)
+
+                        if schema_ignored_tbs:
+                            self.log.log.info(
+                                "Table(s) under schema '%s' ignored by the rules: [%s]",
+                                schema_name, ", ".join(schema_ignored_tbs),
+                            )
+                                
+                else: 
+                    
                     ignored_tbs = []
                     valid_tbs = []
                     # Get the tables of the schema.
-                    table_list = collector.get_tables(db_name, db_name)
-                    
+                    table_list = collector.get_tables(db_name, db_name) 
                     for table in table_list:
-                        self._update_table(
+                        self._pre_process_table(
+                            table,
                             provider,
                             include_tb_re,
                             exclude_tb_re,
                             database,
-                            table,
-                            ignored_tbs,
-                            valid_tbs,
                             collector,
-                            ingestion
+                            ingestion,
+                            ignored_tbs,  
+                            valid_tbs,    
+                            None             
                         )
                     # Handle tables not found in database, but in metadata
                     db_client = DatabaseTableApiClient()
@@ -298,7 +344,6 @@ class DataCollectionEngine:
                     AssetApiClient.disable_many(tb_to_disable)
 
                     if ignored_tbs:
-                        
                         self.log.log.info(
                             "Table(s) ignored by the rules: [%s]",
                             ", ".join(ignored_tbs),
@@ -346,90 +391,73 @@ class DataCollectionEngine:
         else:
             return "API_FAILED"
         
-
-
-    def _update_table(
+    def _pre_process_table(
         self,
-        provider,
-        include_tb_re,
-        exclude_tb_re,
-        database,
-        table,
-        ignored_tbs,
-        valid_tbs,
-        collector,
-        ingestion
+        table: DatabaseTableCreateSchema,
+        provider: DatabaseProviderItemSchema,
+        include_tb_re: typing.Optional[re.Pattern],
+        exclude_tb_re: typing.Optional[re.Pattern],
+        database: DatabaseItemSchema,
+        collector: Collector,
+        ingestion: DatabaseProviderIngestionItemSchema,
+        ignored_tbs: typing.List[str],
+        valid_tbs: typing.List[str],
+        schema: typing.Optional[DatabaseSchemaItemSchema] = None,
     ):
         tb_name = table.name
         # Test if tb_name must be excluded from processing (ignored)
         must_not_tb = bool(exclude_tb_re and exclude_tb_re.match(tb_name))
-
         # Test if tb_name must be processed
-        must_tb = bool(include_tb_re and include_tb_re.match(tb_name))
+        must_tb = (include_tb_re is None) or (include_tb_re and include_tb_re.match(tb_name))
         # If both flags, item is explicitly ignored
-        ignore_tb = must_tb and must_not_tb
+        ignore_tb = (not must_tb) or must_not_tb
+
         if ignore_tb:
             ignored_tbs.append(tb_name)
-        else:
-            # Process the object table.
-            table.database_id = database.id
-            self._pre_process_table(table,
-                                       database,
-                                       collector,
-                                       provider,
-                                       ingestion
-                                       )
-            valid_tbs.append(tb_name)
+            self.log.log.info(f"Table '{tb_name}' ignored by rules.")
+            return
 
-    def _pre_process_table(self,
-                              table:DatabaseTableCreateSchema,
-                              database:DatabaseItemSchema,
-                              collector:Collector,
-                              provider:DatabaseProviderItemSchema,
-                              ingestion: DatabaseProviderIngestionItemSchema,
-                              schema:DatabaseSchemaItemSchema=None
-                              ):
+        self.log.log.info(f"Table '{tb_name}' will be processed.")
         # Process the object table.
         table.database_id = database.id
         # table.database_schema_id = schema.id #FIXME
+        if schema:
+            table.database_schema_id = schema.id
 
         database_table_sample = None
         # check if the parameter to collect the sample was checked
         if ingestion.collect_sample:
-            
             # Collect the samples
-            database_table_sample = collector.get_samples(database.name,
-                                                            schema.name if schema else database.name,
-                                                            table)
-
+            database_table_sample = collector.get_samples(
+                database.name,
+                schema.name if schema else database.name,
+                table,
+            )
+            
             # check if the parameter to apply semantic analysis was checked
-            if ingestion.apply_semantic_analysis:
+            if ingestion.apply_semantic_analysis and database_table_sample and database_table_sample.content:
+                # Format samples to infer the semantic values
+                structured_sample = defaultdict(list)
+                for sample in database_table_sample.content:
+                    for column in sample.keys():
+                        structured_sample[column].append(sample[column])
+                        
+                # For each column, get it's semantic value
+                for column in table.columns:
+                    sample = structured_sample.get(column.name, [])
+                    if sample:
+                        semantic_type = self._get_semantic_type(sample)
+                        column.semantic_type = semantic_type
 
-                # check if the there are samples
-                if database_table_sample and (len(database_table_sample.content) > 0):
-                    
-                    # Format samples to infer the semantic values
-                    structured_sample = defaultdict(list)
-                    for sample in database_table_sample.content:
-                        for column in sample.keys():
-                            structured_sample[column].append(sample[column])
-
-                    # For each column, get it's semantic value
-                    for column in table.columns:
-                        sample = structured_sample[column.name]
-                        if sample and (len(sample)>0):
-                            # Get it's semantic value
-                            semantic_type = self._get_semantic_type(sample)
-                            column.semantic_type = semantic_type
-        
         table_return = self._process_table(
-                                            table,
-                                            provider,
-                                            database,
-                                            schema,
-                                        )
-        
+            table,
+            provider,
+            database,
+            schema,
+        )
+
         if database_table_sample:
-            database_table_sample.database_table_id=table_return.id
+            database_table_sample.database_table_id = table_return.id
             self._process_sample(database_table_sample)
 
+        valid_tbs.append(tb_name)
