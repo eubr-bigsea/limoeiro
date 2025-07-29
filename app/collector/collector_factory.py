@@ -14,6 +14,7 @@ from app.schemas import (
     DatabaseProviderIngestionItemSchema,
     DatabaseProviderItemSchema,
 )
+import urllib.parse 
 
 from . import DatabaseProviderTypeDisplayName as SUPPORTED_TYPES
 
@@ -54,7 +55,10 @@ class CollectorFactory:
         if collector_class:
             collector = collector_class()
             collector.ingestion = ingestion
-            collector.connection_info = connection
+            modified_connection = connection.copy(deep=True) 
+            if modified_connection.password and isinstance(modified_connection.password, str):
+                modified_connection.password = urllib.parse.quote(modified_connection.password)
+            collector.connection_info = modified_connection
             return collector
         else:
             raise ValueError(
